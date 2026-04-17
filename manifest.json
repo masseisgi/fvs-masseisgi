@@ -1,0 +1,17 @@
+{
+  "name": "MASSEI FVS",
+  "short_name": "FVS Massei",
+  "description": "Fichas de Verificação de Serviço - Massei Gestão Integrada",
+  "start_url": "/fvs-masseisgi/index.html",
+  "display": "standalone",
+  "background_color": "#07090f",
+  "theme_color": "#00c896",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://masseisgi.github.io/fvs-masseisgi/index.html",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
