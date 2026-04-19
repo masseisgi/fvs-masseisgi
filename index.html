@@ -16,7 +16,6 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png"/>
 
 <title>MGI PRO — Massei Gestão Integrada</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -271,6 +270,28 @@ textarea.input-f{resize:vertical;min-height:52px}
   background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);
   border-radius:10px;margin-bottom:14px;font-size:.65rem}
 .info-banner b{color:var(--cyan)}
+
+/* ASSINATURA DIGITAL */
+.sign-wrapper{background:rgba(15,23,42,.85);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:14px}
+.sign-box{background:#fff;border-radius:10px;border:2px dashed var(--border);
+  overflow:hidden;position:relative;margin-top:8px}
+.sign-box canvas{display:block;width:100%;height:160px;touch-action:none;cursor:crosshair}
+.sign-box.signed{border-style:solid;border-color:var(--green)}
+.sign-box.signed::before{content:"✓ Assinado";position:absolute;top:6px;right:8px;
+  background:rgba(22,101,52,.9);color:#fff;font-size:.62rem;padding:2px 8px;
+  border-radius:10px;font-weight:700;letter-spacing:.05em;pointer-events:none}
+.sign-hint{font-size:.64rem;color:var(--muted);text-align:center;margin-top:6px;font-style:italic}
+.sign-actions{display:flex;gap:8px;margin-top:10px}
+.sign-btn{flex:1;background:transparent;border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:8px;cursor:pointer;font-family:'Barlow',sans-serif;
+  font-weight:600;font-size:.72rem;transition:all .15s}
+.sign-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.sign-btn.clear:hover{border-color:var(--red);color:var(--red)}
+.sign-preview{max-height:80px;background:#fff;border-radius:6px;padding:4px;margin-top:6px}
+.sign-preview img{max-height:72px;max-width:100%;display:block;margin:0 auto}
+.sign-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:640px){.sign-grid{grid-template-columns:1fr 1fr}}
 
 /* DIÁRIO — tempo buttons */
 .tempo-btn{background:rgba(15,23,42,.8);border:1.5px solid var(--border);color:var(--muted);
@@ -599,11 +620,12 @@ textarea.input-f{resize:vertical;min-height:52px}
 
       <!-- Assinaturas -->
       <div class="card">
-        <div class="section-hdr"><span>✍️</span><div><div class="section-hdr-title">ASSINATURAS / APROVAÇÕES</div></div></div>
-        <div class="form-grid">
-          <div><div class="field-lbl">Responsável Técnico</div><input class="input-f" id="d-sign-rt" placeholder="Nome / visto" oninput="saveDiario()"/></div>
-          <div><div class="field-lbl">Fiscal / Cliente</div><input class="input-f" id="d-sign-fiscal" placeholder="Nome / visto" oninput="saveDiario()"/></div>
+        <div class="section-hdr"><span>✍️</span><div><div class="section-hdr-title">ASSINATURAS DO DIA</div><div class="section-hdr-sub">Desenhe com o dedo ou mouse no quadro</div></div></div>
+        <div class="form-grid" style="margin-bottom:14px">
+          <div><div class="field-lbl">Nome do Resp. Técnico</div><input class="input-f" id="d-sign-rt" placeholder="Nome completo" oninput="saveDiario()"/></div>
+          <div><div class="field-lbl">Nome do Fiscal / Cliente</div><input class="input-f" id="d-sign-fiscal" placeholder="Nome completo" oninput="saveDiario()"/></div>
         </div>
+        <div class="sign-grid" id="diario-sign-grid"></div>
       </div>
 
       <button class="btn-start" onclick="salvarDiario()" style="margin-bottom:6px">💾 SALVAR REGISTRO DO DIA</button>
@@ -945,6 +967,11 @@ let state = {
   diarios: [],       // histórico de registros salvos
   resumoIA: null,    // cache do último resumo IA
   loadingResumo: false,
+  // ASSINATURAS (data URLs)
+  signatures: {
+    iso_auditor: null, iso_responsavel: null,
+    fvs_inspetor: null, fvs_responsavel: null,
+  },
   // Photo target
   photoTarget: null,
 };
@@ -1306,12 +1333,16 @@ function renderRelatorioISO(){
       ${clausulaRows}
     </div>
     ${ncDetail}
+    <div class="section-hdr"><span>✍️</span><div><div class="section-hdr-title">ASSINATURAS</div><div class="section-hdr-sub">Desenhe sua assinatura com o dedo ou mouse</div></div></div>
+    <div class="sign-grid">
+      ${renderSignaturePad("iso-auditor","iso_auditor", "Auditor Líder"+(auditor?" — "+auditor:""))}
+      ${renderSignaturePad("iso-responsavel","iso_responsavel", "Responsável pelo Processo"+(state.info.responsavel?" — "+state.info.responsavel:""))}
+    </div>
     <div class="footer-txt">MGI PRO · Massei Gestão Integrada · "Qualidade Constrói Confiança"</div>`;
-}
 
-// ═════════════════════════════════════════════════════════════════════════════
-// FVS
-// ═════════════════════════════════════════════════════════════════════════════
+  // Inicializa os canvases após render
+  setTimeout(()=>initSignaturesForPage("iso"), 80);
+}
 function initFVSSelect(){
   const sel=document.getElementById("service-select");
   SERVICOS.forEach(s=>{
@@ -1590,7 +1621,14 @@ function renderRelatorioFVS(){
         </div>`;
       }).join("")}
     </div>`:""}
+    <div class="section-hdr" style="margin-top:14px"><span>✍️</span><div><div class="section-hdr-title">ASSINATURAS</div><div class="section-hdr-sub">Desenhe sua assinatura com o dedo ou mouse</div></div></div>
+    <div class="sign-grid">
+      ${renderSignaturePad("fvs-inspetor","fvs_inspetor", "Inspetor / Executor"+(resp?" — "+resp:""))}
+      ${renderSignaturePad("fvs-responsavel","fvs_responsavel", "Responsável Técnico")}
+    </div>
     <div class="footer-txt">MGI PRO · Massei Gestão Integrada · "Qualidade Constrói Confiança"</div>`;
+
+  setTimeout(()=>initSignaturesForPage("fvs"), 80);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1610,6 +1648,7 @@ function novoRegistroDiario(){
     fotos: [],
     obs: "",
     signRT: "", signFiscal: "",
+    signRTImg: null, signFiscalImg: null,
   };
 }
 
@@ -1650,6 +1689,84 @@ function renderDiarioForm(){
   renderATList();
   renderOCList();
   renderFotosDiario();
+  renderDiarioSigns();
+}
+
+function renderDiarioSigns(){
+  const grid = document.getElementById("diario-sign-grid");
+  if(!grid) return;
+  const d = state.diarioAtual;
+  const rtHTML = d.signRTImg
+    ? `<div class="sign-wrapper">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="field-lbl" style="margin-bottom:0">✍️ Responsável Técnico</div>
+          <span style="font-size:.62rem;color:var(--green);font-weight:700">✓ ASSINADO</span>
+        </div>
+        <div class="sign-box signed"><img src="${d.signRTImg}" style="width:100%;height:160px;object-fit:contain;background:#fff"/></div>
+        <div class="sign-actions"><button class="sign-btn clear" onclick="clearDiarioSign('rt')">🗑️ Limpar</button></div>
+      </div>`
+    : `<div class="sign-wrapper">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="field-lbl" style="margin-bottom:0">✍️ Responsável Técnico</div>
+          <span style="font-size:.62rem;color:var(--muted)">Aguardando</span>
+        </div>
+        <div class="sign-box" id="box-diario-rt"><canvas id="canvas-diario-rt"></canvas></div>
+        <div class="sign-hint">Desenhe a assinatura com o dedo ou mouse</div>
+        <div class="sign-actions">
+          <button class="sign-btn clear" onclick="clearDiarioCanvas('rt')">🗑️ Limpar</button>
+          <button class="sign-btn" onclick="saveDiarioSign('rt')" style="background:rgba(74,222,128,.1);border-color:var(--green);color:var(--green)">💾 Salvar</button>
+        </div>
+      </div>`;
+  const fiscalHTML = d.signFiscalImg
+    ? `<div class="sign-wrapper">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="field-lbl" style="margin-bottom:0">✍️ Fiscal / Cliente</div>
+          <span style="font-size:.62rem;color:var(--green);font-weight:700">✓ ASSINADO</span>
+        </div>
+        <div class="sign-box signed"><img src="${d.signFiscalImg}" style="width:100%;height:160px;object-fit:contain;background:#fff"/></div>
+        <div class="sign-actions"><button class="sign-btn clear" onclick="clearDiarioSign('fiscal')">🗑️ Limpar</button></div>
+      </div>`
+    : `<div class="sign-wrapper">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="field-lbl" style="margin-bottom:0">✍️ Fiscal / Cliente</div>
+          <span style="font-size:.62rem;color:var(--muted)">Aguardando</span>
+        </div>
+        <div class="sign-box" id="box-diario-fiscal"><canvas id="canvas-diario-fiscal"></canvas></div>
+        <div class="sign-hint">Desenhe a assinatura com o dedo ou mouse</div>
+        <div class="sign-actions">
+          <button class="sign-btn clear" onclick="clearDiarioCanvas('fiscal')">🗑️ Limpar</button>
+          <button class="sign-btn" onclick="saveDiarioSign('fiscal')" style="background:rgba(74,222,128,.1);border-color:var(--green);color:var(--green)">💾 Salvar</button>
+        </div>
+      </div>`;
+  grid.innerHTML = rtHTML + fiscalHTML;
+  setTimeout(()=>{
+    if(!d.signRTImg) initSignatureCanvas("diario-rt");
+    if(!d.signFiscalImg) initSignatureCanvas("diario-fiscal");
+  }, 50);
+}
+
+function clearDiarioCanvas(which){
+  const canvas = document.getElementById("canvas-diario-"+which);
+  if(canvas && canvas._clearRef) canvas._clearRef();
+}
+
+function saveDiarioSign(which){
+  const canvas = document.getElementById("canvas-diario-"+which);
+  if(!canvas){ alert("Canvas não encontrado."); return; }
+  if(canvas._hasDrawnRef && !canvas._hasDrawnRef()){
+    alert("Desenhe a assinatura primeiro!");
+    return;
+  }
+  const dataURL = canvas.toDataURL("image/png");
+  if(which==="rt") state.diarioAtual.signRTImg = dataURL;
+  else state.diarioAtual.signFiscalImg = dataURL;
+  renderDiarioSigns();
+}
+
+function clearDiarioSign(which){
+  if(which==="rt") state.diarioAtual.signRTImg = null;
+  else state.diarioAtual.signFiscalImg = null;
+  renderDiarioSigns();
 }
 
 function saveDiario(){
@@ -2112,8 +2229,16 @@ function gerarHTMLPDF(registros, incluirIA, incluirFotos){
 
       <table class="signs">
         <tr>
-          <td><div class="sign-line"></div><div>Responsável Técnico${d.signRT?" — "+d.signRT:""}</div></td>
-          <td><div class="sign-line"></div><div>Fiscal / Cliente${d.signFiscal?" — "+d.signFiscal:""}</div></td>
+          <td>
+            ${d.signRTImg ? `<img src="${d.signRTImg}" style="max-height:22mm;max-width:60mm;display:block;margin:0 auto 2mm"/>` : `<div style="height:22mm"></div>`}
+            <div class="sign-line"></div>
+            <div>Responsável Técnico${d.signRT?" — "+d.signRT:""}</div>
+          </td>
+          <td>
+            ${d.signFiscalImg ? `<img src="${d.signFiscalImg}" style="max-height:22mm;max-width:60mm;display:block;margin:0 auto 2mm"/>` : `<div style="height:22mm"></div>`}
+            <div class="sign-line"></div>
+            <div>Fiscal / Cliente${d.signFiscal?" — "+d.signFiscal:""}</div>
+          </td>
         </tr>
       </table>
     </div>`;
@@ -2158,9 +2283,9 @@ function gerarHTMLPDF(registros, incluirIA, incluirFotos){
   p{font-size:10pt;margin-bottom:3mm}
   .photos{display:flex;flex-wrap:wrap;gap:3mm;margin-top:3mm;margin-bottom:5mm}
   .photos img{width:55mm;height:40mm;object-fit:cover;border-radius:2mm;border:1px solid #d1d5db}
-  .signs{width:100%;margin-top:15mm;font-size:9pt;color:#475569}
-  .signs td{width:50%;text-align:center;padding:0 8mm}
-  .sign-line{border-top:1px solid #1f2937;margin-bottom:2mm;padding-top:8mm}
+  .signs{width:100%;margin-top:10mm;font-size:9pt;color:#475569}
+  .signs td{width:50%;text-align:center;padding:0 6mm;vertical-align:bottom}
+  .sign-line{border-top:1px solid #1f2937;margin-bottom:2mm;padding-top:2mm}
   .footer{position:fixed;bottom:6mm;left:12mm;right:12mm;font-size:8pt;color:#9ca3af;text-align:center;border-top:1px solid #e5e7eb;padding-top:2mm}
   h2{font-size:14pt;margin-bottom:6mm}
 </style>
@@ -2181,7 +2306,6 @@ ${iaHTML}
 <div class="footer">MGI PRO · Massei Gestão Integrada · Gerado em ${new Date().toLocaleString("pt-BR")}</div>
 
 <script>
-// Service Worker para PWA (funcionalidade offline básica)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registro falhou', err));
@@ -2190,6 +2314,113 @@ if ('serviceWorker' in navigator) {
 </script>
 </body></html>`;
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ASSINATURA DIGITAL
+// ═════════════════════════════════════════════════════════════════════════════
+function renderSignaturePad(containerId, signKey, label){
+  return `<div class="sign-wrapper">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="field-lbl" style="margin-bottom:0">✍️ ${label}</div>
+      ${state.signatures[signKey]?'<span style="font-size:.62rem;color:var(--green);font-weight:700">✓ ASSINADO</span>':'<span style="font-size:.62rem;color:var(--muted)">Aguardando</span>'}
+    </div>
+    <div class="sign-box ${state.signatures[signKey]?'signed':''}" id="box-${containerId}">
+      ${state.signatures[signKey]
+        ? `<img src="${state.signatures[signKey]}" style="width:100%;height:160px;object-fit:contain;background:#fff"/>`
+        : `<canvas id="canvas-${containerId}"></canvas>`
+      }
+    </div>
+    ${!state.signatures[signKey]?`<div class="sign-hint">Desenhe sua assinatura no quadro branco acima</div>`:""}
+    <div class="sign-actions">
+      <button class="sign-btn clear" onclick="clearSignature('${containerId}','${signKey}')">🗑️ Limpar</button>
+      ${!state.signatures[signKey]?`<button class="sign-btn" onclick="saveSignature('${containerId}','${signKey}')" style="background:rgba(74,222,128,.1);border-color:var(--green);color:var(--green)">💾 Salvar Assinatura</button>`:""}
+    </div>
+  </div>`;
+}
+
+function initSignatureCanvas(containerId){
+  const canvas = document.getElementById("canvas-"+containerId);
+  if(!canvas) return;
+  const parent = canvas.parentElement;
+  const rect = parent.getBoundingClientRect();
+  canvas.width = rect.width || 300;
+  canvas.height = 160;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+  ctx.strokeStyle = "#0f172a";
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  let drawing = false, lastX=0, lastY=0, hasDrawn=false;
+
+  function getPos(e){
+    const r = canvas.getBoundingClientRect();
+    const touch = e.touches && e.touches[0];
+    const clientX = touch ? touch.clientX : e.clientX;
+    const clientY = touch ? touch.clientY : e.clientY;
+    return { x: clientX - r.left, y: clientY - r.top };
+  }
+  function start(e){ e.preventDefault(); drawing=true; hasDrawn=true; const p=getPos(e); lastX=p.x; lastY=p.y; }
+  function move(e){ if(!drawing) return; e.preventDefault(); const p=getPos(e); ctx.beginPath(); ctx.moveTo(lastX,lastY); ctx.lineTo(p.x,p.y); ctx.stroke(); lastX=p.x; lastY=p.y; }
+  function end(e){ if(e) e.preventDefault(); drawing=false; }
+
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  canvas.addEventListener("mouseup", end);
+  canvas.addEventListener("mouseleave", end);
+  canvas.addEventListener("touchstart", start, {passive:false});
+  canvas.addEventListener("touchmove", move, {passive:false});
+  canvas.addEventListener("touchend", end);
+
+  canvas._hasDrawnRef = () => hasDrawn;
+  canvas._clearRef = () => {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+    ctx.strokeStyle = "#0f172a";
+    hasDrawn = false;
+  };
+}
+
+function clearSignature(containerId, signKey){
+  if(state.signatures[signKey]){
+    state.signatures[signKey] = null;
+    if(containerId.startsWith("iso")) { renderRelatorioISO(); setTimeout(()=>initSignaturesForPage("iso"), 80); }
+    else if(containerId.startsWith("fvs")) { renderRelatorioFVS(); setTimeout(()=>initSignaturesForPage("fvs"), 80); }
+    else if(containerId.startsWith("diario")) { renderDiarioForm(); setTimeout(()=>initSignaturesForPage("diario"), 80); }
+    return;
+  }
+  const canvas = document.getElementById("canvas-"+containerId);
+  if(canvas && canvas._clearRef) canvas._clearRef();
+}
+
+function saveSignature(containerId, signKey){
+  const canvas = document.getElementById("canvas-"+containerId);
+  if(!canvas){ alert("Canvas não encontrado."); return; }
+  if(canvas._hasDrawnRef && !canvas._hasDrawnRef()){
+    alert("Desenhe sua assinatura primeiro!");
+    return;
+  }
+  state.signatures[signKey] = canvas.toDataURL("image/png");
+  if(containerId.startsWith("iso")) { renderRelatorioISO(); setTimeout(()=>initSignaturesForPage("iso"), 80); }
+  else if(containerId.startsWith("fvs")) { renderRelatorioFVS(); setTimeout(()=>initSignaturesForPage("fvs"), 80); }
+  else if(containerId.startsWith("diario")) { renderDiarioForm(); setTimeout(()=>initSignaturesForPage("diario"), 80); }
+}
+
+function initSignaturesForPage(module){
+  if(module==="iso"){
+    initSignatureCanvas("iso-auditor");
+    initSignatureCanvas("iso-responsavel");
+  } else if(module==="fvs"){
+    initSignatureCanvas("fvs-inspetor");
+    initSignatureCanvas("fvs-responsavel");
+  } else if(module==="diario"){
+    initSignatureCanvas("diario-rt");
+    initSignatureCanvas("diario-fiscal");
+  }
+}
+
 function openPhotoMenu(module, id){
   const existing=document.getElementById("photo-menu"); if(existing) existing.remove();
   const menu=document.createElement("div");
