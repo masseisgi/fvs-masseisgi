@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Política de Privacidade — MGI PRO</title>
+<style>
+body{max-width:820px;margin:40px auto;padding:0 20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1f2937;line-height:1.6;background:#fff}
+h1{color:#0e7490;border-bottom:3px solid #22d3ee;padding-bottom:10px}
+h2{color:#0e7490;margin-top:32px}
+h3{color:#374151;margin-top:20px}
+p, li{color:#374151}
+a{color:#0e7490}
+.meta{color:#6b7280;font-size:.9em;margin-bottom:30px}
+.highlight{background:#ecfeff;border-left:4px solid #22d3ee;padding:12px 16px;margin:20px 0;border-radius:0 6px 6px 0}
+ul{padding-left:24px}
+code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:.9em}
+hr{border:none;border-top:1px solid #e5e7eb;margin:40px 0}
+.footer{color:#6b7280;text-align:center;font-size:.85em;margin-top:40px}
+</style>
+</head>
+<body>
+
+<h1>Política de Privacidade — MGI PRO</h1>
+<div class="meta">Última atualização: 23 de abril de 2026</div>
+
+<div class="highlight">
+<strong>Resumo:</strong> O MGI PRO é um aplicativo de uso profissional desenvolvido pela Massei Gestão Integrada para auditoria ISO 9001, PBQP-H, verificação de serviços e diário de obra. Os dados do usuário são armazenados localmente no próprio dispositivo e, quando configurada, a API da Anthropic (Claude) é utilizada para geração de ações corretivas. O aplicativo não coleta dados para fins de marketing nem compartilha informações com terceiros além dos provedores de serviço diretamente envolvidos no funcionamento.
+</div>
+
+<h2>1. Quem somos</h2>
+<p>
+<strong>Massei Gestão Integrada</strong><br/>
+E-mail de contato: <a href="mailto:contato@masseisgi.com.br">contato@masseisgi.com.br</a><br/>
+Site: <a href="https://masseisgi.github.io">masseisgi.github.io</a>
+</p>
+<p>
+Somos os responsáveis pelo tratamento dos dados coletados pelo aplicativo MGI PRO, conforme a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018).
+</p>
+
+<h2>2. Dados coletados pelo aplicativo</h2>
+<p>O MGI PRO coleta apenas os dados estritamente necessários ao seu funcionamento:</p>
+
+<h3>2.1 Dados inseridos pelo usuário</h3>
+<ul>
+  <li>Informações de identificação da auditoria (empresa, processo, auditor, obra)</li>
+  <li>Respostas dos checklists de auditoria e FVS</li>
+  <li>Observações e evidências textuais</li>
+  <li>Fotografias tiradas via câmera do dispositivo ou selecionadas da galeria</li>
+  <li>Assinaturas digitais desenhadas na tela</li>
+  <li>Dados do Diário de Obra (condições climáticas, mão de obra, equipamentos, atividades)</li>
+</ul>
+
+<h3>2.2 Configurações do dispositivo</h3>
+<ul>
+  <li>API Key da Anthropic (inserida pelo usuário, armazenada apenas no dispositivo)</li>
+  <li>Preferências de interface</li>
+</ul>
+
+<h3>2.3 O que NÃO coletamos</h3>
+<ul>
+  <li>❌ Localização GPS</li>
+  <li>❌ Lista de contatos</li>
+  <li>❌ Dados de navegação ou cookies publicitários</li>
+  <li>❌ Identificadores de dispositivo para rastreamento</li>
+  <li>❌ Dados biométricos além das assinaturas explicitamente desenhadas</li>
+</ul>
+
+<h2>3. Como os dados são armazenados</h2>
+
+<h3>3.1 Armazenamento local</h3>
+<p>
+Todos os dados inseridos no aplicativo ficam armazenados <strong>exclusivamente no dispositivo do usuário</strong>, através do mecanismo <code>localStorage</code> do navegador (WebView). Os dados não são enviados para servidores da Massei, tampouco para nuvem de terceiros, exceto quando o usuário utiliza a função de geração de ações corretivas por Inteligência Artificial (ver item 4).
+</p>
+
+<h3>3.2 Permanência dos dados</h3>
+<p>
+Os dados permanecem no dispositivo até que o usuário:
+</p>
+<ul>
+  <li>Exclua manualmente um registro pelo próprio aplicativo</li>
+  <li>Limpe o armazenamento do aplicativo nas configurações do Android</li>
+  <li>Desinstale o aplicativo</li>
+</ul>
+
+<h2>4. Serviços de Inteligência Artificial</h2>
+<p>
+O MGI PRO utiliza a API da <strong>Anthropic (Claude)</strong> para gerar ações corretivas 5W2H e análises de produtividade do Diário de Obra. Essa funcionalidade só é ativada quando o usuário configura sua API Key pessoal nas configurações do app.
+</p>
+<p>
+Quando ativada:
+</p>
+<ul>
+  <li>As descrições textuais das Não Conformidades são enviadas à Anthropic para processamento</li>
+  <li>Os dados do Diário de Obra consolidado são enviados para geração de análise</li>
+  <li>As fotografias <strong>não</strong> são enviadas à IA</li>
+  <li>A Anthropic processa os dados conforme sua própria política de privacidade: <a href="https://www.anthropic.com/privacy" target="_blank">anthropic.com/privacy</a></li>
+</ul>
+<p>
+A API Key da Anthropic fica armazenada somente no dispositivo do usuário e nunca é compartilhada com a Massei.
+</p>
+
+<h2>5. Permissões solicitadas pelo aplicativo</h2>
+<ul>
+  <li><strong>Câmera:</strong> para registro fotográfico de evidências (opcional, pode ser negada)</li>
+  <li><strong>Arquivos/Fotos:</strong> para importar imagens da galeria (opcional)</li>
+  <li><strong>Internet:</strong> apenas quando a função de IA é utilizada</li>
+</ul>
+
+<h2>6. Compartilhamento de dados</h2>
+<p>
+A Massei Gestão Integrada <strong>não compartilha</strong>, não vende e não aluga dados dos usuários. Os únicos compartilhamentos que ocorrem são:
+</p>
+<ul>
+  <li><strong>Anthropic</strong> — quando o usuário utiliza a função de IA (conforme item 4)</li>
+  <li><strong>Google Play Services</strong> — dados técnicos de crash e diagnóstico do Android, conforme política do Google</li>
+</ul>
+
+<h2>7. Segurança</h2>
+<ul>
+  <li>Conexões com a API da Anthropic utilizam HTTPS/TLS</li>
+  <li>Dados armazenados localmente usam a proteção nativa do Android</li>
+  <li>O app não exige login, reduzindo a superfície de coleta de dados</li>
+  <li>A API Key do usuário nunca sai do dispositivo, exceto em requisições diretas à Anthropic</li>
+</ul>
+
+<h2>8. Direitos do titular dos dados (LGPD)</h2>
+<p>Como usuário do MGI PRO, você tem direito a:</p>
+<ul>
+  <li>Acessar seus dados (estão no seu próprio dispositivo)</li>
+  <li>Retificar ou atualizar dados</li>
+  <li>Excluir seus dados (a qualquer momento, dentro do app)</li>
+  <li>Portar seus dados (via exportação em PDF)</li>
+  <li>Revogar consentimento (basta desinstalar o aplicativo)</li>
+  <li>Solicitar informações sobre o tratamento de dados pela Massei</li>
+</ul>
+<p>
+Para exercer qualquer direito, entre em contato: <a href="mailto:contato@masseisgi.com.br">contato@masseisgi.com.br</a>
+</p>
+
+<h2>9. Crianças e adolescentes</h2>
+<p>
+O MGI PRO é destinado exclusivamente a profissionais adultos que atuam em engenharia, gestão da qualidade e construção civil. Não é indicado para uso por menores de 18 anos e não coleta dados de crianças ou adolescentes.
+</p>
+
+<h2>10. Alterações nesta Política</h2>
+<p>
+Esta política pode ser atualizada periodicamente. A versão mais recente está sempre disponível em <a href="https://masseisgi.github.io/fvs-masseisgi/privacy.html">masseisgi.github.io/fvs-masseisgi/privacy.html</a>. A data de atualização fica registrada no topo do documento.
+</p>
+
+<h2>11. Contato</h2>
+<p>
+Para dúvidas, solicitações ou reclamações relacionadas a esta Política ou ao tratamento dos seus dados:
+</p>
+<p>
+<strong>Massei Gestão Integrada</strong><br/>
+E-mail: <a href="mailto:contato@masseisgi.com.br">contato@masseisgi.com.br</a><br/>
+</p>
+
+<hr/>
+
+<div class="footer">
+  MGI PRO · Massei Gestão Integrada<br/>
+  "Qualidade Constrói Confiança"
+</div>
+
+</body>
+</html>
