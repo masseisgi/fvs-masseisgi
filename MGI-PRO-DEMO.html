@@ -356,7 +356,7 @@ textarea.input-f{resize:vertical;min-height:52px}
       <div class="logo-title">MGI PRO <span class="dot-live"></span></div>
       <div class="logo-sub" id="module-sub">MASSEI GESTÃO INTEGRADA</div>
     </div>
-    <button onclick="openConfig()" id="btn-config" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;margin-right:6px" title="Configurações da IA">⚙️</button>
+    <button onclick="openConfig()" id="btn-config" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1rem;align-items:center;justify-content:center;margin-right:6px" title="Configurações da IA">⚙️</button>
     <div class="prog-wrap">
       <div style="font-size:.6rem;color:var(--muted)">Progresso</div>
       <div class="prog-pct" id="prog-pct">0%</div>
@@ -3065,6 +3065,8 @@ function abrirContatoDemo(){
 }
 
 function openConfig(){
+  // No DEMO, não há configuração de chave — mostra o convite para assinar
+  if(typeof abrirContatoDemo === "function"){ abrirContatoDemo(); return; }
   const existing = document.getElementById("config-modal");
   if(existing) existing.remove();
   const savedKey = getApiKey();
