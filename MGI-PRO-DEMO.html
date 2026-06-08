@@ -3057,7 +3057,7 @@ function abrirContatoDemo(){
       '</div>' +
     '</div>' +
     '<a href="https://wa.me/5511974946171?text=Ol%C3%A1!%20Vi%20o%20demo%20do%20MGI%20PRO%20e%20quero%20saber%20mais%20sobre%20a%20assinatura." target="_blank" style="display:block;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;text-decoration:none;border-radius:10px;padding:13px;font-weight:800;font-size:.85rem;margin-bottom:8px;font-family:\'Barlow\',sans-serif">💬 FALAR PELO WHATSAPP</a>' +
-    '<a href="mailto:contato@masseisgi.com.br?subject=Interesse%20no%20MGI%20PRO&body=Ol%C3%A1!%20Vi%20o%20demo%20e%20gostaria%20de%20saber%20mais%20sobre%20planos%20e%20valores." style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:12px;font-weight:600;font-size:.8rem;margin-bottom:8px;font-family:\'Barlow\',sans-serif">📧 ENVIAR E-MAIL</a>' +
+    '<a href="mailto:thiago@masseisgi.com?subject=Interesse%20no%20MGI%20PRO&body=Ol%C3%A1!%20Vi%20o%20demo%20e%20gostaria%20de%20saber%20mais%20sobre%20planos%20e%20valores." style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:12px;font-weight:600;font-size:.8rem;margin-bottom:8px;font-family:\'Barlow\',sans-serif">📧 ENVIAR E-MAIL</a>' +
     '<button onclick="document.getElementById(\'contato-demo-modal\').remove()" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:.76rem;padding:8px;font-family:\'Barlow\',sans-serif;margin-top:4px">Continuar explorando o demo</button>' +
     '<div style="margin-top:14px;font-size:.62rem;color:#475569">MGI PRO · Massei Gestão Integrada<br/>"Qualidade Constrói Confiança"</div>' +
   '</div>';
@@ -3447,5 +3447,35 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+
+<!-- ===== RODAPÉ MGI ===== -->
+<style>
+  .mgi-footer{--mgi-verde:#14CE8D;--mgi-azul:#107DE0;box-sizing:border-box;width:100%;background:#0A0A0A;color:#C9CDD2;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:0;border:none}
+  .mgi-footer *{box-sizing:border-box}
+  .mgi-footer__line{height:2px;width:100%;background:linear-gradient(90deg,var(--mgi-verde) 0%,var(--mgi-azul) 100%)}
+  .mgi-footer__inner{max-width:960px;margin:0 auto;padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+  .mgi-footer__brand{font-size:14px;font-weight:600;letter-spacing:.3px;background:linear-gradient(90deg,var(--mgi-verde) 0%,var(--mgi-azul) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--mgi-verde)}
+  .mgi-footer__copy{font-size:12.5px;color:#8A9099;line-height:1.5;margin:0}
+  .mgi-footer__links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 14px;margin-top:2px}
+  .mgi-footer__links a{color:#C9CDD2;text-decoration:none;font-size:12.5px;transition:color .2s ease}
+  .mgi-footer__links a:hover{color:var(--mgi-verde)}
+  .mgi-footer__sep{color:#3A3F46;font-size:12px}
+  @media (max-width:480px){.mgi-footer__inner{padding:18px 16px}}
+</style>
+<footer class="mgi-footer" role="contentinfo">
+  <div class="mgi-footer__line"></div>
+  <div class="mgi-footer__inner">
+    <div class="mgi-footer__brand">Massei Gestão Integrada Ltda.</div>
+    <p class="mgi-footer__copy">© 2026 Massei Gestão Integrada Ltda. — Todos os direitos reservados.</p>
+    <nav class="mgi-footer__links" aria-label="Links legais">
+      <a href="termos-de-uso.html" target="_blank">Termos de Uso</a>
+      <span class="mgi-footer__sep">|</span>
+      <a href="politica-de-privacidade.html" target="_blank">Política de Privacidade</a>
+      <span class="mgi-footer__sep">|</span>
+      <a href="mailto:thiago@masseisgi.com">Contato</a>
+    </nav>
+  </div>
+</footer>
+
 </body>
 </html>
