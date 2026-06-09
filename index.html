@@ -2209,7 +2209,7 @@ Responda SOMENTE o JSON, sem markdown:
     state.resumoIA = r;
     cont.innerHTML = renderResumoContent(r);
   } catch(e) {
-    cont.innerHTML = `<div style="color:var(--red);padding:16px;text-align:center;font-size:.8rem">❌ Erro: ${e.message}<br/><br/><button onclick="openConfig()" class="btn-next">⚙️ Configurar API Key</button></div>`;
+    cont.innerHTML = `<div style="color:var(--red);padding:16px;text-align:center;font-size:.8rem">❌ ${e.message}<br/><br/><button onclick="location.reload()" class="btn-next">🔄 Tentar novamente</button></div>`;
   }
 }
 
@@ -3320,19 +3320,6 @@ document.getElementById("f-data").value=state.info.data;
 initFVSSelect();
 state.diarioAtual = novoRegistroDiario();
 updateConfigBtn();
-
-// Na primeira vez, se não tem API key configurada, abre o modal de configuração
-if(!hasApiKey()){
-  setTimeout(()=>{
-    // Verifica se é a primeira vez neste dispositivo
-    try {
-      if(!localStorage.getItem("mgi_seen_config")){
-        openConfig();
-        localStorage.setItem("mgi_seen_config", "1");
-      }
-    } catch(e){}
-  }, 500);
-}
 </script>
 
 <script>
