@@ -335,6 +335,20 @@ textarea.input-f{resize:vertical;min-height:52px}
 <body>
 <div id="wave-bg"><div class="wave-line"></div></div>
 
+<!-- ===== AUTH GUARD OVERLAY ===== -->
+<div id="auth-overlay" style="position:fixed;inset:0;z-index:9999;background:#0d1117;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">
+  <div style="width:42px;height:42px;border:3px solid rgba(34,211,238,.3);border-top-color:#22d3ee;border-radius:50%;animation:authspin .7s linear infinite"></div>
+  <div style="color:#64748b;font-size:.85rem;font-family:'Barlow',sans-serif">Verificando acesso...</div>
+</div>
+<style>@keyframes authspin{to{transform:rotate(360deg)}}</style>
+
+<!-- ===== BARRA DE STATUS (empresa + trial + sair) ===== -->
+<div id="trial-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;padding:5px 12px;font-size:.7rem;font-weight:600;font-family:'Barlow',sans-serif;align-items:center;justify-content:space-between;gap:10px">
+  <span id="trial-empresa" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
+  <span id="trial-status" style="white-space:nowrap"></span>
+  <button onclick="mgiLogout()" style="background:rgba(255,255,255,.9);color:#0e7490;border:none;border-radius:14px;padding:2px 12px;font-weight:800;font-size:.66rem;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap">Sair</button>
+</div>
+
 <!-- LIGHTBOX -->
 <div id="lightbox" onclick="closeLightbox()">
   <img id="lightbox-img" src=""/>
@@ -3379,6 +3393,117 @@ if ('serviceWorker' in navigator) {
     </nav>
   </div>
 </footer>
+
+
+<!-- ===== FIREBASE AUTH GUARD ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyCCmp1pH56xwRvqceZ_pG73J30_kTLUtCU",
+    authDomain: "mgi-pro.firebaseapp.com",
+    projectId: "mgi-pro",
+    storageBucket: "mgi-pro.firebasestorage.app",
+    messagingSenderId: "157049569327",
+    appId: "1:157049569327:web:d1779979320f49e1c2c6da",
+    measurementId: "G-KF5E64P9ZT"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const LOGIN_URL = "login.html";
+
+  window.mgiLogout = function(){
+    auth.signOut().then(function(){ window.location.href = LOGIN_URL; });
+  };
+
+  function liberarApp(){
+    const ov = document.getElementById("auth-overlay");
+    if(ov) ov.style.display = "none";
+  }
+  function bloquearComMensagem(html){
+    const ov = document.getElementById("auth-overlay");
+    if(ov){
+      ov.innerHTML = html;
+      ov.style.display = "flex";
+    }
+  }
+
+  function diasRestantes(trialFim){
+    if(!trialFim) return 0;
+    const fim = trialFim.toDate ? trialFim.toDate() : new Date(trialFim);
+    const diff = fim.getTime() - Date.now();
+    return Math.ceil(diff / (1000*60*60*24));
+  }
+
+  auth.onAuthStateChanged(async function(user){
+    if(!user){
+      // não logado -> manda pro login
+      window.location.href = LOGIN_URL;
+      return;
+    }
+    try {
+      const udoc = await db.collection("usuarios").doc(user.uid).get();
+      if(!udoc.exists){
+        bloquearComMensagem('<div style="text-align:center;max-width:340px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2rem;margin-bottom:10px">⚠️</div><div style="color:#e2e8f0;font-weight:700;margin-bottom:8px">Conta sem empresa vinculada</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:18px">Faça login novamente para concluir o cadastro.</div><button onclick="mgiLogout()" style="background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:800;cursor:pointer">Voltar ao login</button></div>');
+        return;
+      }
+      const udata = udoc.data();
+      const tenantId = udata.tenantId;
+      const edoc = await db.collection("empresas").doc(tenantId).get();
+      const empresa = edoc.exists ? edoc.data() : null;
+
+      // Verifica trial / plano
+      let bloqueado = false;
+      let statusTxt = "";
+      if(empresa){
+        const plano = empresa.plano || "trial";
+        if(plano === "trial"){
+          const dias = diasRestantes(empresa.trialFim);
+          if(dias <= 0){
+            bloqueado = true;
+          } else {
+            statusTxt = "Teste grátis · " + dias + (dias===1?" dia":" dias") + " restantes";
+          }
+        } else if(plano === "ativo" || plano === "pago"){
+          statusTxt = "Plano " + (empresa.planoNome || "Ativo");
+        } else if(plano === "suspenso" || empresa.ativo === false){
+          bloqueado = true;
+        } else {
+          statusTxt = "Teste grátis";
+        }
+      }
+
+      if(bloqueado){
+        bloquearComMensagem('<div style="text-align:center;max-width:360px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2.4rem;margin-bottom:10px">⏳</div><div style="color:#e2e8f0;font-weight:800;font-size:1.1rem;margin-bottom:8px">Seu período de teste terminou</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:20px;line-height:1.5">Assine o MGI PRO para continuar usando auditorias, FVS e Diário de Obra com IA.</div><a href="https://wa.me/5511974946171?text=Quero%20assinar%20o%20MGI%20PRO" target="_blank" style="display:block;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;text-decoration:none;border-radius:10px;padding:13px;font-weight:800;margin-bottom:10px">💬 Falar com a Massei</a><a href="mailto:thiago@masseisgi.com?subject=Assinar%20MGI%20PRO" style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:11px;font-weight:600;font-size:.82rem;margin-bottom:14px">📧 thiago@masseisgi.com</a><button onclick="mgiLogout()" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:.76rem">Sair</button></div>');
+        return;
+      }
+
+      // OK — mostra a barra e libera o app
+      const bar = document.getElementById("trial-bar");
+      if(bar){
+        document.getElementById("trial-empresa").textContent = (empresa && empresa.nome) ? empresa.nome : (udata.nome || user.email);
+        document.getElementById("trial-status").textContent = statusTxt;
+        bar.style.display = "flex";
+        // mede a altura real da barra e empurra o conteúdo + ajusta o header sticky
+        const h = bar.offsetHeight || 26;
+        document.body.style.paddingTop = h + "px";
+        const hdr = document.getElementById("header");
+        if(hdr){ hdr.style.top = h + "px"; }
+      }
+      // guarda dados globais para uso futuro (cota IA etc.)
+      window.MGI_USER = { uid:user.uid, email:user.email, tenantId:tenantId, role:udata.role||"user" };
+      window.MGI_EMPRESA = empresa;
+      liberarApp();
+    } catch(err){
+      console.error("Auth guard erro:", err);
+      bloquearComMensagem('<div style="text-align:center;max-width:340px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2rem;margin-bottom:10px">⚠️</div><div style="color:#e2e8f0;font-weight:700;margin-bottom:8px">Erro ao verificar acesso</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:18px">Verifique sua conexão e tente novamente.</div><button onclick="location.reload()" style="background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:800;cursor:pointer;margin-right:8px">Recarregar</button><button onclick="mgiLogout()" style="background:transparent;border:1px solid #334155;color:#94a3b8;border-radius:10px;padding:12px 20px;font-weight:600;cursor:pointer">Sair</button></div>');
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
