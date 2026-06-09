@@ -363,7 +363,7 @@ textarea.input-f{resize:vertical;min-height:52px}
       <div class="logo-title">MGI PRO <span class="dot-live"></span></div>
       <div class="logo-sub" id="module-sub">MASSEI GESTÃO INTEGRADA</div>
     </div>
-    <button onclick="openConfig()" id="btn-config" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;margin-right:6px" title="Configurações da IA">⚙️</button>
+    <button onclick="openConfig()" id="btn-config" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1rem;align-items:center;justify-content:center;margin-right:6px" title="Configurações da IA">⚙️</button>
     <div class="prog-wrap">
       <div style="font-size:.6rem;color:var(--muted)">Progresso</div>
       <div class="prog-pct" id="prog-pct">0%</div>
@@ -3025,8 +3025,8 @@ function setApiKey(key){
   try { localStorage.setItem("mgi_api_key", key); } catch(e){}
 }
 function hasApiKey(){
-  const k = getApiKey();
-  return k && k.startsWith("sk-ant-");
+  // IA centralizada: sempre disponível (a chave fica no servidor)
+  return true;
 }
 
 function openConfig(){
@@ -3103,51 +3103,29 @@ function updateConfigBtn(){
 
 // Wrapper que faz a chamada à API da Anthropic com a chave configurada
 async function callAnthropicAPI(messages, maxTokens){
-  const apiKey = getApiKey();
-  if(!apiKey){
-    throw new Error("API key não configurada. Clique no ⚙️ no canto superior para configurar.");
+  // IA centralizada: chama a Cloud Function (a chave fica segura no servidor)
+  if(typeof firebase === "undefined" || !firebase.functions){
+    throw new Error("Serviço de IA indisponível. Recarregue a página e tente novamente.");
   }
-  let res;
   try {
-    res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: maxTokens || 1000,
-        messages: messages
-      })
-    });
-  } catch(networkErr){
-    throw new Error("Erro de rede/CORS. Verifique sua conexão e tente novamente. Detalhes: " + networkErr.message);
-  }
-  if(!res.ok){
-    let errDetail = "";
-    try {
-      const errJson = await res.json();
-      errDetail = errJson.error?.message || errJson.message || JSON.stringify(errJson).substring(0,200);
-    } catch(e){
-      errDetail = await res.text().catch(()=>"") || "resposta não lida";
-      errDetail = errDetail.substring(0, 200);
-    }
-    if(res.status === 401){
-      throw new Error("API key inválida ou expirada. Verifique no ⚙️ Configurações. Detalhes: " + errDetail);
-    } else if(res.status === 403){
-      throw new Error("Sem permissão. A API key pode não ter créditos ou o modelo não está habilitado. Detalhes: " + errDetail);
-    } else if(res.status === 429){
-      throw new Error("Limite de requisições atingido. Aguarde alguns segundos e tente novamente.");
-    } else if(res.status === 400){
-      throw new Error("Requisição inválida: " + errDetail);
+    const functions = firebase.app().functions("southamerica-east1");
+    const gerarIA = functions.httpsCallable("gerarIA");
+    const result = await gerarIA({ messages: messages, maxTokens: maxTokens || 1200 });
+    return result.data;
+  } catch(e){
+    // Traduz os erros vindos da função
+    const code = e.code || "";
+    const msg = e.message || "";
+    if(code === "functions/resource-exhausted" || msg.includes("limite")){
+      throw new Error("Você atingiu o limite de gerações de IA do seu período de teste. Assine o MGI PRO para continuar usando a IA.");
+    } else if(code === "functions/permission-denied" || msg.includes("teste terminou") || msg.includes("suspensa")){
+      throw new Error("Seu acesso à IA expirou. Assine o MGI PRO para continuar. Fale com a Massei: thiago@masseisgi.com");
+    } else if(code === "functions/unauthenticated"){
+      throw new Error("Sessão expirada. Recarregue a página e faça login novamente.");
     } else {
-      throw new Error("API erro " + res.status + ": " + errDetail);
+      throw new Error("Não foi possível gerar a resposta da IA. Tente novamente em instantes.");
     }
   }
-  return await res.json();
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -3399,6 +3377,7 @@ if ('serviceWorker' in navigator) {
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script>
 (function(){
   const firebaseConfig = {
