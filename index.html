@@ -502,7 +502,7 @@ textarea.input-f{resize:vertical;min-height:52px}
           <div id="cat-card-saneamento" onclick="selectCategoria('saneamento')" style="flex:1;padding:22px 12px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(37,99,235,.06));color:#60a5fa;text-align:center;cursor:pointer;transition:all .2s;user-select:none">
             <div style="font-size:2rem;line-height:1;margin-bottom:8px">🚰</div>
             <div style="font-weight:800;font-size:.9rem;letter-spacing:.02em">SANEAMENTO</div>
-            <div style="font-size:.66rem;opacity:.7;margin-top:3px">16 serviços</div>
+            <div style="font-size:.66rem;opacity:.7;margin-top:3px">36 serviços</div>
           </div>
           <div id="cat-card-construcao" onclick="selectCategoria('construcao')" style="flex:1;padding:22px 12px;border-radius:16px;border:2px solid #ea580c;background:linear-gradient(135deg,rgba(234,88,12,.18),rgba(234,88,12,.06));color:#fb923c;text-align:center;cursor:pointer;transition:all .2s;user-select:none">
             <div style="font-size:2rem;line-height:1;margin-bottom:8px">🏗️</div>
@@ -782,218 +782,260 @@ const todos = CLAUSULAS.flatMap(c => c.itens.map(i => ({...i, clausula:c})));
 // SERVIÇOS FVS SANEAMENTO
 // ═════════════════════════════════════════════════════════════════════════════
 const SERVICOS = [
-{ id:"pv", cat:"saneamento", nome:"Execução de Caixas e Poços de Visita (PV)", normas:["NTS 025 Sabesp","NTS 044 Sabesp","NTS 234 Sabesp","NBR 9649","NBR 8890"], itens:[
-  {t:"Locação e cotas do PV",m:"Conferir locação (coordenadas X/Y) e cotas de tampa e fundo conforme projeto com estação total ou nível.",tol:"Locação: ±5 cm em planta · Cotas: ±2 cm"},
-  {t:"Escavação e preparo do fundo",m:"Verificar geometria, profundidade e compactação. Fundo isento de matéria orgânica e água.",tol:"Profundidade ≥ projeto · Fundo seco e firme"},
-  {t:"Lastro de concreto magro",m:"Medir espessura do lastro e fck antes do assentamento do anel de base.",tol:"Espessura ≥ 10 cm · fck ≥ 10 MPa"},
-  {t:"Anéis/tubos de concreto ou plástico",m:"Inspecionar integridade, marcas do fabricante e conformidade com NTS 044 ou NTS 234.",tol:"Sem trincas, lascas ou defeitos · Certificado do fabricante"},
-  {t:"Junta elástica entre anéis",m:"Verificar instalação correta do anel de vedação e alinhamento da junta ponta-bolsa.",tol:"Junta uniforme · Sem deslocamentos · Lubrificada"},
-  {t:"Prumo das paredes do PV",m:"Medir prumo com fio de prumo ou nível a laser em 4 pontos.",tol:"Desvio máx. 1 cm por metro de altura"},
-  {t:"Conformação hidráulica (calhas)",m:"Calhas direcionando fluxo à saída. Altura lateral = geratriz superior do tubo.",tol:"Calha suave · Sem arestas · Direcionada à saída"},
-  {t:"Tubo de queda (quando aplicável)",m:"Obrigatório para degrau ≥ 60 cm em coletor afluente (DN ≤ 300 mm).",tol:"Instalado conforme NTS 025 · Fixação adequada"},
-  {t:"Degraus / sistema de acesso",m:"Degraus de polipropileno ou equivalente, fixados em espaçamento regular.",tol:"Espaçamento 30-40 cm · Resistência ≥ 150 kgf"},
-  {t:"Tampão e boca de lobo",m:"Tampão de FoFo classe adequada (B-125/D-400), nivelado com pavimento.",tol:"Nivelado com pista ±5 mm · Tampão classe correta"},
-  {t:"Impermeabilização / vedação externa",m:"Argamassa de cimento/polimérica nas juntas externas. Sem infiltrações visíveis.",tol:"Sem pontos de infiltração · Juntas seladas"},
-  {t:"Reaterro e compactação ao redor",m:"Reaterro em camadas de ≤20 cm, compactadas com soquete ou placa vibratória.",tol:"GC ≥ 95% Proctor Normal"},
-  {t:"Ensaio de estanqueidade",m:"Teste hidrostático ou por infiltração conforme projeto.",tol:"Sem vazamentos em 30 min de teste"},
+{ id:"pv01", cat:"saneamento", grupo:"Preliminares", nome:"Locação Topográfica e Marcação da Frente", normas:["NTS SABESP","NBR 13133"], itens:[
+  {t:"Marcos de referência (RN)",m:"Conferir RN e marcos topográficos da obra.",tol:"RN materializada · Marcos protegidos"},
+  {t:"Conferência topográfica",m:"Locação dos eixos e pontos com estação total/GPS.",tol:"Desvio ≤ ±2 cm em planta"},
+  {t:"Cotas de projeto",m:"Transferência de cotas (greide).",tol:"Cota ±1 cm do projeto"},
+  {t:"Marcação da frente de serviço",m:"Demarcação física do trecho a executar.",tol:"Conforme projeto · Sinalizada"},
 ]},
-{ id:"pi", cat:"saneamento", nome:"Execução de Caixas e Poços de Inspeção (PI)", normas:["NTS 025 Sabesp","NTS 234 Sabesp","NBR 9649"], itens:[
-  {t:"Locação e cotas do PI",m:"Conferir locação e cotas com equipamento topográfico.",tol:"Locação: ±5 cm · Cotas: ±2 cm"},
-  {t:"Escavação e fundo da cava",m:"Dimensões mínimas. Fundo firme, nivelado e seco.",tol:"Fundo compactado · Sem água · Dimensões ≥ projeto"},
-  {t:"Lastro / berço de assentamento",m:"Lastro em brita/concreto magro sob o PI.",tol:"Espessura mínima 10 cm · Nivelado"},
-  {t:"Instalação do PI",m:"PI íntegro; travamento das conexões de entrada/saída.",tol:"Conexões alinhadas · Sem vazamentos"},
-  {t:"Alinhamento entrada/saída",m:"Tubos alinhados com declividade de projeto.",tol:"Declividade conforme projeto ±0,5%"},
-  {t:"Vedação das conexões",m:"Anéis de vedação em todas as entradas/saídas.",tol:"Anéis íntegros · Sem infiltração"},
-  {t:"Tampa do PI",m:"Tampa estanque, compatível com o tráfego.",tol:"Tampa nivelada · Classe adequada"},
-  {t:"Reaterro e compactação",m:"Reaterro em camadas de 20 cm com placa vibratória.",tol:"GC ≥ 95% Proctor Normal"},
-  {t:"Teste de estanqueidade",m:"Verificar infiltração/exfiltração conforme NTS 025.",tol:"Sem vazamentos"},
+{ id:"pv02", cat:"saneamento", grupo:"Preliminares", nome:"Sinalização, Isolamento e Liberação da Área", normas:["NR-18","CTB","Lei Municipal","ATO"], itens:[
+  {t:"Sinalização viária",m:"Placas, cones e dispositivos conforme CTB/ATO.",tol:"Conforme projeto de sinalização · CTB"},
+  {t:"Isolamento da área",m:"Cercamento/tapumes da frente de serviço.",tol:"Área isolada · Sem acesso indevido"},
+  {t:"Sinalização noturna",m:"Dispositivos refletivos/luminosos.",tol:"Presentes e operantes"},
+  {t:"Licença/ATO",m:"Autorização de trabalho na via emitida.",tol:"ATO válido · Documentado"},
+  {t:"Checklist de liberação",m:"Inspeção visual antes de liberar a frente.",tol:"Checklist preenchido · Conforme"},
 ]},
-{ id:"armco", cat:"saneamento", nome:"Execução de Montagem de Armco", normas:["NBR 8161","ASTM A760"], itens:[
-  {t:"Recebimento e inspeção das chapas",m:"Verificar galvanização, corrugação, dimensões e marcação.",tol:"Galvanização íntegra · Sem oxidação · Conforme projeto"},
-  {t:"Preparo da fundação / berço",m:"Berço em solo compactado ou BGS. Geometria curva do arco.",tol:"Compactação ≥ 95% PN · Espessura ≥ projeto"},
-  {t:"Montagem e alinhamento das chapas",m:"Conferir sequência, sobreposição e alinhamento.",tol:"Sobreposição: conforme fabricante · Desvio axial ≤ 1%"},
-  {t:"Torque de parafusos",m:"Aplicar torque com torquímetro calibrado.",tol:"Torque conforme manual · Todos apertados"},
-  {t:"Proteção anticorrosiva",m:"Inspecionar galvanização e reparar com zinco rico.",tol:"Sem pontos de oxidação"},
-  {t:"Reaterro envolvente",m:"Reaterro simétrico em camadas de 20 cm. Evitar ovalização.",tol:"Camadas ≤ 20 cm · GC ≥ 95% PN · Ovalização ≤ 5%"},
-  {t:"Recobrimento mínimo",m:"Verificar recobrimento sobre a geratriz superior.",tol:"Recobrimento ≥ 60 cm (típico)"},
-  {t:"Proteção de extremidades",m:"Cabeceiras em concreto ou gabião.",tol:"Cabeceiras executadas · Proteção contra erosão"},
+{ id:"pv03", cat:"saneamento", grupo:"Vala", nome:"Escavação de Vala", normas:["NR-18","NBR 9061"], itens:[
+  {t:"Locação e largura",m:"Conferir largura e alinhamento da vala.",tol:"Largura conforme projeto"},
+  {t:"Profundidade",m:"Medir profundidade conforme greide do projeto.",tol:"Profundidade ±5 cm do projeto"},
+  {t:"Talude/estabilidade",m:"Inclinação segura conforme tipo de solo.",tol:"Conforme NR-18 / NBR 9061"},
+  {t:"Bota-fora/material",m:"Destino do material escavado.",tol:"Material segregado · Bota-fora licenciado"},
+  {t:"Interferências",m:"Identificar redes/interferências subterrâneas.",tol:"Interferências mapeadas · Protegidas"},
+  {t:"Inspeção visual e medição",m:"Conferência geral da escavação.",tol:"Conforme projeto"},
 ]},
-{ id:"vca", cat:"saneamento", nome:"Execução de Vala a Céu Aberto (VCA)", normas:["NBR 12266","NBR 9061","NR-18","NTS 025 Sabesp"], itens:[
-  {t:"Locação do eixo da vala",m:"Marcação topográfica do eixo e limites.",tol:"Desvio lateral máx. 5 cm"},
-  {t:"Sinalização e isolamento",m:"Cavaletes, cones, fitas e placas conforme NR-18 e CTB.",tol:"Isolamento 100% do perímetro · Placas visíveis"},
-  {t:"Cadastro de interferências",m:"Consultar e marcar redes existentes (água, gás, energia, telecom).",tol:"Cadastro executado · Interferências marcadas"},
-  {t:"Profundidade e largura da vala",m:"Medir dimensões conforme projeto e diâmetro do tubo.",tol:"Profundidade ±5 cm · Largura ±5 cm"},
-  {t:"Estabilidade dos taludes",m:"Inclinação compatível com o solo ou escoramento. Vala > 1,25 m exige escoramento.",tol:"Talude estável OU escoramento íntegro"},
-  {t:"Escoramento (se aplicável)",m:"Sistema, espaçamento de travas e vedação.",tol:"Conforme projeto · Sem deformações"},
-  {t:"Rebaixamento de lençol freático",m:"Ponteiras filtrantes ou bombas operantes.",tol:"Nível d'água ≥ 30 cm abaixo do fundo"},
-  {t:"Preparo do fundo da vala",m:"Fundo nivelado, isento de matéria orgânica, pedras e água.",tol:"Declividade conforme projeto"},
-  {t:"Berço de assentamento",m:"Berço em areia ou material granular fino.",tol:"Espessura ≥ 10 cm · Uniforme"},
-  {t:"Acesso à vala",m:"Escadas a cada 25 m máx. para valas > 1,20 m (NR-18).",tol:"Escada a cada ≤25 m · Fixada"},
+{ id:"pv04", cat:"saneamento", grupo:"Vala", nome:"Escoramento de Vala", normas:["NR-18","NBR 9061","NBR 12266"], itens:[
+  {t:"Tipo de escoramento",m:"Conferir sistema conforme profundidade/solo.",tol:"Conforme projeto · NR-18"},
+  {t:"Montagem",m:"Pontaletes/pranchas/escudos instalados corretamente.",tol:"Sem folgas · Travado"},
+  {t:"Verticalidade",m:"Pranchas aprumadas e contínuas.",tol:"Prumo ok · Sem vãos"},
+  {t:"Inspeção estrutural",m:"Verificar deformações/esforços.",tol:"Sem deformação · Estável"},
+  {t:"Segurança (acesso)",m:"Escadas e saídas de emergência.",tol:"Acesso seguro a cada 15 m"},
 ]},
-{ id:"tunel", cat:"saneamento", nome:"Execução de Túnel Linear (NATM e Mecanizado)", normas:["NBR 15978","DNIT 098/2007"], itens:[
-  {t:"Investigação geotécnica prévia",m:"Sondagens SPT e rotativas conforme projeto.",tol:"Sondagens executadas · Perfil elaborado"},
-  {t:"Locação topográfica do eixo",m:"Eixo, greide e seção marcados com estação total.",tol:"Desvio axial ≤ 5 cm · Greide ±1 cm"},
-  {t:"Emboque e desemboque",m:"Portais com proteção, drenagem e contenção.",tol:"Estrutura íntegra · Sem instabilidade"},
-  {t:"Escavação conforme seção",m:"Conferir seção escavada com gabarito.",tol:"Sobreescavação ≤ 10 cm · Subescavação 0"},
-  {t:"Concreto projetado (shotcrete)",m:"Aplicação em camadas; espessura e fck conforme projeto.",tol:"Espessura ±1 cm · fck ≥ projeto · Adesão verificada"},
-  {t:"Cambotas metálicas / treliçadas",m:"Verificar posição, espaçamento e travamento.",tol:"Espaçamento conforme projeto ±5 cm"},
-  {t:"Enfilagens e chumbadores",m:"Comprimento, inclinação, injeção de calda e ancoragem.",tol:"Conforme projeto · Calda preenchendo o furo"},
-  {t:"Tela metálica / armadura",m:"Malha, sobreposições e fixação.",tol:"Sobreposição ≥ 15 cm · Fixada"},
-  {t:"Instrumentação e monitoramento",m:"Convergência, recalques e tensões. Leituras periódicas.",tol:"Leituras dentro dos limites · Registros atualizados"},
-  {t:"Impermeabilização",m:"Manta PVC/PEAD entre revestimento primário e definitivo.",tol:"Sem rasgos · Soldas estanques"},
-  {t:"Revestimento definitivo",m:"Concreto moldado in loco ou pré-moldado.",tol:"fck ≥ projeto · Espessura ±1 cm · Sem ninhos"},
-  {t:"Drenagem do túnel",m:"Drenos longitudinais e transversais operantes.",tol:"Drenos limpos e conectados"},
-  {t:"Segurança (ventilação, escape)",m:"Ventilação forçada, rotas de fuga, monitoramento de gases.",tol:"Ventilação ≥ norma · Rotas livres · O2 > 20%"},
+{ id:"pv05", cat:"saneamento", grupo:"Vala", nome:"Regularização do Fundo de Vala", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Cota de fundo",m:"Conferir cota e declividade do fundo.",tol:"Declividade conforme projeto"},
+  {t:"Topografia",m:"Conferência topográfica do fundo.",tol:"Cota ±2 cm"},
+  {t:"Compactação/preparo",m:"Fundo firme, isento de água e detritos.",tol:"Fundo seco e regularizado"},
+  {t:"Inspeção visual",m:"Superfície uniforme para o berço.",tol:"Sem irregularidades"},
 ]},
-{ id:"topo", cat:"saneamento", nome:"Locação de Obra e Acompanhamento Topográfico", normas:["NBR 13133","NBR 14166","NTS 291 Sabesp"], itens:[
-  {t:"RN implantado",m:"RN oficial ou auxiliar materializado próximo à obra.",tol:"RN protegido · Distância ≤ 500 m da frente"},
-  {t:"Poligonal de apoio",m:"Poligonal fechada ou amarrada.",tol:"Fechamento angular ≤ 40\"√n · Linear ≤ 1:5.000"},
-  {t:"Equipamentos calibrados",m:"Estação total, nível e GNSS com certificado vigente.",tol:"Certificado ≤ 12 meses"},
-  {t:"Locação do eixo da obra",m:"Piquetes/marcos no eixo com intervalo regular.",tol:"Intervalo ≤ 20 m · Piquetes identificados"},
-  {t:"Gabaritos de escavação",m:"Cruzetas/cavaletes para controle de profundidade e largura.",tol:"Montagem correta · Cotas conferidas"},
-  {t:"Cadernetas e registros",m:"Registro de todas as leituras, croquis e coordenadas.",tol:"Cadernetas preenchidas e assinadas"},
-  {t:"Cota de greide durante execução",m:"Verificação da cota de assentamento ao longo da obra.",tol:"Desvio ≤ ±1 cm · Declividade conforme projeto"},
-  {t:"Cadastro as-built",m:"Levantamento final da obra executada.",tol:"Arquivo digital entregue · Planta aprovada"},
+{ id:"pv06", cat:"saneamento", grupo:"Vala", nome:"Execução de Lastro e Berço de Assentamento", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Material do lastro",m:"Granulometria do material de berço.",tol:"Conforme projeto"},
+  {t:"Espessura",m:"Espessura do lastro/berço.",tol:"Conforme projeto (ex: ≥ 10 cm)"},
+  {t:"Granulometria",m:"Verificar faixa granulométrica do material.",tol:"Dentro da faixa especificada"},
+  {t:"Conformação do berço",m:"Berço conformado ao tubo (ângulo de apoio).",tol:"Apoio conforme projeto"},
+  {t:"Nível/declividade",m:"Caimento conforme greide.",tol:"Declividade de projeto"},
 ]},
-{ id:"aterro", cat:"saneamento", nome:"Execução de Aterro e Reaterro", normas:["NBR 12266","NBR 7182","DNIT 108/2009"], itens:[
-  {t:"Material de reaterro",m:"Solo isento de matéria orgânica, pedregulho > 5 cm, detritos.",tol:"IG ≤ 6 · Sem matéria orgânica"},
-  {t:"Umidade do solo",m:"Ensaio de umidade próximo à ótima (speedy test ou estufa).",tol:"Umidade: ótima ±2%"},
-  {t:"Compactação de envelope",m:"Camadas de 10 cm, compactadas manualmente ao redor do tubo.",tol:"Camada ≤ 10 cm · GC ≥ 95% PN · Sem danos ao tubo"},
-  {t:"Compactação acima do envelope",m:"Camadas de 20-30 cm, placa vibratória ou rolo pequeno.",tol:"GC ≥ 95% PN (passeio) · ≥ 100% PN (via)"},
-  {t:"Ensaio de grau de compactação",m:"Hilf, frasco de areia ou densímetro nuclear a cada 100 m.",tol:"GC ≥ 95% PN em todas as leituras"},
-  {t:"Espessura das camadas",m:"Medição direta durante o lançamento.",tol:"Camada ≤ 20 cm (via) ou ≤ 30 cm (fora)"},
-  {t:"Saturação evitada",m:"Proteger aterro contra chuva; drenar superfície.",tol:"Aterro seco durante compactação"},
-  {t:"Nivelamento final",m:"Superfície regularizada conforme greide.",tol:"Desvio ±3 cm no greide"},
+{ id:"pv07", cat:"saneamento", grupo:"Materiais", nome:"Recebimento, Transporte e Armazenamento de Tubos e Conexões", normas:["Vendor List SABESP","NTS","NBR"], itens:[
+  {t:"Conferência de Vendor List",m:"Material de fornecedor homologado.",tol:"Fornecedor na Vendor List Sabesp"},
+  {t:"Inspeção documental",m:"Certificados e notas conferidos.",tol:"Documentação completa"},
+  {t:"Inspeção visual",m:"Tubos/conexões sem danos.",tol:"Sem trincas, riscos ou ovalização"},
+  {t:"Transporte",m:"Manuseio e içamento adequados.",tol:"Sem impactos · Cintas apropriadas"},
+  {t:"Armazenamento",m:"Estoque protegido (UV, empilhamento).",tol:"Conforme fabricante · Calços"},
 ]},
-{ id:"concreto", cat:"saneamento", nome:"Execução de Concretagem", normas:["NBR 12655","NBR 14931","NBR 6118","NBR 7212"], itens:[
-  {t:"Fôrmas (geometria, limpeza, desmoldante)",m:"Conferir dimensões, estanqueidade das juntas, desmoldante.",tol:"Dimensões ±1 cm · Sem detritos"},
-  {t:"Armadura",m:"Checklist: bitolas, espaçamento, traspasses, cobrimento.",tol:"Cobrimento: conforme NBR 6118 (≥25 mm solo, ≥30 mm exterior)"},
-  {t:"Espaçadores",m:"Presença de espaçadores (≥4/m²) para cobrimento.",tol:"≥ 4 espaçadores/m²"},
-  {t:"Nota fiscal do concreto",m:"Conferir fck pedido, slump, aditivos, horário.",tol:"fck conforme projeto · Transporte ≤ 90 min"},
-  {t:"Slump test na chegada",m:"Ensaio de abatimento conforme NBR NM 67.",tol:"Slump conforme pedido ±10 mm"},
-  {t:"Moldagem de corpos de prova",m:"Mínimo 6 CPs por betonada (NBR 12655).",tol:"≥ 6 CPs para 7/28 dias · Identificados"},
-  {t:"Lançamento e adensamento",m:"Altura de queda ≤ 2 m. Vibrador de imersão operando.",tol:"Queda livre ≤ 2 m · Vibrador ≤ 50 cm entre pontos"},
-  {t:"Juntas de concretagem",m:"Tratamento da superfície antiga (apicoamento, limpeza).",tol:"Superfície rugosa · Sem nata"},
-  {t:"Cura",m:"Molhagem ou cobertura com manta por ≥ 7 dias.",tol:"Cura ≥ 7 dias · Superfície úmida"},
-  {t:"Desforma",m:"Tempo mínimo conforme NBR 14931 e elemento.",tol:"Laje ≥ 14 dias · Viga ≥ 21 dias · Pilar ≥ 3 dias"},
-  {t:"Acabamento",m:"Sem ninhos, bicheiras, exposição de armadura.",tol:"Sem falhas estruturais"},
-  {t:"Rompimento de CPs",m:"Laudo de laboratório com resistência aos 7 e 28 dias.",tol:"≥ fck de projeto aos 28 dias"},
+{ id:"pv08", cat:"saneamento", grupo:"Assentamento", nome:"Assentamento de Tubulação PVC", normas:["NTS 024/025","NBR 7665","NBR 10570"], itens:[
+  {t:"Alinhamento",m:"Tubo alinhado ao eixo de projeto.",tol:"Desvio ≤ tolerância de projeto"},
+  {t:"Declividade",m:"Caimento conforme greide.",tol:"Declividade de projeto"},
+  {t:"Juntas",m:"Encaixe, anel e lubrificante corretos.",tol:"Junta conforme fabricante · Anel íntegro"},
+  {t:"Medição/conferência",m:"Cotas e posição verificadas.",tol:"Conforme projeto"},
+  {t:"Apoio contínuo",m:"Tubo apoiado em toda extensão no berço.",tol:"Sem vazios sob o tubo"},
 ]},
-{ id:"assent", cat:"saneamento", nome:"Assentamento de Tubulações (VCA)", normas:["NBR 9649","NBR 12266","NTS 187 Sabesp","NTS 320 Sabesp"], itens:[
-  {t:"Recebimento e inspeção dos tubos",m:"Conferir marca, DN, classe, integridade. Sem trincas.",tol:"Marcação do fabricante · Sem danos · Certificado"},
-  {t:"Armazenamento no canteiro",m:"Empilhamento correto, sobre travesseiros, protegido de sol.",tol:"Altura ≤ fabricante · Proteção UV"},
-  {t:"Berço de assentamento",m:"Areia ou material granular fino.",tol:"Espessura ≥ 10 cm · Sem pontos duros"},
-  {t:"Sentido de montagem",m:"Jusante → montante; pontas para bolsas.",tol:"Sentido correto · Bolsas em direção ao fluxo"},
-  {t:"Encaixe da junta (anel elástico)",m:"Lubrificação recomendada; encaixe até a marca.",tol:"Encaixe na marca · Anel centrado"},
-  {t:"Alinhamento e declividade",m:"Conferir eixo e declividade com nível ou laser.",tol:"Alinhamento ±1 cm · Declividade ±0,5% do projeto"},
-  {t:"Recobrimento sobre geratriz superior",m:"Medir recobrimento mínimo.",tol:"Passeio ≥ 65 cm · Via ≥ 90 cm"},
-  {t:"Envelope de areia lateral",m:"Areia em toda a altura do tubo + 30 cm acima.",tol:"Envelope ≥ DN + 30 cm · Compactado manual"},
-  {t:"Proteção contra deslocamento",m:"Sacos/blocos para ancoragem em curvas e tês.",tol:"Ancoragem executada"},
-  {t:"Ensaio de estanqueidade",m:"Ensaio hidráulico ou por ar conforme NBR 9649.",tol:"Pressão mantida · Sem vazamento"},
-  {t:"Ensaio de deformação (ovalização)",m:"Ensaio com mandril ou CCTV após 30 dias.",tol:"Ovalização ≤ 5% do DI"},
+{ id:"pv09", cat:"saneamento", grupo:"Assentamento", nome:"Assentamento de Tubulação PEAD", normas:["NTS SABESP","NBR 14462","NBR 15561"], itens:[
+  {t:"Alinhamento",m:"Tubo alinhado ao eixo.",tol:"Conforme projeto"},
+  {t:"Raio de curvatura",m:"Curvatura dentro do limite do PEAD.",tol:"≥ raio mínimo do fabricante"},
+  {t:"Apoio/berço",m:"Apoio contínuo no berço.",tol:"Sem vazios"},
+  {t:"Lançamento na vala",m:"Descida sem danos ao tubo.",tol:"Sem arraste · Sem impactos"},
+  {t:"Conferência visual",m:"Integridade após assentamento.",tol:"Sem danos"},
 ]},
-{ id:"asfalto", cat:"saneamento", nome:"Execução de Pavimentação de Asfalto", normas:["DNIT 031/2006","DNIT 144/2014","NBR 12891"], itens:[
-  {t:"Preparo do subleito",m:"Regularização e compactação. ISC mínimo conforme projeto.",tol:"ISC ≥ 2% · GC ≥ 100% PN"},
-  {t:"Execução de sub-base / base",m:"BGS ou BGTC; espessura e compactação.",tol:"Espessura ±1 cm · GC ≥ 100% PI"},
-  {t:"Imprimação (CM-30)",m:"Taxa e cobertura uniforme. Cura antes da próxima camada.",tol:"Taxa: 0,8-1,6 L/m² · Cura ≥ 24 h"},
-  {t:"Pintura de ligação (RR-1C/2C)",m:"Taxa de aplicação conforme DNIT.",tol:"Taxa: 0,3-0,6 L/m² · Sem poças"},
-  {t:"Temperatura da massa (CBUQ)",m:"Medição na chegada e no espalhamento.",tol:"Chegada: 140-160°C · Compactação ≥ 120°C"},
-  {t:"Espessura da camada",m:"Medir antes e depois da compactação.",tol:"Espessura compactada ±5 mm"},
-  {t:"Compactação da capa",m:"Rolo pneumático + tandem. Densímetro.",tol:"GC: 97-100% Marshall"},
-  {t:"Juntas longitudinais e transversais",m:"Pintura de ligação na junta anterior, seladas.",tol:"Juntas alinhadas · Sem degraus"},
-  {t:"Teor de betume e granulometria",m:"Ensaios Marshall ou extração de CPs.",tol:"Teor ±0,3% · Granulometria na faixa"},
-  {t:"Regularidade superficial",m:"Verificação com régua de 3 m.",tol:"Desvio ≤ 5 mm em 3 m"},
-  {t:"Sinalização horizontal",m:"Pintura conforme projeto, após cura.",tol:"Refletividade conforme ABNT"},
+{ id:"pv10", cat:"saneamento", grupo:"Assentamento", nome:"Soldagem de Tubulação PEAD (Eletrofusão/Topo)", normas:["NBR 14462","NBR 15561","ISO 21307"], itens:[
+  {t:"Qualificação do soldador",m:"Registro/certificado do soldador.",tol:"Soldador qualificado"},
+  {t:"Parâmetros de solda",m:"Tempo, temperatura e pressão registrados.",tol:"Conforme fabricante/ISO 21307"},
+  {t:"Preparo das pontas",m:"Faceamento, limpeza e alinhamento.",tol:"Faces limpas · Alinhadas"},
+  {t:"Cordão/bolsa de solda",m:"Aspecto do cordão (topo) ou bolsa (eletrofusão).",tol:"Cordão uniforme · Sem defeitos"},
+  {t:"Resfriamento",m:"Tempo de resfriamento respeitado.",tol:"Sem movimentação durante resfriamento"},
+  {t:"Registro",m:"Identificação e rastreabilidade da junta.",tol:"Registro por junta"},
 ]},
-{ id:"pd-gbm", cat:"saneamento", nome:"Perfuração Dirigida — GBMFVS (Mini-HDD)", normas:["NBR 15803","NBR 15527"], itens:[
-  {t:"Projeto de traçado executivo",m:"Perfil, raio mínimo de curvatura, profundidade, cadastro.",tol:"Raio ≥ projeto · Cobertura ≥ 10× DN"},
-  {t:"Cadastro de interferências",m:"Sondagem manual e GPR para localizar redes existentes.",tol:"Interferências marcadas no trajeto"},
-  {t:"Preparo dos poços entrada/saída",m:"Dimensões adequadas ao equipamento; escoramento se necessário.",tol:"Conforme equipamento · Estável"},
-  {t:"Fluido de perfuração (lama bentonítica)",m:"Mistura + aditivos. Medir viscosidade (Marsh) e densidade.",tol:"Marsh: 40-60 s · Densidade: 1,03-1,08 g/cm³"},
-  {t:"Execução do furo piloto",m:"Monitoramento com sonda locadora.",tol:"Desvio horizontal ≤ 1% · Vertical ≤ 30 cm"},
-  {t:"Pré-alargamento escalonado",m:"Alargadores em etapas progressivas.",tol:"Diâmetro final: 1,3-1,5× DN · Sem bloqueios"},
-  {t:"Instalação do tubo (puxamento)",m:"Tubo solidarizado ao alargador; força monitorada.",tol:"Força ≤ capacidade do tubo"},
-  {t:"Controle de retorno de fluido",m:"Observar retorno contínuo de lama.",tol:"Retorno contínuo · Sem fraturamento"},
-  {t:"Gestão de resíduos",m:"Bacia de decantação; destinação ambiental correta.",tol:"Resíduo contido · Destinação conforme PGR"},
-  {t:"Locação as-built",m:"Levantamento dos dados da sonda durante execução.",tol:"Registros salvos · Planta as-built"},
-  {t:"Ensaio de estanqueidade",m:"Teste hidráulico ou por ar.",tol:"Conforme NBR aplicável"},
+{ id:"pv11", cat:"saneamento", grupo:"Assentamento", nome:"Execução de Juntas, Conexões e Peças Especiais", normas:["NTS SABESP","fabricante"], itens:[
+  {t:"Tipo de junta/conexão",m:"Conforme projeto e fabricante.",tol:"Conforme projeto"},
+  {t:"Torque",m:"Aperto de parafusos no torque especificado.",tol:"Torque conforme fabricante"},
+  {t:"Vedação",m:"Anéis/gaxetas posicionados.",tol:"Vedação íntegra"},
+  {t:"Alinhamento",m:"Peças alinhadas sem tensão.",tol:"Sem esforços indevidos"},
+  {t:"Inspeção visual",m:"Conferência geral da montagem.",tol:"Conforme projeto"},
 ]},
-{ id:"hdd", cat:"saneamento", nome:"Perfuração Horizontal Direcional — HDD", normas:["NBR 15803","ASCE 38-02"], itens:[
-  {t:"Projeto executivo de HDD",m:"Perfil com raio mínimo, cobertura, entradas/saídas, cadastro.",tol:"Raio ≥ 1200×DN · Cobertura ≥ 10× DN"},
-  {t:"Sondagens geotécnicas",m:"SPT a cada ~50 m; identificação de obstáculos.",tol:"Sondagens conforme projeto · Laudo entregue"},
-  {t:"Calibração do sistema de navegação",m:"Transmissor e receptor calibrados.",tol:"Erro ≤ 1% da profundidade"},
-  {t:"Lama bentonítica — controle",m:"Ensaios com funil Marsh, balança e filtrado API.",tol:"Marsh 40-60 s · Densidade 1,03-1,08 · Filtrado ≤ 15 mL/30 min"},
-  {t:"Furo piloto monitorado",m:"Leitura de profundidade, direção e inclinação a cada haste.",tol:"Desvio ≤ 1% horizontal · 30 cm vertical"},
-  {t:"Controle de torque e tração",m:"Acompanhar parâmetros durante avanço.",tol:"Parâmetros ≤ capacidade da máquina"},
-  {t:"Pré-alargamento",m:"Alargador em passadas sucessivas.",tol:"Diâmetro: 1,3-1,5× DN"},
-  {t:"Preparação do tubo (solda PEAD)",m:"Testar soldas de termofusão antes do puxamento.",tol:"Soldas aprovadas · Cordão uniforme"},
-  {t:"Puxamento do tubo",m:"Força monitorada; swivel ativo.",tol:"Tração ≤ tensão admissível"},
-  {t:"Controle ambiental (fraturamento)",m:"Monitorar pressão para evitar afloramento.",tol:"Pressão ≤ 80% da pressão de fraturamento"},
-  {t:"Retorno e gestão de lama",m:"Contenção em caixas/lagoas.",tol:"Sem derrame · Licença ambiental"},
-  {t:"Ensaio de estanqueidade",m:"Teste hidrostático conforme norma.",tol:"Pressão mantida · Sem vazamento"},
-  {t:"As-built do trajeto",m:"Planta e perfil com dados da sonda.",tol:"Entregue em formato digital"},
+{ id:"pv12", cat:"saneamento", grupo:"Concreto", nome:"Ancoragem, Blocos e Apoios de Concreto", normas:["NBR 6118","NBR 12655","NTS SABESP"], itens:[
+  {t:"Dimensões do bloco",m:"Geometria conforme projeto.",tol:"Dimensões ±2 cm"},
+  {t:"Posição",m:"Bloco em curvas/derivações/extremidades.",tol:"Conforme projeto"},
+  {t:"Concreto (fck/slump)",m:"Resistência e abatimento.",tol:"fck de projeto · Slump ±10 mm"},
+  {t:"Corpos de prova",m:"Moldagem de CPs.",tol:"≥ 6 CPs · Identificados"},
+  {t:"Apoio na peça",m:"Bloco apoiado contra terreno firme.",tol:"Reação garantida"},
 ]},
-{ id:"termofusao", cat:"saneamento", nome:"Solda por Termofusão — PEAD", normas:["NBR 14462","NBR 15688","ISO 21307"], itens:[
-  {t:"Qualificação do soldador",m:"Certificado vigente (NBR 14462). Registro do operador.",tol:"Certificado na validade · ID no relatório"},
-  {t:"Máquina de termofusão calibrada",m:"Manômetro, termômetro e cronômetro com certificado.",tol:"Calibração ≤ 12 meses"},
-  {t:"Inspeção visual do tubo",m:"Sem riscos profundos, ovalização, UV prolongada.",tol:"Sem defeitos · Marcação legível"},
-  {t:"Compatibilidade (SDR, MRS, DN)",m:"Tubos com mesmo SDR, PE80/PE100, DN igual.",tol:"Mesmo SDR · MRS compatível · DN idêntico"},
-  {t:"Faceamento",m:"Plaina até aparas contínuas; verificar paralelismo.",tol:"Aparas contínuas · Gap ≤ 0,5 mm"},
-  {t:"Limpeza das superfícies",m:"Álcool isopropílico + pano limpo após faceamento.",tol:"Superfícies limpas"},
-  {t:"Temperatura do espelho",m:"Termômetro de contato: 210-230°C (PE100).",tol:"220°C ±10°C"},
-  {t:"Tempo e pressão de aquecimento",m:"Conforme tabela do fabricante para DN e SDR.",tol:"Conforme tabela"},
-  {t:"Tempo de troca",m:"Tempo máximo para retirar o espelho e unir tubos.",tol:"≤ 4 s (típico)"},
-  {t:"Pressão de junção",m:"Pressão durante formação da junta.",tol:"Conforme tabela · Sem arrastamento"},
-  {t:"Tempo de resfriamento sob pressão",m:"Mantida a pressão até temperatura segura.",tol:"Conforme tabela"},
-  {t:"Inspeção visual do cordão",m:"Duplo cordão simétrico, uniforme, sem valos.",tol:"K ≥ 0 · Simetria ±10%"},
-  {t:"Registro/Ticket",m:"Data, hora, operador, DN, SDR, temperatura, pressão.",tol:"Registro completo · Rastreabilidade 100%"},
+{ id:"pv13", cat:"saneamento", grupo:"Reaterro", nome:"Envolvimento Lateral e Superior da Tubulação", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Material de envolvimento",m:"Material selecionado (areia/solo fino).",tol:"Sem pedras > 5 cm · Sem detritos"},
+  {t:"Espessura lateral/superior",m:"Camada de envolvimento ao redor do tubo.",tol:"Conforme projeto"},
+  {t:"Compactação manual",m:"Compactação cuidadosa nas laterais.",tol:"Camada ≤ 15 cm · Sem danos ao tubo"},
+  {t:"Proteção do tubo",m:"Sem contato com material grosseiro.",tol:"Tubo protegido"},
+  {t:"Inspeção/medição",m:"Conferência da espessura.",tol:"Conforme projeto"},
 ]},
-{ id:"eletrofusao", cat:"saneamento", nome:"Solda por Eletrofusão — PEAD", normas:["NBR 14464","NBR 15688","ISO 13950"], itens:[
-  {t:"Qualificação do soldador",m:"Certificado de operador para eletrofusão.",tol:"Certificado vigente"},
-  {t:"Máquina de eletrofusão",m:"Calibrada, com leitor de código de barras.",tol:"Calibração vigente · Leitor operante"},
-  {t:"Inspeção da conexão (luva)",m:"Embalagem lacrada até o uso.",tol:"Lacre íntegro · Sem umidade"},
-  {t:"Medição e marcação da penetração",m:"Marcar a profundidade de inserção.",tol:"Marcação visível · Conforme fabricante"},
-  {t:"Raspagem da superfície",m:"Raspador mecânico removendo camada oxidada (~0,2 mm).",tol:"Camada removida em 100% da área"},
-  {t:"Limpeza com álcool isopropílico",m:"Pano não fiapento + álcool 100%. Secagem natural.",tol:"Superfície limpa e seca"},
-  {t:"Alinhamento",m:"Tubos alinhados e fixados sem tensão até final do ciclo.",tol:"Desalinhamento ≤ 1,5% do DN"},
-  {t:"Leitura do código de barras",m:"Máquina lê parâmetros da luva.",tol:"Leitura correta · Parâmetros validados"},
-  {t:"Correção de temperatura ambiente",m:"Ajuste pela temperatura (NBR 14464).",tol:"Correção aplicada"},
-  {t:"Execução do ciclo de fusão",m:"Cabos fixos; sem desconexão durante o ciclo.",tol:"Ciclo completo · Tempo ±1% nominal"},
-  {t:"Indicadores de fusão (pinos)",m:"Pinos devem aflorar.",tol:"Pinos aflorados em ambos os lados"},
-  {t:"Resfriamento sem movimentação",m:"Tempo mínimo conforme tabela.",tol:"≥ Tempo nominal · Sem manuseio"},
-  {t:"Inspeção visual pós-fusão",m:"Sem escape de material, deformação ou trincas.",tol:"Sem anomalias · Pinos visíveis"},
-  {t:"Registro digital (data logger)",m:"Relatório com ID, operador, data, parâmetros.",tol:"Arquivo salvo · Rastreabilidade completa"},
+{ id:"pv14", cat:"saneamento", grupo:"Reaterro", nome:"Aterro e Reaterro Manual", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Material",m:"Solo isento de matéria orgânica/detritos.",tol:"Sem entulho · Sem matéria orgânica"},
+  {t:"Camadas",m:"Reaterro em camadas controladas.",tol:"Camada ≤ 20 cm"},
+  {t:"Compactação manual",m:"Soquete/compactador manual.",tol:"GC conforme projeto"},
+  {t:"Umidade",m:"Próxima à ótima.",tol:"Umidade ótima ±2%"},
+  {t:"Inspeção visual",m:"Conferência das camadas.",tol:"Conforme projeto"},
 ]},
-{ id:"ramal", cat:"saneamento", nome:"Execução de Ligações de Ramal (Esgoto)", normas:["NTS 217 Sabesp","NBR 8160","NBR 7362"], itens:[
-  {t:"Projeto / cadastro da ligação",m:"Localização da caixa (TIL) e do coletor público.",tol:"Cadastro aprovado · CDL gerado"},
-  {t:"Locação da caixa de inspeção (TIL)",m:"Dentro do imóvel, acessível, próxima ao alinhamento.",tol:"Dentro do lote · Próxima ao alinhamento"},
-  {t:"Diâmetro do ramal",m:"DN mínimo 100 mm residencial; 150+ mm outros.",tol:"DN ≥ 100 mm · ≥ 150 mm (outros)"},
-  {t:"Declividade do ramal",m:"Declividade mínima para autolimpeza.",tol:"Mínima 2% (DN 100) · 1% (DN 150)"},
-  {t:"Material do tubo",m:"PVC, PE ou cerâmico conforme NTS 187/320.",tol:"Marcação do fabricante · Certificado"},
-  {t:"Execução da caixa de inspeção",m:"Dimensões da NTS 217 anexo B.",tol:"Dimensões conforme anexo B · Tampa íntegra"},
-  {t:"Conexão ao coletor (TIL ou selim)",m:"Selim ou TIL selado.",tol:"Selagem íntegra · Ângulo correto"},
-  {t:"Separação de águas pluviais",m:"Vedado lançar AP no ramal de esgoto.",tol:"Sem interligação com rede pluvial"},
-  {t:"Recobrimento do ramal",m:"Conforme local.",tol:"Passeio ≥ 65 cm · Via ≥ 90 cm"},
-  {t:"Teste de estanqueidade",m:"Enchimento com água ou fumaça.",tol:"Sem vazamentos · Escoamento pleno"},
-  {t:"Recomposição do passeio",m:"Pavimento recomposto idêntico ao original.",tol:"Mesmo material · Nivelado"},
-  {t:"Registro fotográfico / cadastro",m:"Fotos antes, durante e depois.",tol:"Álbum fotográfico · Cadastro atualizado"},
+{ id:"pv15", cat:"saneamento", grupo:"Reaterro", nome:"Aterro e Reaterro Compactado com Controle Tecnológico", normas:["NBR 7182","NBR 6457","NTS SABESP"], itens:[
+  {t:"Material",m:"Solo conforme especificação.",tol:"IG conforme projeto"},
+  {t:"Espessura das camadas",m:"Lançamento controlado.",tol:"Camada ≤ 20 cm"},
+  {t:"Ensaio Proctor",m:"Proctor de referência (NBR 7182).",tol:"Curva de compactação definida"},
+  {t:"Densidade in situ",m:"Frasco de areia/densímetro (GC).",tol:"GC ≥ 95% PN (passeio) · ≥ 100% (via)"},
+  {t:"Umidade",m:"Speedy/estufa próximo à ótima.",tol:"Umidade ótima ±2%"},
+  {t:"Registro/laudo",m:"Relatório de controle tecnológico.",tol:"Laudo por camada/trecho"},
 ]},
-{ id:"tubo-cravado", cat:"saneamento", nome:"Tubo Cravado — Método Não Destrutivo (Pipe Jacking)", normas:["NTS 163 Sabesp","NBR 8890","NBR 15978"], itens:[
-  {t:"Projeto executivo do trecho",m:"Planta, perfil, solos, interferências, cotas de emboque/desemboque.",tol:"Projeto aprovado · Cadastro completo"},
-  {t:"Poços de emboque/desemboque",m:"Dimensões compatíveis com shield e macaco hidráulico.",tol:"Conforme projeto · Escoramento executado"},
-  {t:"Parede de reação (back-stop)",m:"Estrutura de concreto armado para absorver empuxo.",tol:"Dimensionada · Sem deformação"},
-  {t:"Conferência dos tubos (NBR 8890)",m:"Classe, junta, integridade.",tol:"Sem trincas · Marcação · Laudo"},
-  {t:"Direcionamento a laser",m:"Laser alinhado com o eixo de projeto.",tol:"Desvio horizontal ≤ 1% · Vertical ≤ 1%"},
-  {t:"Lubrificação do anular (bentonita)",m:"Injeção contínua para reduzir atrito.",tol:"Vazão conforme projeto · Retorno verificado"},
-  {t:"Controle de carga do macaco",m:"Acompanhar pressão; não exceder capacidade do tubo.",tol:"Pressão ≤ capacidade nominal"},
-  {t:"Juntas entre tubos",m:"Anel de vedação, almofadas entre tubos.",tol:"Juntas alinhadas · Almofada íntegra"},
-  {t:"Estações intermediárias (> 80 m)",m:"Instalação para trechos longos.",tol:"Estações conforme projeto · Operacionais"},
-  {t:"Escavação na frente (shield)",m:"Sem sobreescavação.",tol:"Volume escavado ≈ volume do tubo"},
-  {t:"Recalques superficiais",m:"Monitoramento de edificações e pavimento.",tol:"Recalque ≤ 25 mm (típico)"},
-  {t:"Preenchimento do vazio anular",m:"Injeção de argamassa ou calda.",tol:"Sem vazios · Volume conforme cálculo"},
-  {t:"Inspeção interna (CCTV)",m:"Filmagem interna após cravação.",tol:"Sem deslocamentos · Sem trincas"},
-  {t:"As-built",m:"Levantamento topográfico do eixo executado.",tol:"Planta e perfil entregues"},
-]},,
+{ id:"pv16", cat:"saneamento", grupo:"Poços/Caixas", nome:"Assentamento e Montagem de Poço de Visita", normas:["NTS 025/026","NBR 9649"], itens:[
+  {t:"Locação e cotas",m:"Posição e cotas de tampa/fundo.",tol:"Locação ±5 cm · Cotas ±2 cm"},
+  {t:"Base/fundo",m:"Preparo e concretagem do fundo.",tol:"Fundo conforme projeto"},
+  {t:"Montagem dos anéis",m:"Anéis/elementos alinhados e vedados.",tol:"Alinhados · Juntas vedadas"},
+  {t:"Calha/meia-cana",m:"Conformação hidráulica do fundo.",tol:"Calha conforme projeto"},
+  {t:"Estanqueidade",m:"Verificar vedação das juntas.",tol:"Sem infiltração"},
+  {t:"Visual + medição",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv17", cat:"saneamento", grupo:"Poços/Caixas", nome:"Instalação de Tampa, Aro e Ajuste de Cota de PV/Caixa", normas:["NTS SABESP","ABNT"], itens:[
+  {t:"Tipo de tampa/aro",m:"Classe de carga conforme local.",tol:"Classe conforme tráfego (NBR 10160)"},
+  {t:"Cota topográfica",m:"Nível da tampa com o pavimento.",tol:"Desnível ≤ ±5 mm com pavimento"},
+  {t:"Assentamento",m:"Aro chumbado/argamassado firme.",tol:"Firme · Sem balanço"},
+  {t:"Visual",m:"Tampa assenta sem ruído/folga.",tol:"Sem trepidação"},
+]},
+{ id:"pv18", cat:"saneamento", grupo:"Ligações", nome:"Execução de Ligações Domiciliares de Água", normas:["NTS 181","NBR 5626"], itens:[
+  {t:"Locação do ramal",m:"Posição conforme cadastro/projeto.",tol:"Conforme projeto"},
+  {t:"Material/colar de tomada",m:"Conexões conforme NTS.",tol:"Conforme NTS 181"},
+  {t:"Estanqueidade",m:"Teste de vazamento na ligação.",tol:"Sem vazamento"},
+  {t:"Cavalete/hidrômetro",m:"Montagem do cavalete (se aplicável).",tol:"Conforme padrão Sabesp"},
+  {t:"Visual",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv19", cat:"saneamento", grupo:"Ligações", nome:"Execução de Ligações Domiciliares de Esgoto", normas:["NTS SABESP","NBR 8160"], itens:[
+  {t:"Locação",m:"Posição da ligação conforme cadastro.",tol:"Conforme projeto"},
+  {t:"Declividade",m:"Caimento do ramal de esgoto.",tol:"≥ 2% (ramais) ou conforme projeto"},
+  {t:"Conexão à rede",m:"Selim/conexão na rede coletora.",tol:"Conforme NTS · Estanque"},
+  {t:"Estanqueidade",m:"Sem vazamento/infiltração.",tol:"Estanque"},
+  {t:"Visual",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv20", cat:"saneamento", grupo:"Acessórios", nome:"Instalação de Registros, Válvulas e Acessórios Hidráulicos", normas:["NTS SABESP","fabricante"], itens:[
+  {t:"Tipo/posição",m:"Acessório conforme projeto.",tol:"Conforme projeto"},
+  {t:"Montagem",m:"Instalação conforme fabricante.",tol:"Conforme manual"},
+  {t:"Teste operacional",m:"Abertura/fechamento e vedação.",tol:"Operante · Sem vazamento"},
+  {t:"Sentido de fluxo",m:"Válvulas no sentido correto.",tol:"Conforme indicação"},
+  {t:"Visual",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv21", cat:"saneamento", grupo:"Poços/Caixas", nome:"Caixas de Registro, Inspeção e Abrigo de Acessórios", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Locação e cotas",m:"Posição e nível da caixa.",tol:"Conforme projeto"},
+  {t:"Execução/montagem",m:"Caixa conforme padrão.",tol:"Conforme NTS"},
+  {t:"Tampa/acesso",m:"Tampa adequada e acessível.",tol:"Classe conforme local"},
+  {t:"Estanqueidade",m:"Vedação da caixa.",tol:"Sem infiltração"},
+  {t:"Visual + medição",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv22", cat:"saneamento", grupo:"Travessias", nome:"Travessia Não Destrutiva (MND)", normas:["NBR 15280","NTS SABESP","fabricante"], itens:[
+  {t:"Topografia (eixo)",m:"Locação do eixo de travessia.",tol:"Conforme projeto"},
+  {t:"Alinhamento/profundidade",m:"Controle do furo durante avanço.",tol:"Desvio conforme projeto"},
+  {t:"Equipamento/parâmetros",m:"Pressão, fluido e avanço monitorados.",tol:"Conforme fabricante"},
+  {t:"Tubo instalado",m:"Integridade do tubo após travessia.",tol:"Sem danos"},
+  {t:"As-built",m:"Levantamento do executado.",tol:"Planta/perfil entregues"},
+]},
+{ id:"pv23", cat:"saneamento", grupo:"Travessias", nome:"Instalação de Tubo Camisa e Passagem de Tubo de Produto", normas:["NTS SABESP","fabricante"], itens:[
+  {t:"Tubo camisa",m:"Diâmetro e posição conforme projeto.",tol:"Conforme projeto"},
+  {t:"Alinhamento",m:"Camisa alinhada ao eixo.",tol:"Conforme projeto"},
+  {t:"Espaçadores",m:"Espaçadores no tubo de produto.",tol:"Conforme projeto"},
+  {t:"Passagem do tubo",m:"Inserção sem danos.",tol:"Sem danos ao tubo"},
+  {t:"Estanqueidade/selagem",m:"Selagem das extremidades.",tol:"Vedado"},
+]},
+{ id:"pv24", cat:"saneamento", grupo:"Testes", nome:"Teste Hidrostático de Rede Pressurizada", normas:["NTS SABESP","NBR 12266"], itens:[
+  {t:"Preparação",m:"Trecho isolado e cheio (purga de ar).",tol:"Sem ar · Trecho isolado"},
+  {t:"Pressão de ensaio",m:"Aplicar pressão de teste especificada.",tol:"Conforme NTS (ex: 1,5x pressão serviço)"},
+  {t:"Tempo de ensaio",m:"Manter pressão pelo tempo exigido.",tol:"Conforme NTS"},
+  {t:"Queda de pressão",m:"Verificar perda admissível.",tol:"Dentro do limite da norma"},
+  {t:"Laudo",m:"Registro do teste.",tol:"Laudo aprovado"},
+]},
+{ id:"pv25", cat:"saneamento", grupo:"Testes", nome:"Teste de Estanqueidade em Rede Coletora de Esgoto", normas:["NTS SABESP","NBR 9649"], itens:[
+  {t:"Método",m:"Fumaça, ar comprimido ou água.",tol:"Conforme NTS"},
+  {t:"Trecho/PVs",m:"Isolamento entre poços.",tol:"Trecho definido"},
+  {t:"Aplicação",m:"Pressão/fumaça aplicada conforme norma.",tol:"Conforme NTS/NBR 9649"},
+  {t:"Verificação",m:"Identificar vazamentos/infiltrações.",tol:"Sem vazamento"},
+  {t:"Laudo",m:"Registro do ensaio.",tol:"Laudo aprovado"},
+]},
+{ id:"pv26", cat:"saneamento", grupo:"Testes", nome:"Desinfecção de Rede de Água", normas:["NTS SABESP","Portaria 888/MS"], itens:[
+  {t:"Solução desinfetante",m:"Concentração de cloro conforme norma.",tol:"Conforme NTS"},
+  {t:"Tempo de contato",m:"Permanência da solução na rede.",tol:"Conforme NTS"},
+  {t:"Cloro residual",m:"Medição do residual após contato.",tol:"Conforme Portaria 888/MS"},
+  {t:"Análise bacteriológica",m:"Coleta e laudo laboratorial.",tol:"Potável · Conforme 888/MS"},
+  {t:"Liberação",m:"Aprovação para abastecimento.",tol:"Laudo aprovado"},
+]},
+{ id:"pv27", cat:"saneamento", grupo:"Testes", nome:"Descarga, Lavagem e Limpeza da Rede", normas:["NTS SABESP"], itens:[
+  {t:"Pontos de descarga",m:"Identificar pontos para descarga.",tol:"Conforme projeto"},
+  {t:"Lavagem",m:"Circulação de água até clarear.",tol:"Água limpa na saída"},
+  {t:"Amostragem",m:"Coleta de amostra final.",tol:"Conforme NTS"},
+  {t:"Visual",m:"Ausência de detritos.",tol:"Rede limpa"},
+]},
+{ id:"pv28", cat:"saneamento", grupo:"Controle Tecnológico", nome:"Controle Tecnológico de Solo, Aterro e Reaterro", normas:["NBR 7182","NBR 6457","NBR 7185"], itens:[
+  {t:"Coleta de amostras",m:"Amostragem conforme plano.",tol:"Plano de amostragem cumprido"},
+  {t:"Ensaio Proctor",m:"Compactação de referência.",tol:"NBR 7182"},
+  {t:"Densidade in situ",m:"GC por frasco de areia/densímetro.",tol:"NBR 7185 · GC conforme projeto"},
+  {t:"Granulometria",m:"Caracterização do solo.",tol:"NBR 6457"},
+  {t:"Laudo",m:"Relatório técnico do laboratório.",tol:"Laudo aprovado · Laboratório acreditado"},
+]},
+{ id:"pv29", cat:"saneamento", grupo:"Pavimentação", nome:"Recomposição de Base e Sub-base", normas:["DER","NTS SABESP","NBR 11804"], itens:[
+  {t:"Material",m:"Material conforme especificação.",tol:"Conforme DER/projeto"},
+  {t:"Espessura",m:"Espessura das camadas.",tol:"Conforme projeto"},
+  {t:"CBR",m:"Capacidade de suporte.",tol:"CBR conforme projeto"},
+  {t:"Densidade in situ",m:"Grau de compactação.",tol:"GC conforme projeto"},
+  {t:"Visual",m:"Superfície regular.",tol:"Sem irregularidades"},
+]},
+{ id:"pv30", cat:"saneamento", grupo:"Pavimentação", nome:"Recomposição de Pavimento Asfáltico", normas:["NBR 14535","DER","NTS"], itens:[
+  {t:"Imprimação/ligação",m:"Pintura de ligação aplicada.",tol:"Taxa conforme projeto"},
+  {t:"Temperatura da massa",m:"Temperatura de aplicação/compactação.",tol:"Faixa do CAP"},
+  {t:"Espessura",m:"Espessura compactada.",tol:"Conforme projeto"},
+  {t:"Extração/corpo de prova",m:"Teor de ligante e densidade.",tol:"Conforme NBR 14535"},
+  {t:"Compactação/densidade",m:"Grau de compactação da massa.",tol:"GC conforme projeto"},
+  {t:"Acabamento",m:"Juntas, caimento, regularidade.",tol:"Sem segregação · Caimento ok"},
+]},
+{ id:"pv31", cat:"saneamento", grupo:"Pavimentação", nome:"Recomposição de Calçada, Guias e Sarjetas", normas:["NBR 9050","Lei Municipal"], itens:[
+  {t:"Geometria",m:"Largura, espessura e alinhamento.",tol:"Conforme projeto/lei municipal"},
+  {t:"Acessibilidade",m:"Rampas e piso tátil (se aplicável).",tol:"Conforme NBR 9050"},
+  {t:"Nivelamento",m:"Caimento e nível.",tol:"Caimento conforme norma"},
+  {t:"Concreto/material",m:"Resistência e acabamento.",tol:"Conforme projeto"},
+  {t:"Visual + medição",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv32", cat:"saneamento", grupo:"Preliminares", nome:"Limpeza, Organização e Conservação da Frente", normas:["NR-18","PGRCC","NTS"], itens:[
+  {t:"Organização (5S)",m:"Materiais organizados e estocados.",tol:"Frente organizada"},
+  {t:"Resíduos (PGRCC)",m:"Segregação e destinação de resíduos.",tol:"Conforme PGRCC"},
+  {t:"Segurança",m:"Áreas livres e sinalizadas.",tol:"Conforme NR-18"},
+  {t:"Inspeção visual diária",m:"Checklist diário da frente.",tol:"Checklist preenchido"},
+]},
+{ id:"pv33", cat:"saneamento", grupo:"Estruturas", nome:"Execução de Estruturas de ETA/ETE", normas:["NBR 6118","NBR 12655","NTS SABESP"], itens:[
+  {t:"Fôrmas/armação",m:"Geometria, cobrimento e escoramento.",tol:"Conforme NBR 6118"},
+  {t:"Concreto (fck/slump)",m:"Resistência e abatimento.",tol:"fck de projeto · Slump ±10 mm"},
+  {t:"Corpos de prova",m:"Moldagem e rompimento.",tol:"≥ 6 CPs · ≥ fck aos 28 dias"},
+  {t:"Estanqueidade",m:"Teste em estruturas hidráulicas.",tol:"Sem vazamento (72 h)"},
+  {t:"Acabamento",m:"Sem ninhos/bicheiras.",tol:"Sem falhas estruturais"},
+  {t:"Visual",m:"Conferência geral.",tol:"Conforme projeto"},
+]},
+{ id:"pv34", cat:"saneamento", grupo:"Eletromecânica", nome:"Montagem Eletromecânica de Estação Elevatória", normas:["NTS SABESP","NBR 5410","fabricante"], itens:[
+  {t:"Equipamentos",m:"Bombas/motores conforme projeto.",tol:"Conforme especificação"},
+  {t:"Instalação elétrica",m:"Quadros, cabos, aterramento (NBR 5410).",tol:"Conforme NBR 5410"},
+  {t:"Tubulações/conexões",m:"Montagem hidráulica.",tol:"Conforme projeto · Estanque"},
+  {t:"Alinhamento",m:"Alinhamento de conjuntos rotativos.",tol:"Conforme fabricante"},
+  {t:"Testes elétricos",m:"Isolamento, continuidade, sentido de rotação.",tol:"Conforme NBR 5410"},
+  {t:"Comissionamento inicial",m:"Teste a seco/funcional.",tol:"Operante"},
+]},
+{ id:"pv35", cat:"saneamento", grupo:"Eletromecânica", nome:"Comissionamento e Start-up de ETA/ETE/Elevatória", normas:["NTS SABESP","fabricante"], itens:[
+  {t:"Testes operacionais",m:"Operação dos equipamentos em carga.",tol:"Conforme projeto"},
+  {t:"Automação",m:"CLP/sensores/telemetria funcionando.",tol:"Conforme projeto"},
+  {t:"Parâmetros de processo",m:"Vazão, pressão, nível conforme projeto.",tol:"Dentro das faixas de projeto"},
+  {t:"Intertravamentos",m:"Lógica de proteção/alarmes.",tol:"Operante"},
+  {t:"Registro/relatório",m:"Relatório de comissionamento.",tol:"Laudo aprovado"},
+]},
+{ id:"pv36", cat:"saneamento", grupo:"Encerramento", nome:"Inspeção Final, As Built e Liberação do Trecho", normas:["NTS 105","ISO 9001","BEP BIM"], itens:[
+  {t:"Verificação documental",m:"FVS, ensaios e laudos do trecho.",tol:"Documentação completa"},
+  {t:"As-built",m:"Levantamento do executado (BIM/BEP).",tol:"As-built conforme BEP BIM"},
+  {t:"Conferência de pendências",m:"Lista de pendências resolvida.",tol:"Sem pendências abertas"},
+  {t:"Inspeção final",m:"Vistoria geral do trecho.",tol:"Conforme projeto"},
+  {t:"Liberação",m:"Termo de liberação do trecho.",tol:"Trecho liberado · Registrado"},
+]},
 { id:"pit01", cat:"construcao", grupo:"Fundações", nome:"Locação de Obra", normas:["NBR 13133","NBR 14166"], itens:[
   {t:"Marcos de referência",m:"Conferir RN e marcos topográficos implantados.",tol:"RN materializada · Marcos protegidos"},
   {t:"Gabarito/tabeira",m:"Verificar esquadro, nível e fixação do gabarito.",tol:"Esquadro: diagonais iguais ±2 cm"},
@@ -2002,31 +2044,23 @@ function selectCategoria(cat){
 
   const servicos = SERVICOS.filter(s => (s.cat || "saneamento") === cat);
 
-  if(cat === "construcao"){
-    // Agrupa por etapa (grupo) usando optgroup
-    const grupos = {};
-    servicos.forEach(s=>{
-      const g = s.grupo || "Outros";
-      if(!grupos[g]) grupos[g] = [];
-      grupos[g].push(s);
-    });
-    Object.keys(grupos).forEach(gNome=>{
-      const og = document.createElement("optgroup");
-      og.label = gNome;
-      grupos[gNome].forEach(s=>{
-        const opt = document.createElement("option");
-        opt.value = s.id; opt.textContent = s.nome;
-        og.appendChild(opt);
-      });
-      sel.appendChild(og);
-    });
-  } else {
-    servicos.forEach(s=>{
+  // Agrupa por etapa (grupo) usando optgroup — para ambas as categorias
+  const grupos = {};
+  servicos.forEach(s=>{
+    const g = s.grupo || "Outros";
+    if(!grupos[g]) grupos[g] = [];
+    grupos[g].push(s);
+  });
+  Object.keys(grupos).forEach(gNome=>{
+    const og = document.createElement("optgroup");
+    og.label = gNome;
+    grupos[gNome].forEach(s=>{
       const opt = document.createElement("option");
       opt.value = s.id; opt.textContent = s.nome;
-      sel.appendChild(opt);
+      og.appendChild(opt);
     });
-  }
+    sel.appendChild(og);
+  });
 }
 
 function selectService(id){

@@ -1,16 +1,17 @@
 // MGI PRO — Service Worker
-// Cache básico para funcionamento offline
+// Cache para funcionamento offline + atualização automática
 
-const CACHE_NAME = 'mgi-pro-v1';
+// IMPORTANTE: ao publicar nova versão do app, incremente este número.
+// Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
+const CACHE_NAME = 'mgi-pro-v4';
+
 const ASSETS = [
-  './',
-  './index.html',
   './manifest.json',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
 ];
 
-// Instalação: pré-cacheia os assets essenciais
+// Instalação: pré-cacheia só assets estáticos (NÃO o HTML)
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -19,7 +20,7 @@ self.addEventListener('install', event => {
   );
 });
 
-// Ativação: limpa caches antigos
+// Ativação: limpa TODOS os caches antigos
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -28,27 +29,30 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: estratégia "network first" para HTML (sempre pega versão mais nova)
-// e "cache first" para os demais (ícones, manifest)
 self.addEventListener('fetch', event => {
   const req = event.request;
 
-  // Nunca intercepta chamadas para a API Anthropic
-  if (req.url.includes('api.anthropic.com')) return;
+  // Nunca intercepta chamadas externas (API, Firebase, Google)
+  if (req.url.includes('api.anthropic.com') ||
+      req.url.includes('googleapis.com') ||
+      req.url.includes('gstatic.com') ||
+      req.url.includes('firebaseio.com') ||
+      req.url.includes('cloudfunctions.net')) {
+    return;
+  }
 
-  // Para o index.html: network first
-  if (req.mode === 'navigate' || req.url.endsWith('index.html')) {
+  // HTML/navegação: SEMPRE network first (nunca serve HTML velho havendo rede)
+  if (req.mode === 'navigate' ||
+      req.destination === 'document' ||
+      req.url.endsWith('.html') ||
+      req.url.endsWith('/')) {
     event.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+      fetch(req).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
     );
     return;
   }
 
-  // Resto: cache first
+  // Demais recursos: cache first
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(res => {
       const copy = res.clone();
