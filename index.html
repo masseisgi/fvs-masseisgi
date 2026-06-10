@@ -770,7 +770,7 @@ const todos = CLAUSULAS.flatMap(c => c.itens.map(i => ({...i, clausula:c})));
 // SERVIÇOS FVS SANEAMENTO
 // ═════════════════════════════════════════════════════════════════════════════
 const SERVICOS = [
-{ id:"pv", nome:"Execução de Caixas e Poços de Visita (PV)", normas:["NTS 025 Sabesp","NTS 044 Sabesp","NTS 234 Sabesp","NBR 9649","NBR 8890"], itens:[
+{ id:"pv", cat:"saneamento", nome:"Execução de Caixas e Poços de Visita (PV)", normas:["NTS 025 Sabesp","NTS 044 Sabesp","NTS 234 Sabesp","NBR 9649","NBR 8890"], itens:[
   {t:"Locação e cotas do PV",m:"Conferir locação (coordenadas X/Y) e cotas de tampa e fundo conforme projeto com estação total ou nível.",tol:"Locação: ±5 cm em planta · Cotas: ±2 cm"},
   {t:"Escavação e preparo do fundo",m:"Verificar geometria, profundidade e compactação. Fundo isento de matéria orgânica e água.",tol:"Profundidade ≥ projeto · Fundo seco e firme"},
   {t:"Lastro de concreto magro",m:"Medir espessura do lastro e fck antes do assentamento do anel de base.",tol:"Espessura ≥ 10 cm · fck ≥ 10 MPa"},
@@ -785,7 +785,7 @@ const SERVICOS = [
   {t:"Reaterro e compactação ao redor",m:"Reaterro em camadas de ≤20 cm, compactadas com soquete ou placa vibratória.",tol:"GC ≥ 95% Proctor Normal"},
   {t:"Ensaio de estanqueidade",m:"Teste hidrostático ou por infiltração conforme projeto.",tol:"Sem vazamentos em 30 min de teste"},
 ]},
-{ id:"pi", nome:"Execução de Caixas e Poços de Inspeção (PI)", normas:["NTS 025 Sabesp","NTS 234 Sabesp","NBR 9649"], itens:[
+{ id:"pi", cat:"saneamento", nome:"Execução de Caixas e Poços de Inspeção (PI)", normas:["NTS 025 Sabesp","NTS 234 Sabesp","NBR 9649"], itens:[
   {t:"Locação e cotas do PI",m:"Conferir locação e cotas com equipamento topográfico.",tol:"Locação: ±5 cm · Cotas: ±2 cm"},
   {t:"Escavação e fundo da cava",m:"Dimensões mínimas. Fundo firme, nivelado e seco.",tol:"Fundo compactado · Sem água · Dimensões ≥ projeto"},
   {t:"Lastro / berço de assentamento",m:"Lastro em brita/concreto magro sob o PI.",tol:"Espessura mínima 10 cm · Nivelado"},
@@ -796,7 +796,7 @@ const SERVICOS = [
   {t:"Reaterro e compactação",m:"Reaterro em camadas de 20 cm com placa vibratória.",tol:"GC ≥ 95% Proctor Normal"},
   {t:"Teste de estanqueidade",m:"Verificar infiltração/exfiltração conforme NTS 025.",tol:"Sem vazamentos"},
 ]},
-{ id:"armco", nome:"Execução de Montagem de Armco", normas:["NBR 8161","ASTM A760"], itens:[
+{ id:"armco", cat:"saneamento", nome:"Execução de Montagem de Armco", normas:["NBR 8161","ASTM A760"], itens:[
   {t:"Recebimento e inspeção das chapas",m:"Verificar galvanização, corrugação, dimensões e marcação.",tol:"Galvanização íntegra · Sem oxidação · Conforme projeto"},
   {t:"Preparo da fundação / berço",m:"Berço em solo compactado ou BGS. Geometria curva do arco.",tol:"Compactação ≥ 95% PN · Espessura ≥ projeto"},
   {t:"Montagem e alinhamento das chapas",m:"Conferir sequência, sobreposição e alinhamento.",tol:"Sobreposição: conforme fabricante · Desvio axial ≤ 1%"},
@@ -806,7 +806,7 @@ const SERVICOS = [
   {t:"Recobrimento mínimo",m:"Verificar recobrimento sobre a geratriz superior.",tol:"Recobrimento ≥ 60 cm (típico)"},
   {t:"Proteção de extremidades",m:"Cabeceiras em concreto ou gabião.",tol:"Cabeceiras executadas · Proteção contra erosão"},
 ]},
-{ id:"vca", nome:"Execução de Vala a Céu Aberto (VCA)", normas:["NBR 12266","NBR 9061","NR-18","NTS 025 Sabesp"], itens:[
+{ id:"vca", cat:"saneamento", nome:"Execução de Vala a Céu Aberto (VCA)", normas:["NBR 12266","NBR 9061","NR-18","NTS 025 Sabesp"], itens:[
   {t:"Locação do eixo da vala",m:"Marcação topográfica do eixo e limites.",tol:"Desvio lateral máx. 5 cm"},
   {t:"Sinalização e isolamento",m:"Cavaletes, cones, fitas e placas conforme NR-18 e CTB.",tol:"Isolamento 100% do perímetro · Placas visíveis"},
   {t:"Cadastro de interferências",m:"Consultar e marcar redes existentes (água, gás, energia, telecom).",tol:"Cadastro executado · Interferências marcadas"},
@@ -818,7 +818,7 @@ const SERVICOS = [
   {t:"Berço de assentamento",m:"Berço em areia ou material granular fino.",tol:"Espessura ≥ 10 cm · Uniforme"},
   {t:"Acesso à vala",m:"Escadas a cada 25 m máx. para valas > 1,20 m (NR-18).",tol:"Escada a cada ≤25 m · Fixada"},
 ]},
-{ id:"tunel", nome:"Execução de Túnel Linear (NATM e Mecanizado)", normas:["NBR 15978","DNIT 098/2007"], itens:[
+{ id:"tunel", cat:"saneamento", nome:"Execução de Túnel Linear (NATM e Mecanizado)", normas:["NBR 15978","DNIT 098/2007"], itens:[
   {t:"Investigação geotécnica prévia",m:"Sondagens SPT e rotativas conforme projeto.",tol:"Sondagens executadas · Perfil elaborado"},
   {t:"Locação topográfica do eixo",m:"Eixo, greide e seção marcados com estação total.",tol:"Desvio axial ≤ 5 cm · Greide ±1 cm"},
   {t:"Emboque e desemboque",m:"Portais com proteção, drenagem e contenção.",tol:"Estrutura íntegra · Sem instabilidade"},
@@ -833,7 +833,7 @@ const SERVICOS = [
   {t:"Drenagem do túnel",m:"Drenos longitudinais e transversais operantes.",tol:"Drenos limpos e conectados"},
   {t:"Segurança (ventilação, escape)",m:"Ventilação forçada, rotas de fuga, monitoramento de gases.",tol:"Ventilação ≥ norma · Rotas livres · O2 > 20%"},
 ]},
-{ id:"topo", nome:"Locação de Obra e Acompanhamento Topográfico", normas:["NBR 13133","NBR 14166","NTS 291 Sabesp"], itens:[
+{ id:"topo", cat:"saneamento", nome:"Locação de Obra e Acompanhamento Topográfico", normas:["NBR 13133","NBR 14166","NTS 291 Sabesp"], itens:[
   {t:"RN implantado",m:"RN oficial ou auxiliar materializado próximo à obra.",tol:"RN protegido · Distância ≤ 500 m da frente"},
   {t:"Poligonal de apoio",m:"Poligonal fechada ou amarrada.",tol:"Fechamento angular ≤ 40\"√n · Linear ≤ 1:5.000"},
   {t:"Equipamentos calibrados",m:"Estação total, nível e GNSS com certificado vigente.",tol:"Certificado ≤ 12 meses"},
@@ -843,7 +843,7 @@ const SERVICOS = [
   {t:"Cota de greide durante execução",m:"Verificação da cota de assentamento ao longo da obra.",tol:"Desvio ≤ ±1 cm · Declividade conforme projeto"},
   {t:"Cadastro as-built",m:"Levantamento final da obra executada.",tol:"Arquivo digital entregue · Planta aprovada"},
 ]},
-{ id:"aterro", nome:"Execução de Aterro e Reaterro", normas:["NBR 12266","NBR 7182","DNIT 108/2009"], itens:[
+{ id:"aterro", cat:"saneamento", nome:"Execução de Aterro e Reaterro", normas:["NBR 12266","NBR 7182","DNIT 108/2009"], itens:[
   {t:"Material de reaterro",m:"Solo isento de matéria orgânica, pedregulho > 5 cm, detritos.",tol:"IG ≤ 6 · Sem matéria orgânica"},
   {t:"Umidade do solo",m:"Ensaio de umidade próximo à ótima (speedy test ou estufa).",tol:"Umidade: ótima ±2%"},
   {t:"Compactação de envelope",m:"Camadas de 10 cm, compactadas manualmente ao redor do tubo.",tol:"Camada ≤ 10 cm · GC ≥ 95% PN · Sem danos ao tubo"},
@@ -853,7 +853,7 @@ const SERVICOS = [
   {t:"Saturação evitada",m:"Proteger aterro contra chuva; drenar superfície.",tol:"Aterro seco durante compactação"},
   {t:"Nivelamento final",m:"Superfície regularizada conforme greide.",tol:"Desvio ±3 cm no greide"},
 ]},
-{ id:"concreto", nome:"Execução de Concretagem", normas:["NBR 12655","NBR 14931","NBR 6118","NBR 7212"], itens:[
+{ id:"concreto", cat:"saneamento", nome:"Execução de Concretagem", normas:["NBR 12655","NBR 14931","NBR 6118","NBR 7212"], itens:[
   {t:"Fôrmas (geometria, limpeza, desmoldante)",m:"Conferir dimensões, estanqueidade das juntas, desmoldante.",tol:"Dimensões ±1 cm · Sem detritos"},
   {t:"Armadura",m:"Checklist: bitolas, espaçamento, traspasses, cobrimento.",tol:"Cobrimento: conforme NBR 6118 (≥25 mm solo, ≥30 mm exterior)"},
   {t:"Espaçadores",m:"Presença de espaçadores (≥4/m²) para cobrimento.",tol:"≥ 4 espaçadores/m²"},
@@ -867,7 +867,7 @@ const SERVICOS = [
   {t:"Acabamento",m:"Sem ninhos, bicheiras, exposição de armadura.",tol:"Sem falhas estruturais"},
   {t:"Rompimento de CPs",m:"Laudo de laboratório com resistência aos 7 e 28 dias.",tol:"≥ fck de projeto aos 28 dias"},
 ]},
-{ id:"assent", nome:"Assentamento de Tubulações (VCA)", normas:["NBR 9649","NBR 12266","NTS 187 Sabesp","NTS 320 Sabesp"], itens:[
+{ id:"assent", cat:"saneamento", nome:"Assentamento de Tubulações (VCA)", normas:["NBR 9649","NBR 12266","NTS 187 Sabesp","NTS 320 Sabesp"], itens:[
   {t:"Recebimento e inspeção dos tubos",m:"Conferir marca, DN, classe, integridade. Sem trincas.",tol:"Marcação do fabricante · Sem danos · Certificado"},
   {t:"Armazenamento no canteiro",m:"Empilhamento correto, sobre travesseiros, protegido de sol.",tol:"Altura ≤ fabricante · Proteção UV"},
   {t:"Berço de assentamento",m:"Areia ou material granular fino.",tol:"Espessura ≥ 10 cm · Sem pontos duros"},
@@ -880,7 +880,7 @@ const SERVICOS = [
   {t:"Ensaio de estanqueidade",m:"Ensaio hidráulico ou por ar conforme NBR 9649.",tol:"Pressão mantida · Sem vazamento"},
   {t:"Ensaio de deformação (ovalização)",m:"Ensaio com mandril ou CCTV após 30 dias.",tol:"Ovalização ≤ 5% do DI"},
 ]},
-{ id:"asfalto", nome:"Execução de Pavimentação de Asfalto", normas:["DNIT 031/2006","DNIT 144/2014","NBR 12891"], itens:[
+{ id:"asfalto", cat:"saneamento", nome:"Execução de Pavimentação de Asfalto", normas:["DNIT 031/2006","DNIT 144/2014","NBR 12891"], itens:[
   {t:"Preparo do subleito",m:"Regularização e compactação. ISC mínimo conforme projeto.",tol:"ISC ≥ 2% · GC ≥ 100% PN"},
   {t:"Execução de sub-base / base",m:"BGS ou BGTC; espessura e compactação.",tol:"Espessura ±1 cm · GC ≥ 100% PI"},
   {t:"Imprimação (CM-30)",m:"Taxa e cobertura uniforme. Cura antes da próxima camada.",tol:"Taxa: 0,8-1,6 L/m² · Cura ≥ 24 h"},
@@ -893,7 +893,7 @@ const SERVICOS = [
   {t:"Regularidade superficial",m:"Verificação com régua de 3 m.",tol:"Desvio ≤ 5 mm em 3 m"},
   {t:"Sinalização horizontal",m:"Pintura conforme projeto, após cura.",tol:"Refletividade conforme ABNT"},
 ]},
-{ id:"pd-gbm", nome:"Perfuração Dirigida — GBMFVS (Mini-HDD)", normas:["NBR 15803","NBR 15527"], itens:[
+{ id:"pd-gbm", cat:"saneamento", nome:"Perfuração Dirigida — GBMFVS (Mini-HDD)", normas:["NBR 15803","NBR 15527"], itens:[
   {t:"Projeto de traçado executivo",m:"Perfil, raio mínimo de curvatura, profundidade, cadastro.",tol:"Raio ≥ projeto · Cobertura ≥ 10× DN"},
   {t:"Cadastro de interferências",m:"Sondagem manual e GPR para localizar redes existentes.",tol:"Interferências marcadas no trajeto"},
   {t:"Preparo dos poços entrada/saída",m:"Dimensões adequadas ao equipamento; escoramento se necessário.",tol:"Conforme equipamento · Estável"},
@@ -906,7 +906,7 @@ const SERVICOS = [
   {t:"Locação as-built",m:"Levantamento dos dados da sonda durante execução.",tol:"Registros salvos · Planta as-built"},
   {t:"Ensaio de estanqueidade",m:"Teste hidráulico ou por ar.",tol:"Conforme NBR aplicável"},
 ]},
-{ id:"hdd", nome:"Perfuração Horizontal Direcional — HDD", normas:["NBR 15803","ASCE 38-02"], itens:[
+{ id:"hdd", cat:"saneamento", nome:"Perfuração Horizontal Direcional — HDD", normas:["NBR 15803","ASCE 38-02"], itens:[
   {t:"Projeto executivo de HDD",m:"Perfil com raio mínimo, cobertura, entradas/saídas, cadastro.",tol:"Raio ≥ 1200×DN · Cobertura ≥ 10× DN"},
   {t:"Sondagens geotécnicas",m:"SPT a cada ~50 m; identificação de obstáculos.",tol:"Sondagens conforme projeto · Laudo entregue"},
   {t:"Calibração do sistema de navegação",m:"Transmissor e receptor calibrados.",tol:"Erro ≤ 1% da profundidade"},
@@ -921,7 +921,7 @@ const SERVICOS = [
   {t:"Ensaio de estanqueidade",m:"Teste hidrostático conforme norma.",tol:"Pressão mantida · Sem vazamento"},
   {t:"As-built do trajeto",m:"Planta e perfil com dados da sonda.",tol:"Entregue em formato digital"},
 ]},
-{ id:"termofusao", nome:"Solda por Termofusão — PEAD", normas:["NBR 14462","NBR 15688","ISO 21307"], itens:[
+{ id:"termofusao", cat:"saneamento", nome:"Solda por Termofusão — PEAD", normas:["NBR 14462","NBR 15688","ISO 21307"], itens:[
   {t:"Qualificação do soldador",m:"Certificado vigente (NBR 14462). Registro do operador.",tol:"Certificado na validade · ID no relatório"},
   {t:"Máquina de termofusão calibrada",m:"Manômetro, termômetro e cronômetro com certificado.",tol:"Calibração ≤ 12 meses"},
   {t:"Inspeção visual do tubo",m:"Sem riscos profundos, ovalização, UV prolongada.",tol:"Sem defeitos · Marcação legível"},
@@ -936,7 +936,7 @@ const SERVICOS = [
   {t:"Inspeção visual do cordão",m:"Duplo cordão simétrico, uniforme, sem valos.",tol:"K ≥ 0 · Simetria ±10%"},
   {t:"Registro/Ticket",m:"Data, hora, operador, DN, SDR, temperatura, pressão.",tol:"Registro completo · Rastreabilidade 100%"},
 ]},
-{ id:"eletrofusao", nome:"Solda por Eletrofusão — PEAD", normas:["NBR 14464","NBR 15688","ISO 13950"], itens:[
+{ id:"eletrofusao", cat:"saneamento", nome:"Solda por Eletrofusão — PEAD", normas:["NBR 14464","NBR 15688","ISO 13950"], itens:[
   {t:"Qualificação do soldador",m:"Certificado de operador para eletrofusão.",tol:"Certificado vigente"},
   {t:"Máquina de eletrofusão",m:"Calibrada, com leitor de código de barras.",tol:"Calibração vigente · Leitor operante"},
   {t:"Inspeção da conexão (luva)",m:"Embalagem lacrada até o uso.",tol:"Lacre íntegro · Sem umidade"},
@@ -952,7 +952,7 @@ const SERVICOS = [
   {t:"Inspeção visual pós-fusão",m:"Sem escape de material, deformação ou trincas.",tol:"Sem anomalias · Pinos visíveis"},
   {t:"Registro digital (data logger)",m:"Relatório com ID, operador, data, parâmetros.",tol:"Arquivo salvo · Rastreabilidade completa"},
 ]},
-{ id:"ramal", nome:"Execução de Ligações de Ramal (Esgoto)", normas:["NTS 217 Sabesp","NBR 8160","NBR 7362"], itens:[
+{ id:"ramal", cat:"saneamento", nome:"Execução de Ligações de Ramal (Esgoto)", normas:["NTS 217 Sabesp","NBR 8160","NBR 7362"], itens:[
   {t:"Projeto / cadastro da ligação",m:"Localização da caixa (TIL) e do coletor público.",tol:"Cadastro aprovado · CDL gerado"},
   {t:"Locação da caixa de inspeção (TIL)",m:"Dentro do imóvel, acessível, próxima ao alinhamento.",tol:"Dentro do lote · Próxima ao alinhamento"},
   {t:"Diâmetro do ramal",m:"DN mínimo 100 mm residencial; 150+ mm outros.",tol:"DN ≥ 100 mm · ≥ 150 mm (outros)"},
@@ -966,7 +966,7 @@ const SERVICOS = [
   {t:"Recomposição do passeio",m:"Pavimento recomposto idêntico ao original.",tol:"Mesmo material · Nivelado"},
   {t:"Registro fotográfico / cadastro",m:"Fotos antes, durante e depois.",tol:"Álbum fotográfico · Cadastro atualizado"},
 ]},
-{ id:"tubo-cravado", nome:"Tubo Cravado — Método Não Destrutivo (Pipe Jacking)", normas:["NTS 163 Sabesp","NBR 8890","NBR 15978"], itens:[
+{ id:"tubo-cravado", cat:"saneamento", nome:"Tubo Cravado — Método Não Destrutivo (Pipe Jacking)", normas:["NTS 163 Sabesp","NBR 8890","NBR 15978"], itens:[
   {t:"Projeto executivo do trecho",m:"Planta, perfil, solos, interferências, cotas de emboque/desemboque.",tol:"Projeto aprovado · Cadastro completo"},
   {t:"Poços de emboque/desemboque",m:"Dimensões compatíveis com shield e macaco hidráulico.",tol:"Conforme projeto · Escoramento executado"},
   {t:"Parede de reação (back-stop)",m:"Estrutura de concreto armado para absorver empuxo.",tol:"Dimensionada · Sem deformação"},
@@ -981,7 +981,532 @@ const SERVICOS = [
   {t:"Preenchimento do vazio anular",m:"Injeção de argamassa ou calda.",tol:"Sem vazios · Volume conforme cálculo"},
   {t:"Inspeção interna (CCTV)",m:"Filmagem interna após cravação.",tol:"Sem deslocamentos · Sem trincas"},
   {t:"As-built",m:"Levantamento topográfico do eixo executado.",tol:"Planta e perfil entregues"},
+]},,
+{ id:"pit01", cat:"construcao", grupo:"Fundações", nome:"Locação de Obra", normas:["NBR 13133","NBR 14166"], itens:[
+  {t:"Marcos de referência",m:"Conferir RN e marcos topográficos implantados.",tol:"RN materializada · Marcos protegidos"},
+  {t:"Gabarito/tabeira",m:"Verificar esquadro, nível e fixação do gabarito.",tol:"Esquadro: diagonais iguais ±2 cm"},
+  {t:"Locação dos eixos",m:"Conferir eixos principais com estação total.",tol:"Desvio ≤ ±2 cm em relação ao projeto"},
+  {t:"Cotas de nível",m:"Transferir RN para a obra com nível óptico/laser.",tol:"Cota ±1 cm do projeto"},
+  {t:"Alinhamento e prumo",m:"Verificar alinhamento dos pontos de locação.",tol:"Alinhado · Prumo ok"},
 ]},
+{ id:"pit02", cat:"construcao", grupo:"Fundações", nome:"Terraplanagem — Escavação, Cortes e Aterros", normas:["NBR 5681","DNIT 108/2009","NBR 7182"], itens:[
+  {t:"Limpeza do terreno",m:"Remoção de vegetação, raízes e matéria orgânica.",tol:"Terreno limpo · Sem matéria orgânica"},
+  {t:"Cotas de corte/aterro",m:"Conferir greide de projeto com topografia.",tol:"Cota ±5 cm do greide"},
+  {t:"Material de aterro",m:"Solo isento de matéria orgânica e detritos.",tol:"IG ≤ 6 · Sem entulho"},
+  {t:"Espessura das camadas",m:"Lançamento em camadas controladas.",tol:"Camada ≤ 30 cm solta"},
+  {t:"Compactação",m:"Ensaio de grau de compactação por camada.",tol:"GC ≥ 95% PN (corpo) · ≥ 100% PN (topo)"},
+  {t:"Umidade de compactação",m:"Speedy test ou estufa próximo à ótima.",tol:"Umidade ótima ±2%"},
+  {t:"Taludes",m:"Conferir inclinação dos taludes de corte/aterro.",tol:"Conforme projeto geotécnico"},
+  {t:"Drenagem provisória",m:"Sistema para evitar saturação do aterro.",tol:"Superfície drenada"},
+]},
+{ id:"pit03", cat:"construcao", grupo:"Fundações", nome:"Drenagem", normas:["NBR 9814","DNIT 030/2004"], itens:[
+  {t:"Locação e cotas",m:"Conferir traçado e declividade dos drenos.",tol:"Declividade conforme projeto"},
+  {t:"Material drenante",m:"Brita/agregado dentro da faixa granulométrica.",tol:"Granulometria conforme projeto"},
+  {t:"Geotêxtil/manta",m:"Verificar tipo, recobrimento e emendas.",tol:"Recobrimento ≥ 30 cm nas emendas"},
+  {t:"Tubos de drenagem",m:"Conferir furos, alinhamento e juntas.",tol:"Tubos alinhados · Furos voltados conforme projeto"},
+  {t:"Caimento/declividade",m:"Medir declividade com nível.",tol:"≥ 0,5% (mínimo)"},
+  {t:"Saídas e desague",m:"Verificar pontos de desague e proteção.",tol:"Desague livre · Erosão controlada"},
+]},
+{ id:"pit04", cat:"construcao", grupo:"Fundações", nome:"Estaca Pré-Moldada", normas:["NBR 6122","NBR 13208"], itens:[
+  {t:"Certificado das estacas",m:"Conferir fck, armadura e dimensões de fábrica.",tol:"Conforme NBR 13208 · fck de projeto"},
+  {t:"Locação",m:"Conferir posição com topografia.",tol:"Desvio ≤ 10% do diâmetro ou ±10 cm"},
+  {t:"Prumo da estaca",m:"Verticalidade durante a cravação.",tol:"Desvio ≤ 1% (1:100)"},
+  {t:"Controle de cravação (nega)",m:"Medir nega e repique conforme projeto.",tol:"Nega ≤ valor de projeto"},
+  {t:"Emendas",m:"Verificar tipo de emenda (solda/luva) e execução.",tol:"Emenda conforme projeto · Solda íntegra"},
+  {t:"Integridade",m:"Inspeção visual; PIT se especificado.",tol:"Sem fissuras · Topo íntegro"},
+  {t:"Arrasamento",m:"Cota de arrasamento e preparo do topo.",tol:"Cota ±5 cm · Armadura exposta conforme projeto"},
+]},
+{ id:"pit05", cat:"construcao", grupo:"Fundações", nome:"Cravação de Perfil Metálico", normas:["NBR 6122","NBR 8800"], itens:[
+  {t:"Certificado do perfil",m:"Conferir tipo, bitola e aço do perfil.",tol:"Conforme projeto · Certificado siderúrgico"},
+  {t:"Locação e prumo",m:"Posição e verticalidade na cravação.",tol:"Desvio ≤ ±10 cm · Prumo ≤ 1%"},
+  {t:"Proteção anticorrosiva",m:"Pintura/galvanização conforme especificação.",tol:"Conforme projeto"},
+  {t:"Controle de cravação",m:"Acompanhar nega/profundidade de projeto.",tol:"Nega/cota conforme projeto"},
+  {t:"Emendas (solda)",m:"Inspeção de soldas de emenda.",tol:"Solda conforme AWS/projeto · Sem defeitos"},
+]},
+{ id:"pit06", cat:"construcao", grupo:"Fundações", nome:"Estaca Hélice Contínua", normas:["NBR 6122"], itens:[
+  {t:"Locação",m:"Posição da estaca conferida.",tol:"Desvio ≤ 10% diâmetro ou ±10 cm"},
+  {t:"Prumo do equipamento",m:"Verticalidade da torre/hélice.",tol:"Desvio ≤ 1%"},
+  {t:"Monitoração eletrônica",m:"Verificar registro de profundidade, pressão e volume.",tol:"Relatório por estaca · Pressão positiva"},
+  {t:"Concreto/argamassa",m:"fck, slump e bombeabilidade.",tol:"fck de projeto · Slump alto (bombeável)"},
+  {t:"Consumo de concreto",m:"Volume injetado x volume teórico.",tol:"Sobreconsumo controlado · Sem estrangulamento"},
+  {t:"Armadura",m:"Gaiola: comprimento, bitola, centralização.",tol:"Conforme projeto · Centralizada"},
+  {t:"Arrasamento e topo",m:"Limpeza do concreto contaminado.",tol:"Concreto sadio no arrasamento"},
+]},
+{ id:"pit07", cat:"construcao", grupo:"Fundações", nome:"Tubulão", normas:["NBR 6122"], itens:[
+  {t:"Locação e prumo",m:"Posição e verticalidade do fuste.",tol:"Desvio ≤ ±10 cm · Prumo ≤ 1%"},
+  {t:"Escavação do fuste",m:"Diâmetro e profundidade conforme projeto.",tol:"Diâmetro ≥ projeto"},
+  {t:"Base alargada",m:"Geometria da base conferida.",tol:"Dimensões da base ≥ projeto"},
+  {t:"Inspeção (segurança)",m:"Verificar condições para entrada (NR-18/atmosfera).",tol:"Atmosfera segura · Escoramento se necessário"},
+  {t:"Limpeza do fundo",m:"Fundo isento de água e detritos.",tol:"Fundo seco e limpo"},
+  {t:"Concretagem",m:"Lançamento sem segregação; fck e slump.",tol:"fck de projeto · Sem segregação"},
+  {t:"Armadura de topo",m:"Arranque conforme projeto.",tol:"Conforme projeto"},
+]},
+{ id:"pit08", cat:"construcao", grupo:"Fundações", nome:"Estaca Escavada Mecanicamente", normas:["NBR 6122"], itens:[
+  {t:"Locação e prumo",m:"Posição e verticalidade.",tol:"Desvio ≤ ±10 cm · Prumo ≤ 1%"},
+  {t:"Estabilização da parede",m:"Lama bentonítica/polímero se aplicável.",tol:"Densidade da lama controlada"},
+  {t:"Limpeza do fundo",m:"Remoção de detritos antes da concretagem.",tol:"Fundo limpo"},
+  {t:"Armadura",m:"Gaiola: bitola, espaçamento, cobrimento.",tol:"Conforme projeto · Espaçadores presentes"},
+  {t:"Concretagem (tremonha)",m:"Lançamento submerso contínuo.",tol:"Tubo tremonha imerso ≥ 2 m · Sem interrupção"},
+  {t:"Consumo de concreto",m:"Volume real x teórico.",tol:"Sobreconsumo controlado"},
+]},
+{ id:"pit09", cat:"construcao", grupo:"Fundações", nome:"Estaca Strauss", normas:["NBR 6122","NBR 6484"], itens:[
+  {t:"Locação e prumo",m:"Posição e verticalidade do tubo.",tol:"Desvio ≤ ±10 cm · Prumo ≤ 1%"},
+  {t:"Camisa metálica",m:"Cravação e recuperação da camisa.",tol:"Camisa estanque durante concretagem"},
+  {t:"Limpeza do fundo",m:"Remoção de água e solo amolecido.",tol:"Fundo limpo e seco"},
+  {t:"Apiloamento do concreto",m:"Concretagem com soquete em camadas.",tol:"Apiloamento conforme projeto"},
+  {t:"Armadura de topo",m:"Ferragem de arranque.",tol:"Conforme projeto"},
+]},
+{ id:"pit10", cat:"construcao", grupo:"Fundações", nome:"Estaca Raiz", normas:["NBR 6122"], itens:[
+  {t:"Locação e inclinação",m:"Posição e ângulo conforme projeto.",tol:"Desvio ≤ ±7,5 cm · Inclinação ±2°"},
+  {t:"Perfuração",m:"Diâmetro e profundidade.",tol:"Conforme projeto"},
+  {t:"Armadura",m:"Tubo/barra central, bitola e centralização.",tol:"Conforme projeto"},
+  {t:"Injeção de argamassa",m:"Pressão e volume de injeção.",tol:"Pressão conforme projeto · Retorno verificado"},
+  {t:"Consumo de argamassa",m:"Volume injetado controlado.",tol:"Sem estrangulamento"},
+]},
+{ id:"pit11", cat:"construcao", grupo:"Fundações", nome:"Estaca Franki", normas:["NBR 6122"], itens:[
+  {t:"Locação e prumo",m:"Posição e verticalidade.",tol:"Desvio ≤ ±10 cm · Prumo ≤ 1%"},
+  {t:"Bucha e cravação",m:"Formação da bucha e cravação do tubo.",tol:"Conforme projeto"},
+  {t:"Base alargada",m:"Apiloamento da base (energia/nega).",tol:"Base conforme projeto"},
+  {t:"Armadura",m:"Gaiola posicionada antes da concretagem.",tol:"Conforme projeto"},
+  {t:"Concretagem apiloada",m:"Concreto seco apiloado, extração do tubo.",tol:"Sem estrangulamento do fuste"},
+]},
+{ id:"pit12", cat:"construcao", grupo:"Fundações", nome:"Estaca Barrete", normas:["NBR 6122"], itens:[
+  {t:"Locação e geometria",m:"Posição e dimensões do painel.",tol:"Desvio ≤ ±5 cm"},
+  {t:"Lama estabilizante",m:"Controle de densidade e nível.",tol:"Densidade e nível conforme projeto"},
+  {t:"Limpeza de fundo",m:"Desarenação antes da concretagem.",tol:"Fundo limpo"},
+  {t:"Armadura",m:"Gaiola: dimensões, cobrimento, içamento.",tol:"Conforme projeto · Espaçadores"},
+  {t:"Concretagem (tremonha)",m:"Lançamento submerso contínuo.",tol:"Tremonha imersa ≥ 2 m · Sem interrupção"},
+]},
+{ id:"pit13", cat:"construcao", grupo:"Fundações", nome:"Sapata Isolada e Corrida", normas:["NBR 6122","NBR 6118","NBR 14931"], itens:[
+  {t:"Cota de apoio",m:"Solo de apoio na cota e tensão de projeto.",tol:"Cota ±5 cm · Solo conforme sondagem"},
+  {t:"Lastro de concreto magro",m:"Espessura e regularização.",tol:"Lastro ≥ 5 cm"},
+  {t:"Armadura",m:"Bitolas, espaçamento, cobrimento.",tol:"Cobrimento ≥ 4 cm (contato solo)"},
+  {t:"Fôrmas",m:"Geometria, prumo e travamento.",tol:"Dimensões ±1 cm"},
+  {t:"Arranques de pilar",m:"Posição e bitola dos arranques.",tol:"Conforme projeto"},
+  {t:"Concretagem",m:"fck, slump, adensamento.",tol:"fck de projeto · Vibrado"},
+]},
+{ id:"pit14", cat:"construcao", grupo:"Fundações", nome:"Radier", normas:["NBR 6118","NBR 14931"], itens:[
+  {t:"Preparo da base",m:"Compactação e lastro/brita regularizada.",tol:"GC ≥ 95% PN · Lastro regular"},
+  {t:"Lona plástica/barreira",m:"Lona sob o radier (umidade).",tol:"Lona contínua · Emendas sobrepostas"},
+  {t:"Armadura",m:"Telas/barras, espaçamento, cobrimento.",tol:"Cobrimento conforme projeto · Espaçadores"},
+  {t:"Instalações embutidas",m:"Tubulações posicionadas antes da concretagem.",tol:"Conforme projeto · Estanques"},
+  {t:"Espessura",m:"Conferir altura do radier.",tol:"Espessura conforme projeto"},
+  {t:"Concretagem e cura",m:"Lançamento, nivelamento, cura.",tol:"fck de projeto · Cura ≥ 7 dias"},
+]},
+{ id:"pit15", cat:"construcao", grupo:"Fundações", nome:"Contenção de Gabião", normas:["NBR 8964","DNIT 094/2014"], itens:[
+  {t:"Base de apoio",m:"Regularização e cota da fundação.",tol:"Base nivelada · Cota de projeto"},
+  {t:"Malha e arame",m:"Tipo de malha, galvanização/PVC.",tol:"Conforme projeto · Sem corrosão"},
+  {t:"Preenchimento",m:"Pedra dentro da faixa, bem arrumada.",tol:"Pedra > malha · Vazios mínimos"},
+  {t:"Amarração entre gaiolas",m:"Costura de arestas e tirantes.",tol:"Amarração conforme fabricante"},
+  {t:"Escalonamento/prumo",m:"Alinhamento e degraus conforme projeto.",tol:"Conforme projeto"},
+  {t:"Drenagem",m:"Dreno atrás da contenção.",tol:"Dreno executado"},
+]},
+{ id:"pit16", cat:"construcao", grupo:"Fundações", nome:"Cortina de Concreto", normas:["NBR 6118","NBR 6122"], itens:[
+  {t:"Locação e geometria",m:"Eixo, espessura e altura.",tol:"Desvio ≤ ±2 cm"},
+  {t:"Tirantes/ancoragens",m:"Posição, inclinação e protensão (se houver).",tol:"Conforme projeto · Ensaio de tirante"},
+  {t:"Armadura",m:"Bitolas, espaçamento, cobrimento.",tol:"Cobrimento conforme projeto"},
+  {t:"Drenagem",m:"Barbacãs e dreno de tardoz.",tol:"Barbacãs conforme projeto"},
+  {t:"Concretagem",m:"fck, slump, adensamento.",tol:"fck de projeto · Sem ninhos"},
+]},
+{ id:"pit17", cat:"construcao", grupo:"Fundações", nome:"Parede Diafragma", normas:["NBR 6122"], itens:[
+  {t:"Mureta-guia",m:"Geometria e alinhamento da mureta.",tol:"Alinhada · Prumo ok"},
+  {t:"Lama bentonítica",m:"Densidade, viscosidade e nível.",tol:"Conforme projeto"},
+  {t:"Escavação do painel",m:"Profundidade e verticalidade.",tol:"Prumo ≤ 1%"},
+  {t:"Junta entre painéis",m:"Tubo-junta e limpeza.",tol:"Junta limpa e estanque"},
+  {t:"Armadura",m:"Gaiola: dimensões, cobrimento, içamento.",tol:"Conforme projeto"},
+  {t:"Concretagem (tremonha)",m:"Lançamento submerso contínuo.",tol:"Tremonha imersa ≥ 2 m"},
+]},
+{ id:"pit18", cat:"construcao", grupo:"Fundações", nome:"Solo Grampeado", normas:["NBR 6122"], itens:[
+  {t:"Locação dos grampos",m:"Malha, posição e inclinação.",tol:"Conforme projeto · Inclinação ±2°"},
+  {t:"Perfuração",m:"Diâmetro e comprimento dos furos.",tol:"Conforme projeto"},
+  {t:"Inserção da barra",m:"Bitola, centralizadores e proteção.",tol:"Conforme projeto · Centralizada"},
+  {t:"Injeção de calda",m:"Pressão e preenchimento total.",tol:"Furo preenchido · Sem vazios"},
+  {t:"Tela e concreto projetado",m:"Tela fixada e espessura do projetado.",tol:"Espessura conforme projeto"},
+  {t:"Drenagem",m:"Drenos sub-horizontais (DHP).",tol:"DHP conforme projeto"},
+]},
+{ id:"pit19", cat:"construcao", grupo:"Estrutura", nome:"Fôrma, Armação e Concretagem", normas:["NBR 6118","NBR 14931","NBR 12655","NBR 7212"], itens:[
+  {t:"Fôrmas (geometria/limpeza)",m:"Dimensões, estanqueidade, desmoldante.",tol:"Dimensões ±1 cm · Sem detritos"},
+  {t:"Escoramento",m:"Pé-direito, contraventamento e cunhas.",tol:"Conforme projeto de escoramento"},
+  {t:"Armadura",m:"Bitolas, espaçamento, traspasses, cobrimento.",tol:"Cobrimento conforme NBR 6118"},
+  {t:"Espaçadores",m:"Quantidade para garantir cobrimento.",tol:"≥ 4 espaçadores/m²"},
+  {t:"NF do concreto",m:"fck, slump, aditivos, horário.",tol:"fck de projeto · Transporte ≤ 90 min"},
+  {t:"Slump test",m:"Abatimento na chegada (NBR NM 67).",tol:"Slump pedido ±10 mm"},
+  {t:"Corpos de prova",m:"Moldagem mínima por betonada.",tol:"≥ 6 CPs · Identificados"},
+  {t:"Lançamento/adensamento",m:"Altura de queda e vibração.",tol:"Queda ≤ 2 m · Vibrador ok"},
+  {t:"Cura",m:"Molhagem/manta por período mínimo.",tol:"Cura ≥ 7 dias"},
+  {t:"Desforma",m:"Tempo mínimo por elemento.",tol:"Laje ≥ 14d · Viga ≥ 21d · Pilar ≥ 3d"},
+  {t:"Acabamento",m:"Sem ninhos, bicheiras, armadura exposta.",tol:"Sem falhas estruturais"},
+]},
+{ id:"pit20", cat:"construcao", grupo:"Estrutura", nome:"Execução de Parede de Concreto", normas:["NBR 16055","NBR 6118"], itens:[
+  {t:"Fôrmas",m:"Modulação, prumo, travamento.",tol:"Prumo ≤ h/900 · Dimensões ±1 cm"},
+  {t:"Armadura/tela",m:"Tela posicionada e cobrimento.",tol:"Conforme projeto · Cobrimento ok"},
+  {t:"Instalações embutidas",m:"Eletrodutos e caixas posicionados.",tol:"Conforme projeto"},
+  {t:"Concreto autoadensável",m:"fck, espalhamento (slump flow).",tol:"fck de projeto · Espalhamento conforme NBR"},
+  {t:"Lançamento",m:"Altura e velocidade controladas.",tol:"Sem segregação"},
+  {t:"Desforma e acabamento",m:"Tempo e qualidade da superfície.",tol:"Superfície sem ninhos"},
+]},
+{ id:"pit21", cat:"construcao", grupo:"Estrutura", nome:"Laje Nervurada", normas:["NBR 6118","NBR 14931"], itens:[
+  {t:"Cubetas/enchimento",m:"Posição, modulação e fixação.",tol:"Conforme projeto"},
+  {t:"Fôrma de fundo/escora",m:"Nível e contraflecha.",tol:"Contraflecha conforme projeto"},
+  {t:"Armadura das nervuras",m:"Bitolas e posicionamento.",tol:"Conforme projeto · Cobrimento ok"},
+  {t:"Capa/malha",m:"Espessura da capa e tela.",tol:"Capa conforme projeto"},
+  {t:"Concretagem",m:"fck, slump, adensamento.",tol:"fck de projeto"},
+  {t:"Cura e desforma",m:"Período conforme NBR.",tol:"Cura ≥ 7d"},
+]},
+{ id:"pit22", cat:"construcao", grupo:"Estrutura", nome:"Laje Mista", normas:["NBR 8800","NBR 14762"], itens:[
+  {t:"Telha-fôrma (steel deck)",m:"Apoio, fixação e traspasse.",tol:"Conforme fabricante"},
+  {t:"Conectores de cisalhamento",m:"Tipo, quantidade e solda.",tol:"Conforme projeto · Solda íntegra"},
+  {t:"Armadura de retração",m:"Tela posicionada.",tol:"Conforme projeto"},
+  {t:"Escoramento",m:"Conforme vão e fabricante.",tol:"Conforme projeto"},
+  {t:"Concretagem",m:"fck, espessura, adensamento.",tol:"fck e espessura de projeto"},
+]},
+{ id:"pit23", cat:"construcao", grupo:"Estrutura", nome:"Produção de Argamassa", normas:["NBR 13281","NBR 7200"], itens:[
+  {t:"Materiais",m:"Cimento, cal, areia conforme traço.",tol:"Traço conforme projeto"},
+  {t:"Dosagem",m:"Medição dos componentes.",tol:"Traço respeitado · Medição padronizada"},
+  {t:"Mistura",m:"Tempo e homogeneidade.",tol:"Mistura homogênea"},
+  {t:"Trabalhabilidade",m:"Consistência adequada à aplicação.",tol:"Conforme uso"},
+  {t:"Tempo de uso",m:"Utilização dentro do tempo útil.",tol:"Sem ressecamento · Sem retêmpera indevida"},
+]},
+{ id:"pit24", cat:"construcao", grupo:"Estrutura", nome:"Produção de Graute", normas:["NBR 6118","NBR 14931"], itens:[
+  {t:"Materiais",m:"Cimento, agregados, aditivo.",tol:"Conforme especificação"},
+  {t:"Resistência",m:"fck do graute conforme projeto.",tol:"fck ≥ projeto"},
+  {t:"Fluidez",m:"Consistência fluida para preenchimento.",tol:"Autoadensável · Sem vazios"},
+  {t:"Lançamento",m:"Preenchimento total de vazios/furos.",tol:"Sem bolhas · Preenchimento completo"},
+  {t:"Corpos de prova",m:"Moldagem para controle.",tol:"CPs identificados"},
+]},
+{ id:"pit25", cat:"construcao", grupo:"Estrutura", nome:"Produção de Concreto", normas:["NBR 12655","NBR 7212","NBR NM 67"], itens:[
+  {t:"Materiais",m:"Cimento, agregados, água, aditivos.",tol:"Conforme dosagem"},
+  {t:"Dosagem/traço",m:"Medição em massa, relação a/c.",tol:"Traço e a/c conforme projeto"},
+  {t:"Mistura",m:"Tempo e homogeneidade.",tol:"Mistura homogênea"},
+  {t:"Slump",m:"Abatimento conforme aplicação.",tol:"Slump conforme pedido ±10 mm"},
+  {t:"Corpos de prova",m:"Moldagem por volume produzido.",tol:"≥ 6 CPs · Identificados"},
+  {t:"Rompimento",m:"Resistência aos 7 e 28 dias.",tol:"≥ fck aos 28 dias"},
+]},
+{ id:"pit26", cat:"construcao", grupo:"Estrutura", nome:"Alvenaria Estrutural", normas:["NBR 16868","NBR 15961"], itens:[
+  {t:"Marcação/primeira fiada",m:"Locação, esquadro e nível da 1ª fiada.",tol:"Esquadro ok · Nível ±2 mm/m"},
+  {t:"Blocos",m:"Tipo, fbk e integridade.",tol:"fbk conforme projeto · Sem trincas"},
+  {t:"Prumo e nível",m:"Verificar a cada fiada.",tol:"Prumo ≤ 2 mm/m · Junta uniforme"},
+  {t:"Juntas",m:"Espessura e preenchimento.",tol:"Junta 10 mm ±3 mm · Argamassa cheia"},
+  {t:"Grauteamento",m:"Furos grauteados conforme projeto.",tol:"Sem vazios · Graute conforme projeto"},
+  {t:"Armadura",m:"Vergalhões em furos/canaletas.",tol:"Conforme projeto"},
+  {t:"Vergas/contravergas",m:"Sobre vãos de portas/janelas.",tol:"Transpasse ≥ 30 cm cada lado"},
+  {t:"Amarração",m:"Encontro de paredes amarrado.",tol:"Conforme projeto"},
+]},
+{ id:"pit27", cat:"construcao", grupo:"Estrutura", nome:"Alvenaria de Vedação", normas:["NBR 16868","NBR 8545","NBR 15270"], itens:[
+  {t:"Marcação/esquadro",m:"Locação e esquadro das paredes.",tol:"Esquadro: diagonais ±5 mm"},
+  {t:"Blocos/tijolos",m:"Tipo, dimensões e integridade.",tol:"Conforme projeto · Sem trincas"},
+  {t:"Prumo e nível",m:"Verificar prumo e alinhamento.",tol:"Prumo ≤ 3 mm/m"},
+  {t:"Juntas de argamassa",m:"Espessura e preenchimento.",tol:"Junta 10 mm ±3 mm"},
+  {t:"Amarração/fixação",m:"Tela ou ferro-cabelo na estrutura.",tol:"A cada 2 fiadas · Conforme projeto"},
+  {t:"Encunhamento",m:"Aperto superior após acomodação.",tol:"Após ≥ 7 dias · Cheio"},
+  {t:"Vergas e contravergas",m:"Sobre e sob vãos.",tol:"Transpasse ≥ 20 cm cada lado"},
+  {t:"Vãos (portas/janelas)",m:"Dimensões e prumo dos vãos.",tol:"Conforme projeto"},
+]},
+{ id:"pit28", cat:"construcao", grupo:"Estrutura", nome:"Parede de Gesso Acartonado (Drywall)", normas:["NBR 15758","NBR 15217"], itens:[
+  {t:"Guias e montantes",m:"Espaçamento, fixação e prumo.",tol:"Montantes ≤ 60 cm · Prumo ok"},
+  {t:"Isolamento",m:"Lã mineral se especificado.",tol:"Conforme projeto"},
+  {t:"Instalações internas",m:"Tubulações e reforços para fixação.",tol:"Reforços nos pontos de carga"},
+  {t:"Placas",m:"Tipo (ST/RU/RF) conforme ambiente.",tol:"RU em áreas úmidas · Tipo conforme projeto"},
+  {t:"Fixação",m:"Parafusos: espaçamento e profundidade.",tol:"Espaçamento conforme NBR"},
+  {t:"Tratamento de juntas",m:"Fita e massa, lixamento.",tol:"Juntas niveladas · Sem fissuras"},
+]},
+{ id:"pit29", cat:"construcao", grupo:"Pisos", nome:"Piso Polido", normas:["NBR 6118","NBR 14931"], itens:[
+  {t:"Base/contrapiso",m:"Nível, caimento e integridade.",tol:"Nível conforme projeto"},
+  {t:"Junta de dilatação",m:"Posição e dimensão das juntas.",tol:"Conforme projeto"},
+  {t:"Concreto/lançamento",m:"fck, espessura, adensamento.",tol:"fck e espessura de projeto"},
+  {t:"Sarrafeamento/desempeno",m:"Nivelamento da superfície.",tol:"Desvio ≤ 3 mm/m"},
+  {t:"Polimento",m:"Acabamento polido com maquinário.",tol:"Superfície lisa · Sem marcas"},
+  {t:"Cura",m:"Cura úmida ou produto curador.",tol:"Cura conforme especificação"},
+]},
+{ id:"pit30", cat:"construcao", grupo:"Pisos", nome:"Execução de Contrapiso", normas:["NBR 13753","NBR 7200"], itens:[
+  {t:"Limpeza da base",m:"Base limpa e chumamento.",tol:"Sem pó · Chapisco/ponte aderência"},
+  {t:"Caimento",m:"Declividade em áreas molhadas.",tol:"≥ 0,5% (áreas molhadas)"},
+  {t:"Nível/taliscas",m:"Mestras niveladas.",tol:"Nível ±3 mm/m"},
+  {t:"Espessura",m:"Espessura mínima conforme uso.",tol:"Conforme projeto"},
+  {t:"Argamassa/traço",m:"Traço e consistência.",tol:"Conforme projeto"},
+  {t:"Acabamento/cura",m:"Sarrafeado e curado.",tol:"Cura ≥ 3 dias · Sem fissuras"},
+]},
+{ id:"pit31", cat:"construcao", grupo:"Pisos", nome:"Piso Cimentado", normas:["NBR 13753"], itens:[
+  {t:"Base/contrapiso",m:"Aderência e nível.",tol:"Base preparada · Chapisco"},
+  {t:"Juntas",m:"Juntas de retração marcadas.",tol:"Painéis conforme projeto"},
+  {t:"Espessura",m:"Camada conforme projeto.",tol:"Conforme projeto"},
+  {t:"Desempeno",m:"Acabamento liso/camurçado.",tol:"Conforme acabamento pedido"},
+  {t:"Cura",m:"Molhagem para evitar fissuras.",tol:"Cura ≥ 3 dias"},
+]},
+{ id:"pit32", cat:"construcao", grupo:"Pisos", nome:"Piso com Pedras", normas:["NBR 13753"], itens:[
+  {t:"Material/pedra",m:"Tipo, espessura e integridade.",tol:"Conforme projeto · Sem trincas"},
+  {t:"Assentamento",m:"Argamassa/cola e nível.",tol:"Nível ±3 mm/m · Sem vazios"},
+  {t:"Juntas",m:"Espessura e alinhamento.",tol:"Junta uniforme"},
+  {t:"Caimento",m:"Áreas molhadas com caimento.",tol:"≥ 0,5% (áreas molhadas)"},
+  {t:"Rejunte e acabamento",m:"Rejunte completo e limpeza.",tol:"Sem falhas · Superfície limpa"},
+]},
+{ id:"pit33", cat:"construcao", grupo:"Pisos", nome:"Piso Elevado com Placas Removíveis", normas:["NBR 11801"], itens:[
+  {t:"Pedestais",m:"Nível, fixação e altura.",tol:"Nível ±2 mm/m"},
+  {t:"Placas",m:"Tipo, dimensão e capacidade de carga.",tol:"Conforme projeto"},
+  {t:"Nivelamento",m:"Conjunto nivelado e travado.",tol:"Sem desnível perceptível"},
+  {t:"Cortes/bordas",m:"Acabamento junto a paredes.",tol:"Cortes ajustados"},
+  {t:"Aterramento (se elétrico)",m:"Continuidade elétrica se exigido.",tol:"Conforme projeto"},
+]},
+{ id:"pit34", cat:"construcao", grupo:"Pisos", nome:"Instalação de Piso Vinílico", normas:["NBR 14917"], itens:[
+  {t:"Base/regularização",m:"Base lisa, seca e nivelada.",tol:"Umidade ok · Desvio ≤ 2 mm/m"},
+  {t:"Autonivelante",m:"Aplicação se necessário.",tol:"Superfície lisa"},
+  {t:"Cola/adesivo",m:"Tipo e tempo aberto.",tol:"Conforme fabricante"},
+  {t:"Assentamento",m:"Alinhamento e sem bolhas.",tol:"Sem bolhas · Juntas justas"},
+  {t:"Acabamento/rodapé",m:"Soldas/rodapés conforme projeto.",tol:"Conforme projeto"},
+]},
+{ id:"pit35", cat:"construcao", grupo:"Revestimentos", nome:"Revestimento Interno em Argamassa", normas:["NBR 7200","NBR 13749"], itens:[
+  {t:"Preparo da base",m:"Chapisco e cura.",tol:"Chapisco curado ≥ 3 dias"},
+  {t:"Taliscas/mestras",m:"Prumo e nível das mestras.",tol:"Prumo ≤ 3 mm/m"},
+  {t:"Espessura",m:"Emboço/reboco conforme projeto.",tol:"5 a 20 mm (interno)"},
+  {t:"Aderência",m:"Sem som cavo (teste de percussão).",tol:"Sem descolamento"},
+  {t:"Acabamento",m:"Superfície desempenada/feltrada.",tol:"Sem fissuras · Plano"},
+  {t:"Planeza/prumo final",m:"Régua de 2 m.",tol:"Desvio ≤ 3 mm/m"},
+]},
+{ id:"pit36", cat:"construcao", grupo:"Revestimentos", nome:"Revestimento Externo em Argamassa", normas:["NBR 7200","NBR 13749"], itens:[
+  {t:"Preparo/chapisco",m:"Chapisco rolado ou desempenado.",tol:"Chapisco curado"},
+  {t:"Tela em encontros",m:"Tela em juntas estrutura/alvenaria.",tol:"Tela conforme projeto"},
+  {t:"Mestras",m:"Prumo e nível.",tol:"Prumo ≤ 3 mm/m"},
+  {t:"Espessura",m:"Camadas conforme projeto.",tol:"Emboço externo conforme NBR"},
+  {t:"Juntas",m:"Juntas de trabalho/frisos.",tol:"Conforme projeto"},
+  {t:"Aderência",m:"Teste de percussão.",tol:"Sem som cavo"},
+  {t:"Acabamento",m:"Superfície regularizada.",tol:"Desvio ≤ 3 mm/m"},
+]},
+{ id:"pit37", cat:"construcao", grupo:"Revestimentos", nome:"Revestimento em Gesso", normas:["NBR 13867"], itens:[
+  {t:"Base",m:"Limpa, sem pó, umedecida.",tol:"Base preparada"},
+  {t:"Espessura",m:"Camada conforme aplicação.",tol:"Conforme projeto"},
+  {t:"Prumo e planeza",m:"Régua de 2 m.",tol:"Desvio ≤ 3 mm/m"},
+  {t:"Aderência",m:"Sem descolamento.",tol:"Sem som cavo"},
+  {t:"Acabamento",m:"Superfície lisa pronta para pintura.",tol:"Sem fissuras"},
+]},
+{ id:"pit38", cat:"construcao", grupo:"Revestimentos", nome:"Revestimento Cerâmico e Porcelanato", normas:["NBR 13753","NBR 13755","NBR 14081"], itens:[
+  {t:"Base",m:"Regularizada, limpa e curada.",tol:"Plana · Desvio ≤ 3 mm/m"},
+  {t:"Argamassa colante",m:"Tipo (AC-I/II/III) conforme uso.",tol:"ACIII em fachada/porcelanato"},
+  {t:"Dupla colagem",m:"Em peças grandes/fachada.",tol:"Cobertura ≥ 80% (interno) · 100% (fachada)"},
+  {t:"Assentamento",m:"Alinhamento, nível e caimento.",tol:"Desvio ≤ 3 mm/m · Caimento em box"},
+  {t:"Juntas",m:"Espaçadores e alinhamento.",tol:"Junta conforme projeto · Uniforme"},
+  {t:"Aderência",m:"Sem som cavo (percussão).",tol:"Sem peças soltas"},
+  {t:"Rejunte",m:"Tipo e preenchimento.",tol:"Rejunte completo · Sem falhas"},
+]},
+{ id:"pit39", cat:"construcao", grupo:"Revestimentos", nome:"Assentamento de Peitoris e Soleiras", normas:["NBR 13753"], itens:[
+  {t:"Material",m:"Tipo, espessura e integridade.",tol:"Conforme projeto · Sem trincas"},
+  {t:"Caimento (peitoril)",m:"Pingadeira e caimento para fora.",tol:"Caimento ≥ 1% · Pingadeira presente"},
+  {t:"Nível (soleira)",m:"Nivelamento da soleira.",tol:"Nível ±2 mm"},
+  {t:"Assentamento",m:"Argamassa cheia, sem vazios.",tol:"Sem som cavo"},
+  {t:"Acabamento",m:"Rejunte e vedação lateral.",tol:"Vedado · Sem infiltração"},
+]},
+{ id:"pit40", cat:"construcao", grupo:"Esquadrias", nome:"Instalação de Esquadria de Madeira", normas:["NBR 15930"], itens:[
+  {t:"Vão/requadro",m:"Dimensões e esquadro do vão.",tol:"Folga conforme projeto"},
+  {t:"Batente/marco",m:"Prumo, nível e fixação.",tol:"Prumo ≤ 2 mm/m"},
+  {t:"Folha",m:"Alinhamento e folgas.",tol:"Folga uniforme · Abre/fecha livre"},
+  {t:"Ferragens",m:"Dobradiças, fechaduras alinhadas.",tol:"Funcionando · Alinhadas"},
+  {t:"Acabamento/vedação",m:"Vedação perimetral e acabamento.",tol:"Sem frestas indevidas"},
+]},
+{ id:"pit41", cat:"construcao", grupo:"Esquadrias", nome:"Instalação de Esquadria de Alumínio", normas:["NBR 10821"], itens:[
+  {t:"Vão/contramarco",m:"Dimensões, prumo e fixação do contramarco.",tol:"Prumo ≤ 2 mm/m"},
+  {t:"Fixação",m:"Parafusos/chumbadores conforme projeto.",tol:"Fixação conforme fabricante"},
+  {t:"Calafetação",m:"Vedação perimetral com silicone.",tol:"Cordão contínuo · Estanque"},
+  {t:"Esquadro/nível",m:"Marco esquadrejado e nivelado.",tol:"Esquadro ok"},
+  {t:"Vidros",m:"Tipo e espessura conforme NBR 7199.",tol:"Conforme projeto"},
+  {t:"Estanqueidade",m:"Teste de água em fachada (se exigido).",tol:"Sem infiltração"},
+  {t:"Funcionamento",m:"Folhas e fechos operando.",tol:"Abre/fecha livre · Fechos ok"},
+]},
+{ id:"pit42", cat:"construcao", grupo:"Esquadrias", nome:"Instalação de Esquadria de Aço", normas:["NBR 10821"], itens:[
+  {t:"Vão",m:"Dimensões e prumo do vão.",tol:"Folga conforme projeto"},
+  {t:"Tratamento anticorrosivo",m:"Pintura/galvanização.",tol:"Sem corrosão · Pintura íntegra"},
+  {t:"Fixação/chumbamento",m:"Grapas/chumbadores.",tol:"Conforme projeto"},
+  {t:"Prumo e nível",m:"Marco aprumado e nivelado.",tol:"Prumo ≤ 2 mm/m"},
+  {t:"Vedação",m:"Calafetação perimetral.",tol:"Estanque"},
+  {t:"Funcionamento",m:"Ferragens operando.",tol:"Abre/fecha livre"},
+]},
+{ id:"pit43", cat:"construcao", grupo:"Esquadrias", nome:"Colocação de Pele de Vidro", normas:["NBR 7199","NBR 10821"], itens:[
+  {t:"Estrutura de fixação",m:"Montantes/travessas alinhados.",tol:"Prumo e alinhamento ok"},
+  {t:"Vidros",m:"Tipo, espessura e segurança (laminado/temperado).",tol:"Conforme NBR 7199"},
+  {t:"Fixação/calços",m:"Calços e pressão adequados.",tol:"Conforme projeto"},
+  {t:"Vedação",m:"Silicone estrutural/calafetação.",tol:"Cordão contínuo · Estanque"},
+  {t:"Estanqueidade",m:"Teste de água.",tol:"Sem infiltração"},
+]},
+{ id:"pit44", cat:"construcao", grupo:"Instalações", nome:"Instalações Elétricas", normas:["NBR 5410","NBR 5419"], itens:[
+  {t:"Eletrodutos",m:"Tipo, fixação e caixas.",tol:"Conforme projeto · Sem amassados"},
+  {t:"Fiação",m:"Bitola, cores e identificação.",tol:"Bitola conforme projeto · Cores normalizadas"},
+  {t:"Quadros",m:"Disjuntores, DR, barramento, identificação.",tol:"Conforme projeto · DR presente"},
+  {t:"Aterramento",m:"Continuidade e resistência.",tol:"Conforme NBR 5419"},
+  {t:"Tomadas/pontos",m:"Altura, fixação e quantidade.",tol:"Conforme projeto"},
+  {t:"Ensaio/energização",m:"Teste de isolamento e funcionamento.",tol:"Sem fuga · Circuitos ok"},
+]},
+{ id:"pit45", cat:"construcao", grupo:"Instalações", nome:"Instalações Hidrossanitárias", normas:["NBR 5626","NBR 8160"], itens:[
+  {t:"Tubulações água fria/quente",m:"Material, bitola e suportes.",tol:"Conforme projeto"},
+  {t:"Esgoto/ventilação",m:"Declividade e ventilação.",tol:"Declividade ≥ 1% (≤75mm) · 2% (>75mm)"},
+  {t:"Caimentos",m:"Ralos e coletores com caimento.",tol:"Conforme projeto"},
+  {t:"Teste de estanqueidade",m:"Pressão (água) e estanqueidade (esgoto).",tol:"Sem vazamento · Pressão conforme NBR 5626"},
+  {t:"Registros/válvulas",m:"Posição e acesso.",tol:"Conforme projeto · Acessíveis"},
+  {t:"Fixação",m:"Tubulações fixadas e protegidas.",tol:"Sem folgas"},
+]},
+{ id:"pit46", cat:"construcao", grupo:"Instalações", nome:"Instalação de Gás", normas:["NBR 13932","NBR 15526"], itens:[
+  {t:"Tubulação",m:"Material e bitola conforme projeto.",tol:"Cobre/aço/PEAD conforme norma"},
+  {t:"Solda/conexões",m:"Execução e estanqueidade.",tol:"Sem vazamento"},
+  {t:"Ventilação",m:"Ambientes ventilados conforme norma.",tol:"Conforme NBR"},
+  {t:"Teste de estanqueidade",m:"Pressão com manômetro.",tol:"Sem queda de pressão"},
+  {t:"Registros e abrigo",m:"Localização e acesso.",tol:"Conforme projeto · Acessível"},
+  {t:"Identificação/sinalização",m:"Tubulação identificada.",tol:"Conforme NBR"},
+]},
+{ id:"pit47", cat:"construcao", grupo:"Instalações", nome:"Instalações com Polietileno (PE-X)", normas:["NBR 15939"], itens:[
+  {t:"Tubos/conexões",m:"Tipo PE-X e conexões compatíveis.",tol:"Conforme fabricante"},
+  {t:"Distribuição",m:"Sistema (manifold) conforme projeto.",tol:"Conforme projeto"},
+  {t:"Conexões",m:"Prensar/encaixe conforme sistema.",tol:"Conexões íntegras"},
+  {t:"Proteção",m:"Tubo protegido/embutido conforme norma.",tol:"Conforme projeto"},
+  {t:"Teste de estanqueidade",m:"Pressurização do sistema.",tol:"Sem vazamento"},
+]},
+{ id:"pit48", cat:"construcao", grupo:"Forros/Cobertura", nome:"Forro de Gesso em Placas", normas:["NBR 12775"], itens:[
+  {t:"Nível",m:"Marcação de nível no perímetro.",tol:"Nível ±2 mm/m"},
+  {t:"Fixação/arame",m:"Tirantes/arames espaçados.",tol:"Conforme NBR"},
+  {t:"Placas",m:"Integridade e juntas.",tol:"Sem trincas · Juntas alinhadas"},
+  {t:"Planeza",m:"Superfície plana.",tol:"Desvio ≤ 3 mm/m"},
+  {t:"Acabamento",m:"Tratamento de juntas e arremates.",tol:"Sem fissuras"},
+]},
+{ id:"pit49", cat:"construcao", grupo:"Forros/Cobertura", nome:"Forro de Gesso Acartonado", normas:["NBR 15758"], itens:[
+  {t:"Estrutura/perfis",m:"Espaçamento e nivelamento.",tol:"Conforme NBR · Nivelado"},
+  {t:"Pendurais",m:"Espaçamento e fixação.",tol:"Conforme projeto"},
+  {t:"Placas",m:"Tipo (ST/RU/RF) e fixação.",tol:"RU em área úmida"},
+  {t:"Juntas",m:"Fita e massa, lixamento.",tol:"Niveladas · Sem fissuras"},
+  {t:"Planeza",m:"Régua de 2 m.",tol:"Desvio ≤ 3 mm/m"},
+]},
+{ id:"pit50", cat:"construcao", grupo:"Forros/Cobertura", nome:"Forro em Lambril de Madeira", normas:["NBR 12775"], itens:[
+  {t:"Estrutura de apoio",m:"Sarrafos/perfis nivelados.",tol:"Nivelado"},
+  {t:"Lambris",m:"Encaixe macho-fêmea, alinhamento.",tol:"Alinhado · Sem frestas"},
+  {t:"Fixação",m:"Pregos/grampos ocultos.",tol:"Fixação firme"},
+  {t:"Tratamento",m:"Verniz/imunizante.",tol:"Tratado contra umidade/cupim"},
+  {t:"Acabamento",m:"Arremates e cantos.",tol:"Conforme projeto"},
+]},
+{ id:"pit51", cat:"construcao", grupo:"Forros/Cobertura", nome:"Forro em Lambril de PVC", normas:["NBR 14285"], itens:[
+  {t:"Estrutura de apoio",m:"Perfis/sarrafos nivelados.",tol:"Nivelado"},
+  {t:"Réguas PVC",m:"Encaixe e alinhamento.",tol:"Sem frestas · Alinhado"},
+  {t:"Fixação",m:"Grampos/parafusos.",tol:"Fixação firme"},
+  {t:"Ventilação",m:"Vãos de ventilação se necessário.",tol:"Conforme projeto"},
+  {t:"Acabamento",m:"Perfis de arremate.",tol:"Cantos acabados"},
+]},
+{ id:"pit52", cat:"construcao", grupo:"Forros/Cobertura", nome:"Estrutura de Telhado", normas:["NBR 7190","NBR 8800"], itens:[
+  {t:"Material",m:"Madeira/metálica conforme projeto.",tol:"Conforme projeto · Tratada/protegida"},
+  {t:"Apoios",m:"Posição e fixação dos apoios.",tol:"Conforme projeto"},
+  {t:"Esquadro/nível",m:"Tesouras e terças niveladas.",tol:"Nível e alinhamento ok"},
+  {t:"Ligações",m:"Encaixes/soldas/parafusos.",tol:"Conforme projeto"},
+  {t:"Contraventamento",m:"Travamento da estrutura.",tol:"Conforme projeto"},
+  {t:"Caimento",m:"Inclinação conforme telha.",tol:"Conforme fabricante da telha"},
+]},
+{ id:"pit53", cat:"construcao", grupo:"Forros/Cobertura", nome:"Telhamento Fibrocimento", normas:["NBR 7581","NBR 8055"], itens:[
+  {t:"Inclinação",m:"Caimento mínimo da telha.",tol:"Conforme fabricante (≥ 5° típico)"},
+  {t:"Recobrimento",m:"Sobreposição longitudinal/lateral.",tol:"Conforme fabricante"},
+  {t:"Fixação",m:"Ganchos/parafusos com vedação.",tol:"Furos na crista · Vedados"},
+  {t:"Sentido de montagem",m:"Contrário aos ventos dominantes.",tol:"Conforme recomendação"},
+  {t:"Acessórios",m:"Cumeeiras, rufos, calhas.",tol:"Conforme projeto"},
+  {t:"Estanqueidade",m:"Sem goteiras.",tol:"Estanque"},
+]},
+{ id:"pit54", cat:"construcao", grupo:"Forros/Cobertura", nome:"Telhamento Cerâmico", normas:["NBR 15310"], itens:[
+  {t:"Inclinação",m:"Caimento conforme tipo de telha.",tol:"Conforme fabricante"},
+  {t:"Ripamento/espaçamento",m:"Galga das ripas conforme telha.",tol:"Conforme fabricante"},
+  {t:"Assentamento",m:"Encaixe e alinhamento.",tol:"Alinhado · Sem peças quebradas"},
+  {t:"Amarração",m:"Fixação em beirais e cumeeira.",tol:"Conforme projeto · Regiões de vento"},
+  {t:"Cumeeiras",m:"Argamassa/elementos de fixação.",tol:"Vedadas"},
+  {t:"Estanqueidade",m:"Sem goteiras/infiltração.",tol:"Estanque"},
+]},
+{ id:"pit55", cat:"construcao", grupo:"Forros/Cobertura", nome:"Impermeabilização", normas:["NBR 9575","NBR 9574"], itens:[
+  {t:"Preparo do substrato",m:"Regularização, caimento e cantos.",tol:"Caimento ≥ 1% · Cantos arredondados"},
+  {t:"Primer",m:"Aplicação e secagem.",tol:"Conforme fabricante"},
+  {t:"Sistema impermeabilizante",m:"Tipo (manta/membrana) e espessura.",tol:"Conforme projeto · Sem falhas"},
+  {t:"Sobreposições/arremates",m:"Emendas e subidas em paredes.",tol:"Sobreposição ≥ 10 cm · Subida ≥ 30 cm"},
+  {t:"Teste de estanqueidade",m:"Lâmina d'água 72 h.",tol:"Sem vazamento em 72 h"},
+  {t:"Proteção mecânica",m:"Camada de proteção antes do contrapiso.",tol:"Proteção executada"},
+]},
+{ id:"pit56", cat:"construcao", grupo:"Acabamentos", nome:"Colocação de Bancadas, Louças e Metais", normas:["NBR 15097","NBR 10281"], itens:[
+  {t:"Bancadas",m:"Nível, apoio e fixação.",tol:"Nível ±2 mm · Mãos-francesas conforme carga"},
+  {t:"Louças",m:"Fixação e vedação.",tol:"Firme · Vedação com silicone"},
+  {t:"Metais/torneiras",m:"Instalação e vedação.",tol:"Sem vazamento · Vedado"},
+  {t:"Sifões/ligações",m:"Conexões de esgoto e água.",tol:"Estanque · Sem vazamento"},
+  {t:"Funcionamento",m:"Teste de abre/fecha e vazão.",tol:"Operando · Vazão ok"},
+]},
+{ id:"pit57", cat:"construcao", grupo:"Acabamentos", nome:"Instalação de Bacia Sanitária", normas:["NBR 15097","NBR 8160"], itens:[
+  {t:"Posição/altura",m:"Distância da parede e nível.",tol:"Conforme projeto · Nivelada"},
+  {t:"Anel de vedação",m:"Anel de cera/borracha no ramal.",tol:"Anel íntegro · Bem assentado"},
+  {t:"Fixação",m:"Parafusos/buchas com vedação.",tol:"Firme · Sem balanço"},
+  {t:"Ligação de água",m:"Engate e registro.",tol:"Sem vazamento"},
+  {t:"Teste de descarga",m:"Acionamento e estanqueidade.",tol:"Descarga ok · Sem vazamento na base"},
+]},
+{ id:"pit58", cat:"construcao", grupo:"Acabamentos", nome:"Colocação de Guarda-Corpo e Corrimão", normas:["NBR 14718","NBR 9050"], itens:[
+  {t:"Altura",m:"Altura do guarda-corpo/corrimão.",tol:"Guarda-corpo ≥ 1,10 m · Corrimão 0,80–0,92 m"},
+  {t:"Espaçamento",m:"Vãos entre balaústres.",tol:"Vão ≤ 11 cm (proteção infantil)"},
+  {t:"Fixação",m:"Chumbamento/parafusos e resistência.",tol:"Resiste a carga conforme NBR 14718"},
+  {t:"Continuidade (corrimão)",m:"Corrimão contínuo e prolongamentos.",tol:"Conforme NBR 9050"},
+  {t:"Acabamento",m:"Solda/pintura e ausência de rebarbas.",tol:"Sem rebarbas · Pintura íntegra"},
+]},
+{ id:"pit59", cat:"construcao", grupo:"Pintura", nome:"Pintura Esmalte", normas:["NBR 11702","NBR 13245"], itens:[
+  {t:"Preparo da superfície",m:"Lixamento, limpeza e fundo.",tol:"Superfície limpa · Fundo aplicado"},
+  {t:"Fundo/primer",m:"Tipo conforme base (madeira/metal).",tol:"Conforme especificação"},
+  {t:"Demãos",m:"Número de demãos e intervalo.",tol:"≥ 2 demãos · Intervalo conforme fabricante"},
+  {t:"Uniformidade",m:"Cobertura sem falhas/escorridos.",tol:"Uniforme · Sem escorrido"},
+  {t:"Acabamento",m:"Película lisa e aderente.",tol:"Sem descascamento"},
+]},
+{ id:"pit60", cat:"construcao", grupo:"Pintura", nome:"Pintura PVA", normas:["NBR 11702"], itens:[
+  {t:"Preparo",m:"Massa corrida, lixamento e selador.",tol:"Superfície lisa · Selada"},
+  {t:"Selador",m:"Aplicação em base nova.",tol:"Conforme fabricante"},
+  {t:"Demãos",m:"Número de demãos.",tol:"≥ 2 demãos"},
+  {t:"Uniformidade",m:"Cobertura completa.",tol:"Sem falhas · Sem emendas visíveis"},
+  {t:"Acabamento",m:"Superfície uniforme.",tol:"Cor e textura homogêneas"},
+]},
+{ id:"pit61", cat:"construcao", grupo:"Pintura", nome:"Pintura Acrílica", normas:["NBR 11702","NBR 15079"], itens:[
+  {t:"Preparo",m:"Limpeza, massa acrílica (externo) e fundo.",tol:"Superfície preparada"},
+  {t:"Fundo/selador",m:"Fundo preparador em base nova.",tol:"Conforme fabricante"},
+  {t:"Demãos",m:"Número de demãos e diluição.",tol:"≥ 2 demãos · Diluição conforme fabricante"},
+  {t:"Uniformidade",m:"Cobertura sem falhas.",tol:"Uniforme · Sem manchas"},
+  {t:"Resistência",m:"Aderência e resistência à intempérie.",tol:"Sem descascamento"},
+]},
+{ id:"pit62", cat:"construcao", grupo:"Pintura", nome:"Aplicação de Textura", normas:["NBR 11702"], itens:[
+  {t:"Preparo da base",m:"Regularização e fundo.",tol:"Base preparada · Selada"},
+  {t:"Produto",m:"Tipo de textura conforme projeto.",tol:"Conforme projeto"},
+  {t:"Aplicação",m:"Técnica e espessura uniforme.",tol:"Uniforme · Sem emendas aparentes"},
+  {t:"Desenho/acabamento",m:"Padrão conforme amostra.",tol:"Conforme amostra aprovada"},
+  {t:"Cobertura",m:"Sem falhas/base aparente.",tol:"Cobertura completa"},
+]},
+{ id:"pit63", cat:"construcao", grupo:"Pintura", nome:"Revestimento em Monocapa", normas:["NBR 7200"], itens:[
+  {t:"Base/chapisco",m:"Preparo e aderência.",tol:"Chapisco curado"},
+  {t:"Espessura",m:"Camada conforme fabricante.",tol:"Conforme fabricante"},
+  {t:"Tela em pontos críticos",m:"Tela em encontros/aberturas.",tol:"Conforme projeto"},
+  {t:"Acabamento",m:"Raspado/desempenado conforme padrão.",tol:"Conforme amostra"},
+  {t:"Aderência",m:"Teste de percussão.",tol:"Sem som cavo"},
+  {t:"Juntas",m:"Juntas de trabalho.",tol:"Conforme projeto"},
+]},
+{ id:"pit64", cat:"construcao", grupo:"Infraestrutura", nome:"Assentamento de Tubulação", normas:["NBR 12266","NBR 9649"], itens:[
+  {t:"Vala",m:"Largura, profundidade e escoramento.",tol:"Conforme projeto · Escorada se necessário"},
+  {t:"Berço/lastro",m:"Material e espessura do berço.",tol:"Berço conforme projeto"},
+  {t:"Declividade",m:"Caimento conforme projeto.",tol:"Declividade de projeto"},
+  {t:"Assentamento",m:"Alinhamento e juntas.",tol:"Alinhado · Juntas estanques"},
+  {t:"Reaterro",m:"Envelope e camadas compactadas.",tol:"Camada ≤ 20 cm · GC ≥ 95% PN"},
+  {t:"Teste de estanqueidade",m:"Teste de pressão/estanqueidade.",tol:"Sem vazamento"},
+]},
+{ id:"pit65", cat:"construcao", grupo:"Infraestrutura", nome:"Pavimento de Concreto", normas:["NBR 16416","DNIT"], itens:[
+  {t:"Sub-base",m:"Compactação e nível.",tol:"GC ≥ 95% PN · Nível ±1 cm"},
+  {t:"Fôrmas/espessura",m:"Geometria e espessura da placa.",tol:"Espessura conforme projeto"},
+  {t:"Armadura/telas",m:"Posição e cobrimento.",tol:"Conforme projeto"},
+  {t:"Juntas",m:"Serragem/posição de juntas.",tol:"Conforme projeto · No tempo certo"},
+  {t:"Concreto",m:"fck, slump, lançamento.",tol:"fck de projeto"},
+  {t:"Acabamento/textura",m:"Vassourado/desempenado.",tol:"Conforme projeto · Antiderrapante"},
+  {t:"Cura",m:"Cura química/úmida.",tol:"Cura conforme NBR"},
+]},
+{ id:"pit66", cat:"construcao", grupo:"Infraestrutura", nome:"Pavimento Asfáltico", normas:["DNIT 031/2006","NBR"], itens:[
+  {t:"Sub-base/base",m:"Compactação e cota.",tol:"GC conforme projeto · Cota ±1 cm"},
+  {t:"Imprimação/pintura de ligação",m:"Taxa e cobertura.",tol:"Taxa conforme projeto"},
+  {t:"Temperatura da massa",m:"Chegada e compactação.",tol:"Conforme faixa do CAP"},
+  {t:"Espessura",m:"Espessura da camada compactada.",tol:"Conforme projeto"},
+  {t:"Compactação",m:"Grau de compactação da massa.",tol:"GC ≥ 97% (Marshall/projeto)"},
+  {t:"Acabamento",m:"Juntas, caimento e regularidade.",tol:"Caimento ≥ 1% · Sem segregação"},
+]},
+{ id:"pit67", cat:"construcao", grupo:"Infraestrutura", nome:"Piso Intertravado de Concreto", normas:["NBR 9781","NBR 15953"], itens:[
+  {t:"Base/sub-base",m:"Compactação e nível.",tol:"GC ≥ 95% PN · Nível conforme projeto"},
+  {t:"Colchão de areia",m:"Espessura e regularização.",tol:"Camada 3–5 cm · Uniforme"},
+  {t:"Blocos",m:"Resistência (fpk) e integridade.",tol:"fpk ≥ 35 MPa (tráfego) · Sem trincas"},
+  {t:"Assentamento",m:"Padrão, juntas e alinhamento.",tol:"Junta 2–3 mm · Padrão conforme projeto"},
+  {t:"Contenção lateral",m:"Confinamento das bordas.",tol:"Contenção executada"},
+  {t:"Compactação/rejunte",m:"Placa vibratória e selagem de juntas.",tol:"Juntas preenchidas · Travado"},
+  {t:"Caimento",m:"Declividade para drenagem.",tol:"≥ 1%"},
+]}
 ];
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1424,10 +1949,31 @@ function renderRelatorioISO(){
 }
 function initFVSSelect(){
   const sel=document.getElementById("service-select");
+  sel.innerHTML = '<option value="">Selecione o serviço...</option>';
+
+  // Agrupa por categoria
+  const grupos = {
+    saneamento: { label:"🚰 SANEAMENTO", servicos:[] },
+    construcao: { label:"🏗️ CONSTRUÇÃO CIVIL", servicos:[] }
+  };
   SERVICOS.forEach(s=>{
-    const opt=document.createElement("option");
-    opt.value=s.id; opt.textContent=s.nome;
-    sel.appendChild(opt);
+    const cat = s.cat || "saneamento";
+    if(grupos[cat]) grupos[cat].servicos.push(s);
+  });
+
+  Object.keys(grupos).forEach(catKey=>{
+    const g = grupos[catKey];
+    if(g.servicos.length === 0) return;
+    const og = document.createElement("optgroup");
+    og.label = g.label;
+    // Para construção, sub-agrupa visualmente por etapa (grupo) no texto
+    g.servicos.forEach(s=>{
+      const opt=document.createElement("option");
+      opt.value=s.id;
+      opt.textContent = s.grupo ? (s.grupo + " · " + s.nome) : s.nome;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
   });
 }
 
