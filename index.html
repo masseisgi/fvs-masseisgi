@@ -395,6 +395,13 @@ textarea.input-f{resize:vertical;min-height:52px}
       <span class="mi">📒</span>DIÁRIO DE OBRA
     </button>
   </div>
+  <!-- BARRA DE OBRA ATUAL -->
+  <div id="obra-bar" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <span style="font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:.05em">🏗️ OBRA:</span>
+    <select id="obra-select" onchange="selecionarObra(this.value)" style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;font-family:inherit"></select>
+    <button onclick="abrirModalObra()" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:8px;padding:8px 12px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Nova obra</button>
+    <button onclick="abrirGerenciarObras()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 10px;font-size:.76rem;cursor:pointer;font-family:inherit">⚙️</button>
+  </div>
   <!-- TABS (muda conforme módulo) -->
   <div class="tabs" id="tabs-iso">
     <button class="tab active" onclick="goTab('iso',0)" id="iso-tab0"><span class="ti">📋</span>IDENTIFICAÇÃO</button>
@@ -1592,6 +1599,9 @@ let state = {
   // HISTÓRICO SALVO
   auditoriasSalvas: [],  // lista de auditorias ISO finalizadas
   fvsSalvas: [],         // lista de FVS finalizadas
+  // OBRAS (multi-obra)
+  obras: [],             // lista de obras: {id, nome, endereco, criadaEm}
+  obraAtual: null,       // id da obra selecionada no momento
   // Photo target
   photoTarget: null,
 };
@@ -3059,7 +3069,167 @@ function carregarSalvos(){
     if(fvs) state.fvsSalvas = JSON.parse(fvs);
     const diarios = localStorage.getItem("mgi_diarios");
     if(diarios) state.diarios = JSON.parse(diarios);
+    const obras = localStorage.getItem("mgi_obras");
+    if(obras) state.obras = JSON.parse(obras);
+    const obraAtual = localStorage.getItem("mgi_obra_atual");
+    if(obraAtual) state.obraAtual = obraAtual;
   } catch(e){ console.log("Erro ao carregar:", e); }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// OBRAS — gerenciamento multi-obra com trava por plano
+// ═════════════════════════════════════════════════════════════════════════════
+function salvarObrasLS(){
+  try {
+    localStorage.setItem("mgi_obras", JSON.stringify(state.obras));
+    if(state.obraAtual) localStorage.setItem("mgi_obra_atual", state.obraAtual);
+  } catch(e){ console.log("Erro ao salvar obras:", e); }
+}
+
+// Limite de obras por plano
+function limiteObras(){
+  const emp = window.MGI_EMPRESA || {};
+  // plano ativo: depende do planoNome; trial e básico = 1 obra
+  if(emp.plano === "ativo"){
+    const pn = (emp.planoNome || "").toLowerCase();
+    if(pn.includes("pro") || pn.includes("enterprise")) return Infinity;
+    return 1; // Básico
+  }
+  // trial: permite 1 obra (pra experimentar)
+  return 1;
+}
+
+function nomePlanoAtual(){
+  const emp = window.MGI_EMPRESA || {};
+  if(emp.plano === "ativo") return emp.planoNome || "Pago";
+  return "Trial";
+}
+
+function podeAddObra(){
+  return state.obras.length < limiteObras();
+}
+
+function criarObra(nome, endereco){
+  if(!podeAddObra()){
+    return { ok:false, motivo:"limite" };
+  }
+  const obra = {
+    id: "obra_" + Date.now() + "_" + Math.random().toString(36).substr(2,5),
+    nome: nome || "Nova Obra",
+    endereco: endereco || "",
+    criadaEm: new Date().toISOString()
+  };
+  state.obras.push(obra);
+  state.obraAtual = obra.id;
+  salvarObrasLS();
+  return { ok:true, obra };
+}
+
+function selecionarObra(id){
+  state.obraAtual = id;
+  salvarObrasLS();
+  renderObras();
+  // Atualiza o nome da obra nos formulários
+  const obra = state.obras.find(o=>o.id===id);
+  if(obra){
+    const fObra = document.getElementById("f-obra");
+    const fvsObra = document.getElementById("fvs-obra");
+    const dObra = document.getElementById("d-obra");
+    if(fObra && !fObra.value) fObra.value = obra.nome;
+    if(fvsObra && !fvsObra.value) fvsObra.value = obra.nome;
+    if(dObra && !dObra.value) dObra.value = obra.nome;
+  }
+}
+
+function excluirObra(id){
+  const obra = state.obras.find(o=>o.id===id);
+  if(!obra) return;
+  if(!confirm("Excluir a obra \"" + obra.nome + "\"? Os registros salvos não são apagados, mas ficam sem obra vinculada.")) return;
+  state.obras = state.obras.filter(o=>o.id!==id);
+  if(state.obraAtual === id) state.obraAtual = state.obras.length ? state.obras[0].id : null;
+  salvarObrasLS();
+  renderObras();
+}
+
+// ───── UI das obras ─────
+function renderObras(){
+  const sel = document.getElementById("obra-select");
+  if(!sel) return;
+  if(state.obras.length === 0){
+    sel.innerHTML = '<option value="">— Nenhuma obra criada —</option>';
+  } else {
+    sel.innerHTML = state.obras.map(o=>
+      `<option value="${o.id}" ${o.id===state.obraAtual?"selected":""}>${o.nome}</option>`
+    ).join("");
+  }
+}
+
+function abrirModalObra(){
+  const aviso = document.getElementById("obra-limite-aviso");
+  const form = document.getElementById("obra-form");
+  if(!podeAddObra()){
+    // Atingiu o limite — mostra aviso de upgrade
+    const lim = limiteObras();
+    aviso.style.display = "block";
+    aviso.innerHTML = `⚠️ Seu plano <b>${nomePlanoAtual()}</b> permite ${lim===Infinity?"obras ilimitadas":lim+" obra(s)"}. ` +
+      `Para gerenciar mais obras, faça upgrade para o plano <b>Pro</b>.<br><br>` +
+      `<a href="https://wa.me/5511974946171?text=Quero%20fazer%20upgrade%20do%20MGI%20PRO%20para%20o%20plano%20Pro" target="_blank" style="display:inline-block;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;text-decoration:none;border-radius:8px;padding:9px 16px;font-weight:800;font-size:.8rem;margin-top:4px">💬 Fazer upgrade</a>`;
+    form.style.display = "none";
+  } else {
+    aviso.style.display = "none";
+    form.style.display = "block";
+    document.getElementById("obra-nome-input").value = "";
+    document.getElementById("obra-end-input").value = "";
+  }
+  document.getElementById("modal-obra-bg").style.display = "flex";
+}
+
+function fecharModalObra(){
+  document.getElementById("modal-obra-bg").style.display = "none";
+  document.getElementById("modal-gerenciar-bg").style.display = "none";
+}
+
+function confirmarNovaObra(){
+  const nome = document.getElementById("obra-nome-input").value.trim();
+  if(!nome){ alert("Digite o nome da obra."); return; }
+  const end = document.getElementById("obra-end-input").value.trim();
+  const r = criarObra(nome, end);
+  if(!r.ok && r.motivo === "limite"){
+    abrirModalObra(); // re-mostra com aviso
+    return;
+  }
+  fecharModalObra();
+  renderObras();
+}
+
+function abrirGerenciarObras(){
+  const info = document.getElementById("obra-plano-info");
+  const lim = limiteObras();
+  info.innerHTML = `Plano <b style="color:var(--cyan)">${nomePlanoAtual()}</b> · ` +
+    `${state.obras.length}/${lim===Infinity?"∞":lim} obra(s)`;
+
+  const lista = document.getElementById("gerenciar-lista");
+  if(state.obras.length === 0){
+    lista.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px">Nenhuma obra criada ainda.</div>';
+  } else {
+    lista.innerHTML = state.obras.map(o=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;${o.id===state.obraAtual?'border-color:var(--cyan);background:rgba(34,211,238,.06)':''}">
+        <div style="flex:1">
+          <div style="font-weight:700;color:var(--text);font-size:.88rem">${o.nome}</div>
+          ${o.endereco?`<div style="font-size:.72rem;color:var(--muted);margin-top:2px">${o.endereco}</div>`:''}
+        </div>
+        ${o.id===state.obraAtual?'<span style="font-size:.68rem;color:var(--cyan);font-weight:700">ATUAL</span>':`<button onclick="selecionarObra('${o.id}');abrirGerenciarObras()" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:7px;padding:6px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit">Selecionar</button>`}
+        <button onclick="excluirObra('${o.id}');abrirGerenciarObras()" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:7px;padding:6px 9px;font-size:.72rem;cursor:pointer;font-family:inherit">🗑️</button>
+      </div>
+    `).join("");
+  }
+  // botão de adicionar (respeitando limite)
+  if(podeAddObra()){
+    lista.innerHTML += `<button onclick="fecharModalObra();abrirModalObra()" style="width:100%;background:transparent;border:1px dashed var(--cyan);color:var(--cyan);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">+ Nova obra</button>`;
+  } else {
+    lista.innerHTML += `<div style="background:rgba(251,146,60,.1);border:1px solid var(--orange);border-radius:10px;padding:12px;margin-top:6px;font-size:.78rem;color:var(--orange);text-align:center">Limite do plano atingido. <a href="https://wa.me/5511974946171?text=Quero%20fazer%20upgrade%20do%20MGI%20PRO" target="_blank" style="color:var(--cyan);font-weight:700">Fazer upgrade →</a></div>`;
+  }
+  document.getElementById("modal-gerenciar-bg").style.display = "flex";
 }
 
 function salvarAuditoriasLS(){
@@ -3963,6 +4133,7 @@ function closeLightbox(){ document.getElementById("lightbox").classList.remove("
 carregarSalvos();
 document.getElementById("f-data").value=state.info.data;
 initFVSSelect();
+renderObras();
 state.diarioAtual = novoRegistroDiario();
 updateConfigBtn();
 
@@ -4026,6 +4197,36 @@ if ('serviceWorker' in navigator) {
   </div>
 </footer>
 
+<!-- ===== MODAL NOVA OBRA ===== -->
+<div id="modal-obra-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:100%">
+    <h3 style="margin-bottom:6px;color:var(--text);font-family:'Barlow',sans-serif">🏗️ Nova Obra</h3>
+    <div id="obra-limite-aviso" style="display:none;background:rgba(251,146,60,.12);border:1px solid var(--orange);border-radius:10px;padding:12px;margin:12px 0;font-size:.8rem;color:var(--orange);line-height:1.5"></div>
+    <div id="obra-form">
+      <label style="display:block;font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px">Nome / Código da Obra</label>
+      <input id="obra-nome-input" placeholder="Ex: Residencial Bela Vista — BV-001" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.88rem;font-family:inherit">
+      <label style="display:block;font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px">Endereço (opcional)</label>
+      <input id="obra-end-input" placeholder="Rua, número, cidade..." style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.88rem;font-family:inherit">
+      <div style="display:flex;gap:10px;margin-top:22px">
+        <button onclick="fecharModalObra()" style="flex:1;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:11px;font-weight:700;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button onclick="confirmarNovaObra()" style="flex:1;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;border:none;border-radius:10px;padding:11px;font-weight:800;cursor:pointer;font-family:inherit">Criar obra</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL GERENCIAR OBRAS ===== -->
+<div id="modal-gerenciar-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="color:var(--text);font-family:'Barlow',sans-serif">🏗️ Minhas Obras</h3>
+      <button onclick="fecharModalObra()" style="background:transparent;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer">×</button>
+    </div>
+    <div id="obra-plano-info" style="font-size:.76rem;color:var(--muted);margin-bottom:14px"></div>
+    <div id="gerenciar-lista"></div>
+  </div>
+</div>
+
 
 <!-- ===== FIREBASE AUTH GUARD ===== -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -4055,6 +4256,8 @@ if ('serviceWorker' in navigator) {
   function liberarApp(){
     const ov = document.getElementById("auth-overlay");
     if(ov) ov.style.display = "none";
+    // Agora que MGI_EMPRESA está carregado, atualiza a UI de obras (limites por plano)
+    try { if(typeof renderObras === "function") renderObras(); } catch(e){}
   }
   function bloquearComMensagem(html){
     const ov = document.getElementById("auth-overlay");
