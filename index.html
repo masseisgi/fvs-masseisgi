@@ -401,6 +401,7 @@ textarea.input-f{resize:vertical;min-height:52px}
     <select id="obra-select" onchange="selecionarObra(this.value)" style="flex:1;min-width:140px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.82rem;font-family:inherit"></select>
     <button onclick="abrirModalObra()" style="background:transparent;border:1px solid var(--cyan);color:var(--cyan);border-radius:8px;padding:8px 12px;font-size:.76rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">+ Nova obra</button>
     <button onclick="abrirGerenciarObras()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 10px;font-size:.76rem;cursor:pointer;font-family:inherit">⚙️</button>
+    <span id="sync-status" style="font-size:.68rem;color:var(--muted);white-space:nowrap;margin-left:auto"></span>
   </div>
   <!-- TABS (muda conforme módulo) -->
   <div class="tabs" id="tabs-iso">
@@ -3088,6 +3089,114 @@ function salvarObrasLS(){
     localStorage.setItem("mgi_obras", JSON.stringify(state.obras));
     if(state.obraAtual) localStorage.setItem("mgi_obra_atual", state.obraAtual);
   } catch(e){ console.log("Erro ao salvar obras:", e); }
+  syncNuvem(); // dispara sincronização em segundo plano
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// SINCRONIZAÇÃO NA NUVEM (Firestore) — Fase 1: dados estruturados (sem fotos)
+// ═════════════════════════════════════════════════════════════════════════════
+let _syncTimer = null;
+let _syncEmAndamento = false;
+
+// Remove campos pesados (fotos base64) antes de enviar pra nuvem
+function semFotos(obj){
+  const copia = JSON.parse(JSON.stringify(obj));
+  function limpar(o){
+    if(Array.isArray(o)){ o.forEach(limpar); return; }
+    if(o && typeof o === "object"){
+      Object.keys(o).forEach(k=>{
+        if(k === "fotos"){ o[k] = Array.isArray(o[k]) ? o[k].length : 0; } // guarda só a contagem
+        else limpar(o[k]);
+      });
+    }
+  }
+  limpar(copia);
+  return copia;
+}
+
+function atualizarStatusSync(txt, cor){
+  const el = document.getElementById("sync-status");
+  if(el){ el.textContent = txt; el.style.color = cor || "var(--muted)"; }
+}
+
+// Sincroniza com debounce (espera 2s após a última alteração)
+function syncNuvem(){
+  if(typeof firebase === "undefined" || !window.MGI_DB || !window.MGI_USER) return; // só sincroniza logado
+  clearTimeout(_syncTimer);
+  atualizarStatusSync("⏳ Salvando na nuvem...", "var(--yellow)");
+  _syncTimer = setTimeout(enviarNuvem, 2000);
+}
+
+async function enviarNuvem(){
+  if(_syncEmAndamento) return;
+  if(typeof firebase === "undefined" || !window.MGI_DB || !window.MGI_USER) return;
+  _syncEmAndamento = true;
+  try {
+    const tenantId = window.MGI_USER.tenantId;
+    const payload = {
+      obras: state.obras,
+      obraAtual: state.obraAtual,
+      auditoriasSalvas: state.auditoriasSalvas.map(semFotos),
+      fvsSalvas: state.fvsSalvas.map(semFotos),
+      diarios: state.diarios.map(semFotos),
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      atualizadoPor: window.MGI_USER.email || ""
+    };
+    await window.MGI_DB.collection("dados").doc(tenantId).set(payload, { merge: true });
+    atualizarStatusSync("☁️ Salvo na nuvem", "var(--green)");
+    setTimeout(()=>atualizarStatusSync("☁️ Sincronizado", "var(--muted)"), 2000);
+  } catch(e){
+    console.log("Erro ao sincronizar:", e);
+    atualizarStatusSync("⚠️ Erro ao salvar (dados locais OK)", "var(--orange)");
+  } finally {
+    _syncEmAndamento = false;
+  }
+}
+
+// Carrega dados da nuvem ao entrar (chamado após o login)
+async function carregarNuvem(){
+  if(typeof firebase === "undefined" || !window.MGI_DB || !window.MGI_USER) return;
+  try {
+    const tenantId = window.MGI_USER.tenantId;
+    const doc = await window.MGI_DB.collection("dados").doc(tenantId).get();
+    if(!doc.exists) {
+      // Primeira vez: envia o que tem local pra nuvem
+      enviarNuvem();
+      return;
+    }
+    const d = doc.data();
+    // A nuvem é a fonte da verdade para dados estruturados.
+    // Mas preserva as FOTOS locais (que não vão pra nuvem na Fase 1).
+    if(Array.isArray(d.obras)) state.obras = d.obras;
+    if(d.obraAtual) state.obraAtual = d.obraAtual;
+    if(Array.isArray(d.auditoriasSalvas)) state.auditoriasSalvas = mesclarFotosLocais(d.auditoriasSalvas, state.auditoriasSalvas);
+    if(Array.isArray(d.fvsSalvas)) state.fvsSalvas = mesclarFotosLocais(d.fvsSalvas, state.fvsSalvas);
+    if(Array.isArray(d.diarios)) state.diarios = mesclarFotosLocais(d.diarios, state.diarios);
+    // Atualiza localStorage e telas
+    try {
+      localStorage.setItem("mgi_obras", JSON.stringify(state.obras));
+      localStorage.setItem("mgi_auditorias", JSON.stringify(state.auditoriasSalvas));
+      localStorage.setItem("mgi_fvs", JSON.stringify(state.fvsSalvas));
+      localStorage.setItem("mgi_diarios", JSON.stringify(state.diarios));
+    } catch(e){}
+    renderObras();
+    atualizarStatusSync("☁️ Sincronizado", "var(--muted)");
+  } catch(e){
+    console.log("Erro ao carregar da nuvem:", e);
+  }
+}
+
+// Mescla: usa os dados da nuvem, mas mantém as fotos que existem localmente (por id)
+function mesclarFotosLocais(nuvem, local){
+  const mapaLocal = {};
+  (local||[]).forEach(r=>{ if(r && r.id) mapaLocal[r.id] = r; });
+  return nuvem.map(r=>{
+    const loc = mapaLocal[r.id];
+    if(loc && loc.fotos && typeof loc.fotos === "object"){
+      return { ...r, fotos: loc.fotos }; // recupera as fotos locais
+    }
+    return r;
+  });
 }
 
 // Limite de obras por plano
@@ -3255,14 +3364,17 @@ function abrirGerenciarObras(){
 function salvarAuditoriasLS(){
   try { localStorage.setItem("mgi_auditorias", JSON.stringify(state.auditoriasSalvas)); }
   catch(e){ alert("Erro ao salvar: "+e.message); }
+  syncNuvem();
 }
 function salvarFVSLS(){
   try { localStorage.setItem("mgi_fvs", JSON.stringify(state.fvsSalvas)); }
   catch(e){ alert("Erro ao salvar: "+e.message); }
+  syncNuvem();
 }
 function salvarDiariosLS(){
   try { localStorage.setItem("mgi_diarios", JSON.stringify(state.diarios)); }
   catch(e){ alert("Erro ao salvar: "+e.message); }
+  syncNuvem();
 }
 
 // ───── AUDITORIA ISO ─────
@@ -4274,6 +4386,7 @@ if ('serviceWorker' in navigator) {
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  window.MGI_DB = db; // exposto para a sincronização na nuvem
   const LOGIN_URL = "login.html";
 
   window.mgiLogout = function(){
@@ -4285,6 +4398,8 @@ if ('serviceWorker' in navigator) {
     if(ov) ov.style.display = "none";
     // Agora que MGI_EMPRESA está carregado, atualiza a UI de obras (limites por plano)
     try { if(typeof renderObras === "function") renderObras(); } catch(e){}
+    // Carrega os dados da nuvem (sincronização)
+    try { if(typeof carregarNuvem === "function") carregarNuvem(); } catch(e){}
   }
   function bloquearComMensagem(html){
     const ov = document.getElementById("auth-overlay");
