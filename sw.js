@@ -3,7 +3,7 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v7';
+const CACHE_NAME = 'mgi-pro-v10';
 
 const ASSETS = [
   './manifest.json',
@@ -47,7 +47,7 @@ self.addEventListener('fetch', event => {
       req.url.endsWith('.html') ||
       req.url.endsWith('/')) {
     event.respondWith(
-      fetch(req).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+      fetch(req).catch(() => caches.match(req).then(c => c || caches.match('./app.html')))
     );
     return;
   }

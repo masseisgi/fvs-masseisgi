@@ -2,7 +2,7 @@
   "name": "MGI PRO — Massei Gestão Integrada",
   "short_name": "MGI PRO",
   "description": "Auditoria ISO 9001 + PBQP-H, FVS Saneamento e Diário de Obra — Massei Gestão Integrada",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
