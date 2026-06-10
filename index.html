@@ -497,8 +497,12 @@ textarea.input-f{resize:vertical;min-height:52px}
     <!-- TAB 0: SERVIÇO -->
     <div id="fvs-page0">
       <div class="card">
-        <div class="section-hdr orange"><span>🔧</span><div><div class="section-hdr-title">SELECIONAR SERVIÇO</div><div class="section-hdr-sub">Escolha o serviço a ser verificado</div></div></div>
-        <select class="ss-select" id="service-select" onchange="selectService(this.value)">
+        <div class="section-hdr orange"><span>🔧</span><div><div class="section-hdr-title">SELECIONAR SERVIÇO</div><div class="section-hdr-sub">Escolha a categoria e o serviço a verificar</div></div></div>
+        <div class="cat-btns" style="display:flex;gap:10px;margin-bottom:14px">
+          <button type="button" id="cat-btn-saneamento" class="cat-btn" onclick="selectCategoria('saneamento')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:var(--bg2);color:var(--text);font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit">🚰<br/>SANEAMENTO</button>
+          <button type="button" id="cat-btn-construcao" class="cat-btn" onclick="selectCategoria('construcao')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:var(--bg2);color:var(--text);font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit">🏗️<br/>CONSTRUÇÃO CIVIL</button>
+        </div>
+        <select class="ss-select" id="service-select" onchange="selectService(this.value)" style="display:none">
           <option value="">— Escolha um serviço —</option>
         </select>
       </div>
@@ -1569,7 +1573,7 @@ function switchModule(mod){
       btnEl.classList.toggle("fvs", mod===m && m==="fvs");
     }
   });
-  const subs = {iso:"AUDITORIA ISO 9001 + PBQP-H", fvs:"FVS — SANEAMENTO", diario:"DIÁRIO DE OBRA"};
+  const subs = {iso:"AUDITORIA ISO 9001 + PBQP-H", fvs:"FVS — VERIFICAÇÃO DE SERVIÇOS", diario:"DIÁRIO DE OBRA"};
   document.getElementById("module-sub").textContent = subs[mod] || "MASSEI GESTÃO INTEGRADA";
   updateProgress();
   if(mod==="iso") goTab("iso", state.isoTab);
@@ -1948,33 +1952,58 @@ function renderRelatorioISO(){
   setTimeout(()=>initSignaturesForPage("iso"), 80);
 }
 function initFVSSelect(){
-  const sel=document.getElementById("service-select");
-  sel.innerHTML = '<option value="">Selecione o serviço...</option>';
+  // Não popula nada no início — espera o usuário escolher a categoria pelos botões
+  // (a função selectCategoria preenche o seletor)
+}
 
-  // Agrupa por categoria
-  const grupos = {
-    saneamento: { label:"🚰 SANEAMENTO", servicos:[] },
-    construcao: { label:"🏗️ CONSTRUÇÃO CIVIL", servicos:[] }
-  };
-  SERVICOS.forEach(s=>{
-    const cat = s.cat || "saneamento";
-    if(grupos[cat]) grupos[cat].servicos.push(s);
-  });
+// Estado da categoria selecionada
+let fvsCategoriaAtual = null;
 
-  Object.keys(grupos).forEach(catKey=>{
-    const g = grupos[catKey];
-    if(g.servicos.length === 0) return;
-    const og = document.createElement("optgroup");
-    og.label = g.label;
-    // Para construção, sub-agrupa visualmente por etapa (grupo) no texto
-    g.servicos.forEach(s=>{
-      const opt=document.createElement("option");
-      opt.value=s.id;
-      opt.textContent = s.grupo ? (s.grupo + " · " + s.nome) : s.nome;
-      og.appendChild(opt);
+function selectCategoria(cat){
+  fvsCategoriaAtual = cat;
+  // Destaca o botão escolhido
+  const btnS = document.getElementById("cat-btn-saneamento");
+  const btnC = document.getElementById("cat-btn-construcao");
+  [btnS, btnC].forEach(b=>{ if(b){ b.style.borderColor="var(--border)"; b.style.background="var(--bg2)"; b.style.color="var(--text)"; }});
+  const ativo = cat === "saneamento" ? btnS : btnC;
+  if(ativo){
+    ativo.style.borderColor = "var(--cyan)";
+    ativo.style.background = "linear-gradient(135deg, rgba(34,211,238,.12), rgba(74,222,128,.12))";
+    ativo.style.color = "var(--cyan)";
+  }
+
+  // Popula o seletor só com os serviços da categoria
+  const sel = document.getElementById("service-select");
+  sel.innerHTML = '<option value="">— Escolha um serviço —</option>';
+  sel.style.display = "block";
+
+  const servicos = SERVICOS.filter(s => (s.cat || "saneamento") === cat);
+
+  if(cat === "construcao"){
+    // Agrupa por etapa (grupo) usando optgroup
+    const grupos = {};
+    servicos.forEach(s=>{
+      const g = s.grupo || "Outros";
+      if(!grupos[g]) grupos[g] = [];
+      grupos[g].push(s);
     });
-    sel.appendChild(og);
-  });
+    Object.keys(grupos).forEach(gNome=>{
+      const og = document.createElement("optgroup");
+      og.label = gNome;
+      grupos[gNome].forEach(s=>{
+        const opt = document.createElement("option");
+        opt.value = s.id; opt.textContent = s.nome;
+        og.appendChild(opt);
+      });
+      sel.appendChild(og);
+    });
+  } else {
+    servicos.forEach(s=>{
+      const opt = document.createElement("option");
+      opt.value = s.id; opt.textContent = s.nome;
+      sel.appendChild(opt);
+    });
+  }
 }
 
 function selectService(id){
