@@ -498,9 +498,17 @@ textarea.input-f{resize:vertical;min-height:52px}
     <div id="fvs-page0">
       <div class="card">
         <div class="section-hdr orange"><span>🔧</span><div><div class="section-hdr-title">SELECIONAR SERVIÇO</div><div class="section-hdr-sub">Escolha a categoria e o serviço a verificar</div></div></div>
-        <div class="cat-btns" style="display:flex;gap:10px;margin-bottom:14px">
-          <button type="button" id="cat-btn-saneamento" class="cat-btn" onclick="selectCategoria('saneamento')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:var(--bg2);color:var(--text);font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit">🚰<br/>SANEAMENTO</button>
-          <button type="button" id="cat-btn-construcao" class="cat-btn" onclick="selectCategoria('construcao')" style="flex:1;padding:14px 10px;border-radius:12px;border:2px solid var(--border);background:var(--bg2);color:var(--text);font-weight:800;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:inherit">🏗️<br/>CONSTRUÇÃO CIVIL</button>
+        <div class="cat-cards" style="display:flex;gap:12px;margin-bottom:16px">
+          <div id="cat-card-saneamento" onclick="selectCategoria('saneamento')" style="flex:1;padding:22px 12px;border-radius:16px;border:2px solid #2563eb;background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(37,99,235,.06));color:#60a5fa;text-align:center;cursor:pointer;transition:all .2s;user-select:none">
+            <div style="font-size:2rem;line-height:1;margin-bottom:8px">🚰</div>
+            <div style="font-weight:800;font-size:.9rem;letter-spacing:.02em">SANEAMENTO</div>
+            <div style="font-size:.66rem;opacity:.7;margin-top:3px">16 serviços</div>
+          </div>
+          <div id="cat-card-construcao" onclick="selectCategoria('construcao')" style="flex:1;padding:22px 12px;border-radius:16px;border:2px solid #ea580c;background:linear-gradient(135deg,rgba(234,88,12,.18),rgba(234,88,12,.06));color:#fb923c;text-align:center;cursor:pointer;transition:all .2s;user-select:none">
+            <div style="font-size:2rem;line-height:1;margin-bottom:8px">🏗️</div>
+            <div style="font-weight:800;font-size:.9rem;letter-spacing:.02em">CONSTRUÇÃO CIVIL</div>
+            <div style="font-size:.66rem;opacity:.7;margin-top:3px">67 serviços</div>
+          </div>
         </div>
         <select class="ss-select" id="service-select" onchange="selectService(this.value)" style="display:none">
           <option value="">— Escolha um serviço —</option>
@@ -1961,15 +1969,30 @@ let fvsCategoriaAtual = null;
 
 function selectCategoria(cat){
   fvsCategoriaAtual = cat;
-  // Destaca o botão escolhido
-  const btnS = document.getElementById("cat-btn-saneamento");
-  const btnC = document.getElementById("cat-btn-construcao");
-  [btnS, btnC].forEach(b=>{ if(b){ b.style.borderColor="var(--border)"; b.style.background="var(--bg2)"; b.style.color="var(--text)"; }});
-  const ativo = cat === "saneamento" ? btnS : btnC;
-  if(ativo){
-    ativo.style.borderColor = "var(--cyan)";
-    ativo.style.background = "linear-gradient(135deg, rgba(34,211,238,.12), rgba(74,222,128,.12))";
-    ativo.style.color = "var(--cyan)";
+  // Destaca o quadro escolhido (azul=saneamento, laranja=construção)
+  const cardS = document.getElementById("cat-card-saneamento");
+  const cardC = document.getElementById("cat-card-construcao");
+  if(cardS){
+    if(cat === "saneamento"){
+      cardS.style.boxShadow = "0 0 0 3px rgba(37,99,235,.4)";
+      cardS.style.transform = "scale(1.02)";
+      cardS.style.background = "linear-gradient(135deg,rgba(37,99,235,.32),rgba(37,99,235,.14))";
+    } else {
+      cardS.style.boxShadow = "none";
+      cardS.style.transform = "scale(1)";
+      cardS.style.background = "linear-gradient(135deg,rgba(37,99,235,.18),rgba(37,99,235,.06))";
+    }
+  }
+  if(cardC){
+    if(cat === "construcao"){
+      cardC.style.boxShadow = "0 0 0 3px rgba(234,88,12,.4)";
+      cardC.style.transform = "scale(1.02)";
+      cardC.style.background = "linear-gradient(135deg,rgba(234,88,12,.32),rgba(234,88,12,.14))";
+    } else {
+      cardC.style.boxShadow = "none";
+      cardC.style.transform = "scale(1)";
+      cardC.style.background = "linear-gradient(135deg,rgba(234,88,12,.18),rgba(234,88,12,.06))";
+    }
   }
 
   // Popula o seletor só com os serviços da categoria
