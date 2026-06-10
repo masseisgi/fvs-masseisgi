@@ -2686,6 +2686,9 @@ function salvarDiario(){
     alert("Preencha pelo menos a DATA e a OBRA para salvar o registro.");
     return;
   }
+  // Carimba a obra atual
+  d.obraId = state.obraAtual || null;
+  d.obraNome = (state.obras.find(o=>o.id===state.obraAtual)||{}).nome || "";
   // Verifica se já existe um registro com mesmo id (edição)
   const idx = state.diarios.findIndex(x=>x.id===d.id);
   if(idx>=0) state.diarios[idx] = {...d};
@@ -2705,17 +2708,18 @@ function novoDiario(){
 // HISTÓRICO
 function renderHistorico(){
   const cont = document.getElementById("diario-historico");
-  if(state.diarios.length === 0){
+  const lista = filtrarPorObra(state.diarios);
+  if(lista.length === 0){
     cont.innerHTML = `<div class="empty-state">
       <div style="font-size:2.5rem;margin-bottom:12px">📚</div>
-      <div style="font-weight:700;color:var(--cyan);font-size:1rem">Nenhum registro salvo ainda</div>
+      <div style="font-weight:700;color:var(--cyan);font-size:1rem">Nenhum registro salvo ainda${nomeObraFiltro()}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:6px">Preencha e salve registros na aba "Novo".</div></div>`;
     return;
   }
-  const sorted = [...state.diarios].sort((a,b)=>b.data.localeCompare(a.data));
+  const sorted = [...lista].sort((a,b)=>b.data.localeCompare(a.data));
   cont.innerHTML = `<div class="section-hdr"><span>📚</span><div>
-    <div class="section-hdr-title">HISTÓRICO DE REGISTROS</div>
-    <div class="section-hdr-sub">${state.diarios.length} registro(s) salvos</div>
+    <div class="section-hdr-title">HISTÓRICO DE REGISTROS${nomeObraFiltro()}</div>
+    <div class="section-hdr-sub">${lista.length} registro(s) salvos</div>
   </div></div>` + sorted.map(d=>{
     const atCount = (d.atividades||[]).length;
     const ocCount = (d.ocorrencias||[]).length;
@@ -3139,6 +3143,10 @@ function selecionarObra(id){
     if(fvsObra && !fvsObra.value) fvsObra.value = obra.nome;
     if(dObra && !dObra.value) dObra.value = obra.nome;
   }
+  // Atualiza os históricos para mostrar só os registros desta obra
+  try { if(document.getElementById("iso-historico-container")) renderHistoricoISO(); } catch(e){}
+  try { if(document.getElementById("fvs-historico-container")) renderHistoricoFVS(); } catch(e){}
+  try { if(document.getElementById("diario-historico")) renderHistorico(); } catch(e){}
 }
 
 function excluirObra(id){
@@ -3149,6 +3157,18 @@ function excluirObra(id){
   if(state.obraAtual === id) state.obraAtual = state.obras.length ? state.obras[0].id : null;
   salvarObrasLS();
   renderObras();
+}
+
+// ───── Filtro de histórico por obra ─────
+// Mostra registros da obra atual + registros antigos sem obraId (compatibilidade)
+function filtrarPorObra(lista){
+  if(!state.obraAtual) return lista; // sem obra selecionada: mostra tudo
+  return lista.filter(r => !r.obraId || r.obraId === state.obraAtual);
+}
+function nomeObraFiltro(){
+  if(!state.obraAtual) return "";
+  const obra = state.obras.find(o=>o.id===state.obraAtual);
+  return obra ? ` — ${obra.nome}` : "";
 }
 
 // ───── UI das obras ─────
@@ -3253,6 +3273,8 @@ function salvarAuditoria(){
   }
   const snapshot = {
     id: "aud_"+Date.now(),
+    obraId: state.obraAtual || null,
+    obraNome: (state.obras.find(o=>o.id===state.obraAtual)||{}).nome || "",
     savedAt: new Date().toISOString(),
     info: JSON.parse(JSON.stringify(state.info)),
     respostas: JSON.parse(JSON.stringify(state.respostas)),
@@ -3318,19 +3340,21 @@ function excluirAuditoria(id){
 function renderHistoricoISO(){
   const cont = document.getElementById("iso-historico-container");
   if(!cont) return;
-  if(state.auditoriasSalvas.length===0){
+  // Filtra pela obra atual (registros sem obraId aparecem em qualquer obra)
+  const lista = filtrarPorObra(state.auditoriasSalvas);
+  if(lista.length===0){
     cont.innerHTML = `<div class="empty-state">
       <div style="font-size:2.5rem;margin-bottom:12px">📚</div>
-      <div style="font-weight:700;color:var(--cyan);font-size:1rem">Nenhuma auditoria salva</div>
+      <div style="font-weight:700;color:var(--cyan);font-size:1rem">Nenhuma auditoria salva${nomeObraFiltro()}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:6px">As auditorias salvas aparecerão aqui.</div>
     </div>
     <button onclick="novaAuditoria()" class="btn-start" style="margin-top:14px">+ NOVA AUDITORIA</button>`;
     return;
   }
-  const sorted = [...state.auditoriasSalvas].sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
+  const sorted = [...lista].sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
   cont.innerHTML = `<div class="section-hdr"><span>📚</span><div>
-    <div class="section-hdr-title">AUDITORIAS SALVAS</div>
-    <div class="section-hdr-sub">${state.auditoriasSalvas.length} auditoria(s)</div>
+    <div class="section-hdr-title">AUDITORIAS SALVAS${nomeObraFiltro()}</div>
+    <div class="section-hdr-sub">${lista.length} auditoria(s)</div>
   </div></div>
   <button onclick="novaAuditoria()" class="btn-start" style="margin-bottom:14px">+ NOVA AUDITORIA</button>` +
   sorted.map(a=>{
@@ -3377,6 +3401,8 @@ function salvarFVS(){
   }
   const snapshot = {
     id: "fvs_"+Date.now(),
+    obraId: state.obraAtual || null,
+    obraNome: (state.obras.find(o=>o.id===state.obraAtual)||{}).nome || "",
     savedAt: new Date().toISOString(),
     serviceId: state.currentService.id,
     serviceName: state.currentService.nome,
@@ -3468,19 +3494,20 @@ function excluirFVS(id){
 function renderHistoricoFVS(){
   const cont = document.getElementById("fvs-historico-container");
   if(!cont) return;
-  if(state.fvsSalvas.length===0){
+  const lista = filtrarPorObra(state.fvsSalvas);
+  if(lista.length===0){
     cont.innerHTML = `<div class="empty-state">
       <div style="font-size:2.5rem;margin-bottom:12px">📚</div>
-      <div style="font-weight:700;color:var(--orange);font-size:1rem">Nenhuma FVS salva</div>
+      <div style="font-weight:700;color:var(--orange);font-size:1rem">Nenhuma FVS salva${nomeObraFiltro()}</div>
       <div style="color:var(--muted);font-size:.8rem;margin-top:6px">As FVS salvas aparecerão aqui.</div>
     </div>
     <button onclick="novaFVS()" class="btn-start" style="margin-top:14px">+ NOVA FVS</button>`;
     return;
   }
-  const sorted = [...state.fvsSalvas].sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
+  const sorted = [...lista].sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
   cont.innerHTML = `<div class="section-hdr orange"><span>📚</span><div>
-    <div class="section-hdr-title">FVS SALVAS</div>
-    <div class="section-hdr-sub">${state.fvsSalvas.length} FVS(s)</div>
+    <div class="section-hdr-title">FVS SALVAS${nomeObraFiltro()}</div>
+    <div class="section-hdr-sub">${lista.length} FVS(s)</div>
   </div></div>
   <button onclick="novaFVS()" class="btn-start" style="margin-bottom:14px">+ NOVA FVS</button>` +
   sorted.map(f=>{
