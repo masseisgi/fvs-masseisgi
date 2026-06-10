@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MGI PRO — Painel Admin</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0d1117;--bg2:#0f172a;--border:#1e3a4a;--cyan:#22d3ee;--green:#4ade80;
+    --red:#f87171;--yellow:#facc15;--orange:#fb923c;--text:#e2e8f0;--muted:#64748b;
+    --grad:linear-gradient(90deg,#22d3ee,#4ade80);
+  }
+  body{font-family:'Barlow','Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* Overlay de verificação */
+  #guard{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+  .spinner{width:54px;height:54px;border:4px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Tela de bloqueio */
+  #blocked{display:none;text-align:center;max-width:380px;padding:30px}
+  #blocked .ic{font-size:3rem;margin-bottom:14px}
+  #blocked h2{color:var(--text);margin-bottom:10px}
+  #blocked p{color:var(--muted);font-size:.9rem;line-height:1.5;margin-bottom:20px}
+  .btn{background:var(--grad);color:#04121a;border:none;border-radius:10px;padding:12px 22px;font-weight:800;cursor:pointer;font-size:.9rem;font-family:inherit}
+  .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+
+  header{background:var(--bg2);border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+  .logo{width:44px;height:44px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;color:#04121a;font-size:.65rem;text-align:center;line-height:1}
+  header .t{font-weight:800;font-size:1.1rem}
+  header .s{font-size:.7rem;color:var(--cyan);font-weight:700;letter-spacing:.05em}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .admin-email{font-size:.78rem;color:var(--muted)}
+  .logout{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:700;font-size:.78rem;font-family:inherit}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 18px}
+
+  /* Estatísticas */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px}
+  .stat .v{font-size:1.9rem;font-weight:900;line-height:1}
+  .stat .l{font-size:.7rem;color:var(--muted);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:6px}
+  @media(max-width:680px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  .section-title{font-size:1rem;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.85rem;font-family:inherit}
+  .filter{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:.85rem;font-family:inherit;cursor:pointer}
+
+  /* Cards de empresa */
+  .empresas{display:flex;flex-direction:column;gap:12px}
+  .empresa{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .emp-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .emp-info{flex:1;min-width:200px}
+  .emp-nome{font-weight:800;font-size:1rem}
+  .emp-email{font-size:.78rem;color:var(--muted);margin-top:2px}
+  .emp-meta{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;font-size:.72rem;color:var(--muted)}
+  .emp-meta b{color:var(--text)}
+
+  .badge{padding:4px 12px;border-radius:14px;font-size:.7rem;font-weight:800;white-space:nowrap}
+  .b-ativo{background:rgba(74,222,128,.15);color:var(--green);border:1px solid var(--green)}
+  .b-trial{background:rgba(250,204,21,.15);color:var(--yellow);border:1px solid var(--yellow)}
+  .b-expirado{background:rgba(248,113,113,.15);color:var(--red);border:1px solid var(--red)}
+  .b-inativo{background:rgba(100,116,139,.15);color:var(--muted);border:1px solid var(--muted)}
+
+  .emp-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+  .act{border:1px solid var(--border);background:transparent;color:var(--text);border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:.76rem;font-family:inherit;transition:all .15s}
+  .act:hover{border-color:var(--cyan)}
+  .act-ativar{border-color:var(--green);color:var(--green)}
+  .act-desativar{border-color:var(--red);color:var(--red)}
+  .act-cota{border-color:var(--cyan);color:var(--cyan)}
+
+  .empty{text-align:center;padding:40px;color:var(--muted)}
+
+  /* Modal */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:400px;width:100%}
+  .modal h3{margin-bottom:6px}
+  .modal .sub{color:var(--muted);font-size:.82rem;margin-bottom:18px}
+  .modal label{display:block;font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;margin-top:14px}
+  .modal select,.modal input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:11px 13px;color:var(--text);font-size:.88rem;font-family:inherit}
+  .modal-actions{display:flex;gap:10px;margin-top:22px}
+  .modal-actions .btn,.modal-actions .btn-ghost{flex:1;padding:11px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#04121a;padding:12px 22px;border-radius:10px;font-weight:800;z-index:300;display:none;font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- Overlay de verificação de acesso -->
+<div id="guard">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:.85rem">Verificando acesso de administrador...</div>
+  <div id="blocked">
+    <div class="ic">🔒</div>
+    <h2>Acesso restrito</h2>
+    <p>Este painel é exclusivo do administrador da plataforma MGI PRO.</p>
+    <button class="btn" onclick="window.location.href='login.html'">Ir para o login</button>
+  </div>
+</div>
+
+<header style="display:none" id="hdr">
+  <div class="logo">MGI<br>PRO</div>
+  <div>
+    <div class="t">MGI PRO</div>
+    <div class="s">PAINEL ADMINISTRATIVO</div>
+  </div>
+  <div class="right">
+    <span class="admin-email" id="admin-email"></span>
+    <button class="logout" onclick="sair()">Sair</button>
+  </div>
+</header>
+
+<div class="wrap" id="content" style="display:none">
+  <!-- Estatísticas -->
+  <div class="stats">
+    <div class="stat"><div class="v" id="st-total" style="color:var(--cyan)">—</div><div class="l">Empresas</div></div>
+    <div class="stat"><div class="v" id="st-ativas" style="color:var(--green)">—</div><div class="l">Ativas</div></div>
+    <div class="stat"><div class="v" id="st-trial" style="color:var(--yellow)">—</div><div class="l">Em Trial</div></div>
+    <div class="stat"><div class="v" id="st-ia" style="color:var(--orange)">—</div><div class="l">Gerações IA</div></div>
+  </div>
+
+  <div class="section-title">🏢 Empresas cadastradas</div>
+  <div class="toolbar">
+    <input class="search" id="busca" placeholder="🔍 Buscar por nome ou e-mail..." oninput="render()">
+    <select class="filter" id="filtro" onchange="render()">
+      <option value="">Todos os status</option>
+      <option value="ativo">Apenas ativas</option>
+      <option value="trial">Apenas em trial</option>
+      <option value="expirado">Apenas expiradas</option>
+    </select>
+    <button class="filter" onclick="carregar()">↻ Atualizar</button>
+  </div>
+
+  <div class="empresas" id="lista"></div>
+</div>
+
+<!-- Modal de ativação -->
+<div class="modal-bg" id="modal-ativar">
+  <div class="modal">
+    <h3>Ativar empresa</h3>
+    <div class="sub" id="modal-emp-nome"></div>
+    <label>Plano</label>
+    <select id="modal-plano">
+      <option value="basico">Básico — R$197/mês</option>
+      <option value="pro">Pro — R$397/mês</option>
+      <option value="enterprise">Enterprise — R$997/mês</option>
+    </select>
+    <label>Cota de IA (gerações/mês)</label>
+    <input type="number" id="modal-cota" value="99999">
+    <div class="modal-actions">
+      <button class="btn-ghost btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn" onclick="confirmarAtivar()">Ativar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de cota -->
+<div class="modal-bg" id="modal-cota-bg">
+  <div class="modal">
+    <h3>Ajustar cota de IA</h3>
+    <div class="sub" id="modal-cota-nome"></div>
+    <label>Nova cota (gerações)</label>
+    <input type="number" id="modal-cota-input" value="99999">
+    <div class="modal-actions">
+      <button class="btn-ghost btn" onclick="fecharModal()">Cancelar</button>
+      <button class="btn" onclick="confirmarCota()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCCmp1pH56xwRvqceZ_pG73J30_kTLUtCU",
+  authDomain: "mgi-pro.firebaseapp.com",
+  projectId: "mgi-pro",
+  storageBucket: "mgi-pro.firebasestorage.app",
+  messagingSenderId: "157049569327",
+  appId: "1:157049569327:web:d1779979320f49e1c2c6da",
+  measurementId: "G-KF5E64P9ZT"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const SUPER_ADMIN = "thiago@masseisgi.com";
+let empresas = [];
+
+// ===== GUARDA DE ACESSO =====
+auth.onAuthStateChanged(function(user){
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+  if((user.email||"").toLowerCase() !== SUPER_ADMIN.toLowerCase()){
+    // Não é o super admin → bloqueia
+    document.querySelector("#guard .spinner").style.display = "none";
+    document.querySelector("#guard > div").style.display = "none";
+    document.getElementById("blocked").style.display = "block";
+    return;
+  }
+  // É o admin → libera
+  document.getElementById("admin-email").textContent = user.email;
+  document.getElementById("guard").style.display = "none";
+  document.getElementById("hdr").style.display = "flex";
+  document.getElementById("content").style.display = "block";
+  carregar();
+});
+
+function sair(){ auth.signOut().then(()=>window.location.href="login.html"); }
+
+// ===== CARREGAR EMPRESAS =====
+async function carregar(){
+  try {
+    const snap = await db.collection("empresas").get();
+    empresas = [];
+    snap.forEach(doc => empresas.push({ id:doc.id, ...doc.data() }));
+    calcStats();
+    render();
+  } catch(e){
+    showToast("Erro ao carregar: " + e.message, true);
+  }
+}
+
+function statusDe(emp){
+  if(emp.plano === "ativo") return "ativo";
+  // trial: verifica se expirou
+  const fim = emp.trialFim && emp.trialFim.toDate ? emp.trialFim.toDate() : null;
+  if(fim && fim < new Date()) return "expirado";
+  if(emp.ativo === false) return "inativo";
+  return "trial";
+}
+
+function calcStats(){
+  let ativas=0, trial=0, ia=0;
+  empresas.forEach(e=>{
+    const s = statusDe(e);
+    if(s==="ativo") ativas++;
+    if(s==="trial") trial++;
+    ia += (e.iaUsadas||0);
+  });
+  document.getElementById("st-total").textContent = empresas.length;
+  document.getElementById("st-ativas").textContent = ativas;
+  document.getElementById("st-trial").textContent = trial;
+  document.getElementById("st-ia").textContent = ia;
+}
+
+function fmtData(ts){
+  if(!ts || !ts.toDate) return "—";
+  const d = ts.toDate();
+  return d.toLocaleDateString("pt-BR");
+}
+
+function diasRestantes(emp){
+  const fim = emp.trialFim && emp.trialFim.toDate ? emp.trialFim.toDate() : null;
+  if(!fim) return null;
+  const dias = Math.ceil((fim - new Date())/(1000*60*60*24));
+  return dias;
+}
+
+function render(){
+  const busca = (document.getElementById("busca").value||"").toLowerCase();
+  const filtro = document.getElementById("filtro").value;
+  const lista = document.getElementById("lista");
+
+  let arr = empresas.filter(e=>{
+    const txt = ((e.nome||"")+" "+(e.donoEmail||"")).toLowerCase();
+    if(busca && !txt.includes(busca)) return false;
+    if(filtro && statusDe(e) !== filtro) return false;
+    return true;
+  });
+
+  // Ordena: trial primeiro, depois por nome
+  arr.sort((a,b)=>(a.nome||"").localeCompare(b.nome||""));
+
+  if(arr.length === 0){
+    lista.innerHTML = '<div class="empty">Nenhuma empresa encontrada.</div>';
+    return;
+  }
+
+  const badges = {ativo:["b-ativo","✅ Ativo"],trial:["b-trial","⏳ Trial"],expirado:["b-expirado","⌛ Expirado"],inativo:["b-inativo","⏸️ Inativo"]};
+
+  lista.innerHTML = arr.map(e=>{
+    const s = statusDe(e);
+    const [bcls,blbl] = badges[s];
+    const dias = diasRestantes(e);
+    const planoNome = e.plano==="ativo" ? (e.planoNome||"Pago") : "Trial";
+
+    let trialInfo = "";
+    if(s==="trial" && dias!==null) trialInfo = `<span>Trial: <b>${dias} dia(s)</b></span>`;
+    else if(s==="expirado") trialInfo = `<span style="color:var(--red)">Expirou em ${fmtData(e.trialFim)}</span>`;
+
+    let acoes = "";
+    if(s==="ativo"){
+      acoes = `<button class="act act-cota" onclick="abrirCota('${e.id}')">⚡ Ajustar cota</button>
+               <button class="act act-desativar" onclick="desativar('${e.id}')">⏸️ Desativar</button>`;
+    } else {
+      acoes = `<button class="act act-ativar" onclick="abrirAtivar('${e.id}')">✅ Ativar</button>
+               <button class="act act-cota" onclick="abrirCota('${e.id}')">⚡ Ajustar cota</button>`;
+    }
+
+    return `<div class="empresa">
+      <div class="emp-top">
+        <div class="emp-info">
+          <div class="emp-nome">${e.nome||"(sem nome)"}</div>
+          <div class="emp-email">${e.donoEmail||"—"}</div>
+          <div class="emp-meta">
+            <span>Plano: <b>${planoNome}</b></span>
+            <span>IA: <b>${e.iaUsadas||0}/${e.iaCota||0}</b></span>
+            <span>Criada: <b>${fmtData(e.criadoEm)}</b></span>
+            ${trialInfo}
+          </div>
+        </div>
+        <span class="badge ${bcls}">${blbl}</span>
+      </div>
+      <div class="emp-actions">${acoes}</div>
+    </div>`;
+  }).join("");
+}
+
+// ===== AÇÕES =====
+let empAtual = null;
+
+function abrirAtivar(id){
+  empAtual = empresas.find(e=>e.id===id);
+  document.getElementById("modal-emp-nome").textContent = empAtual.nome || empAtual.donoEmail;
+  document.getElementById("modal-ativar").classList.add("show");
+}
+function abrirCota(id){
+  empAtual = empresas.find(e=>e.id===id);
+  document.getElementById("modal-cota-nome").textContent = empAtual.nome || empAtual.donoEmail;
+  document.getElementById("modal-cota-input").value = empAtual.iaCota || 99999;
+  document.getElementById("modal-cota-bg").classList.add("show");
+}
+function fecharModal(){
+  document.getElementById("modal-ativar").classList.remove("show");
+  document.getElementById("modal-cota-bg").classList.remove("show");
+}
+
+const PLANO_NOMES = {basico:"Básico", pro:"Pro", enterprise:"Enterprise"};
+
+async function confirmarAtivar(){
+  if(!empAtual) return;
+  const plano = document.getElementById("modal-plano").value;
+  const cota = parseInt(document.getElementById("modal-cota").value) || 99999;
+  try {
+    await db.collection("empresas").doc(empAtual.id).update({
+      plano: "ativo",
+      planoNome: PLANO_NOMES[plano],
+      iaCota: cota,
+      ativo: true
+    });
+    fecharModal();
+    showToast("✅ " + (empAtual.nome||"Empresa") + " ativada!");
+    carregar();
+  } catch(e){ showToast("Erro: " + e.message, true); }
+}
+
+async function confirmarCota(){
+  if(!empAtual) return;
+  const cota = parseInt(document.getElementById("modal-cota-input").value) || 0;
+  try {
+    await db.collection("empresas").doc(empAtual.id).update({ iaCota: cota });
+    fecharModal();
+    showToast("✅ Cota atualizada!");
+    carregar();
+  } catch(e){ showToast("Erro: " + e.message, true); }
+}
+
+async function desativar(id){
+  const emp = empresas.find(e=>e.id===id);
+  if(!confirm("Desativar " + (emp.nome||"esta empresa") + "? Ela perderá o acesso ao app.")) return;
+  try {
+    await db.collection("empresas").doc(id).update({ plano:"trial", ativo:false });
+    showToast("Empresa desativada.");
+    carregar();
+  } catch(e){ showToast("Erro: " + e.message, true); }
+}
+
+function showToast(msg, erro){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.background = erro ? "var(--red)" : "var(--green)";
+  t.style.display = "block";
+  setTimeout(()=>t.style.display="none", 3000);
+}
+</script>
+</body>
+</html>
