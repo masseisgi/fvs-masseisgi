@@ -3221,6 +3221,46 @@ function nomePlanoAtual(){
   return "Trial";
 }
 
+// === ASSINATURA VIA MERCADOPAGO (cartão) ===
+async function assinarPlano(plano){
+  const btns = document.querySelectorAll('[data-assinar]');
+  btns.forEach(b=>{ b.style.opacity=".55"; b.style.pointerEvents="none"; });
+  try {
+    const fn = firebase.app().functions("southamerica-east1");
+    const criar = fn.httpsCallable("criarAssinatura");
+    const r = await criar({ plano: plano });
+    if(r.data && r.data.init_point){
+      window.location.href = r.data.init_point; // vai pro checkout do MercadoPago
+      return;
+    }
+    alert("Não foi possível iniciar a assinatura. Tente novamente.");
+  } catch(e){
+    alert("Erro ao assinar: " + (e.message || e));
+  }
+  btns.forEach(b=>{ b.style.opacity="1"; b.style.pointerEvents="auto"; });
+}
+
+// Gera os botões de assinatura (cartão). 'destaque' = id do plano em evidência.
+function htmlBotoesPlanos(destaque){
+  const planos = [
+    {id:"basico",     nome:"Básico",     preco:"R$ 297",   desc:"1 obra"},
+    {id:"pro",        nome:"Pro",        preco:"R$ 597",   desc:"até 3 obras"},
+    {id:"enterprise", nome:"Enterprise", preco:"R$ 1.297", desc:"obras ilimitadas"}
+  ];
+  return planos.map(p=>{
+    const hot = p.id===destaque;
+    return '<button data-assinar onclick="assinarPlano(\'' + p.id + '\')" '
+      + 'style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px;'
+      + 'background:' + (hot?'linear-gradient(90deg,#0e7490,#15803d)':'rgba(255,255,255,.04)') + ';'
+      + 'border:1px solid ' + (hot?'transparent':'#334155') + ';'
+      + 'color:' + (hot?'#fff':'#cbd5e1') + ';border-radius:10px;padding:12px 14px;font-weight:800;'
+      + 'font-size:.85rem;cursor:pointer;margin-bottom:8px;font-family:Barlow,sans-serif">'
+      + '<span>💳 ' + p.nome + ' <span style="font-weight:500;opacity:.75;font-size:.73rem">· ' + p.desc + '</span></span>'
+      + '<span>' + p.preco + '<span style="font-weight:500;opacity:.7;font-size:.7rem">/mês</span></span>'
+      + '</button>';
+  }).join("");
+}
+
 function podeAddObra(){
   return state.obras.length < limiteObras();
 }
@@ -3304,8 +3344,9 @@ function abrirModalObra(){
     const lim = limiteObras();
     aviso.style.display = "block";
     aviso.innerHTML = `⚠️ Seu plano <b>${nomePlanoAtual()}</b> permite ${lim===Infinity?"obras ilimitadas":lim+" obra(s)"}. ` +
-      `Para gerenciar mais obras, faça upgrade para o plano <b>Pro</b>.<br><br>` +
-      `<a href="https://wa.me/5511974946171?text=Quero%20fazer%20upgrade%20do%20MGI%20PRO%20para%20o%20plano%20Pro" target="_blank" style="display:inline-block;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;text-decoration:none;border-radius:8px;padding:9px 16px;font-weight:800;font-size:.8rem;margin-top:4px">💬 Fazer upgrade</a>`;
+      `Assine para gerenciar mais obras:<br><br>` +
+      htmlBotoesPlanos("pro") +
+      `<a href="https://wa.me/5511974946171?text=Quero%20fazer%20upgrade%20do%20MGI%20PRO" target="_blank" style="display:block;text-align:center;color:#94a3b8;text-decoration:none;font-size:.76rem;margin-top:4px">ou falar no WhatsApp →</a>`;
     form.style.display = "none";
   } else {
     aviso.style.display = "none";
@@ -4458,7 +4499,7 @@ if ('serviceWorker' in navigator) {
       }
 
       if(bloqueado){
-        bloquearComMensagem('<div style="text-align:center;max-width:360px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2.4rem;margin-bottom:10px">⏳</div><div style="color:#e2e8f0;font-weight:800;font-size:1.1rem;margin-bottom:8px">Seu período de teste terminou</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:20px;line-height:1.5">Assine o MGI PRO para continuar usando auditorias, FVS e Diário de Obra com IA.</div><a href="https://wa.me/5511974946171?text=Quero%20assinar%20o%20MGI%20PRO" target="_blank" style="display:block;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;text-decoration:none;border-radius:10px;padding:13px;font-weight:800;margin-bottom:10px">💬 Falar com a Massei</a><a href="mailto:thiago@masseisgi.com?subject=Assinar%20MGI%20PRO" style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:11px;font-weight:600;font-size:.82rem;margin-bottom:14px">📧 thiago@masseisgi.com</a><button onclick="mgiLogout()" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:.76rem">Sair</button></div>');
+        bloquearComMensagem('<div style="text-align:center;max-width:360px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2.4rem;margin-bottom:10px">⏳</div><div style="color:#e2e8f0;font-weight:800;font-size:1.1rem;margin-bottom:8px">Seu período de teste terminou</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:20px;line-height:1.5">Assine o MGI PRO para continuar usando auditorias, FVS e Diário de Obra com IA.</div>' + htmlBotoesPlanos('pro') + '<a href="https://wa.me/5511974946171?text=Quero%20assinar%20o%20MGI%20PRO" target="_blank" style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:11px;font-weight:600;font-size:.82rem;margin-bottom:10px">💬 Pagar via PIX (WhatsApp)</a><a href="mailto:thiago@masseisgi.com?subject=Assinar%20MGI%20PRO" style="display:block;background:transparent;border:1px solid #334155;color:#94a3b8;text-decoration:none;border-radius:10px;padding:11px;font-weight:600;font-size:.82rem;margin-bottom:14px">📧 thiago@masseisgi.com</a><button onclick="mgiLogout()" style="background:transparent;border:none;color:#64748b;cursor:pointer;font-size:.76rem">Sair</button></div>');
         return;
       }
 
