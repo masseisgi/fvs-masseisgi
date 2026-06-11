@@ -358,7 +358,19 @@ textarea.input-f{resize:vertical;min-height:52px}
 <div id="trial-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(90deg,#0e7490,#15803d);color:#fff;padding:5px 12px;font-size:.7rem;font-weight:600;font-family:'Barlow',sans-serif;align-items:center;justify-content:space-between;gap:10px">
   <span id="trial-empresa" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></span>
   <span id="trial-status" style="white-space:nowrap"></span>
+  <button id="trial-assinar" onclick="abrirModalPlanos()" style="display:none;background:#fff;color:#15803d;border:none;border-radius:14px;padding:2px 12px;font-weight:800;font-size:.66rem;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap">💳 Assinar</button>
   <button onclick="mgiLogout()" style="background:rgba(255,255,255,.9);color:#0e7490;border:none;border-radius:14px;padding:2px 12px;font-weight:800;font-size:.66rem;cursor:pointer;font-family:'Barlow',sans-serif;white-space:nowrap">Sair</button>
+</div>
+
+<!-- MODAL DE PLANOS (assinar com cartão) -->
+<div id="modal-planos-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:650;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:380px;width:100%;padding:22px;font-family:Barlow,sans-serif">
+    <div style="font-weight:800;font-size:1.05rem;color:var(--text);margin-bottom:4px">Assinar o MGI PRO</div>
+    <div style="color:var(--muted);font-size:.82rem;margin-bottom:16px">Pagamento no cartão, ativação na hora.</div>
+    <div id="modal-planos-lista"></div>
+    <a href="https://wa.me/5511974946171?text=Quero%20assinar%20o%20MGI%20PRO" target="_blank" style="display:block;text-align:center;color:var(--muted);text-decoration:none;font-size:.76rem;margin-top:4px">ou pagar via PIX (WhatsApp) →</a>
+    <button onclick="fecharModalPlanos()" style="display:block;width:100%;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;margin-top:14px;font-family:inherit">Fechar</button>
+  </div>
 </div>
 
 <!-- LIGHTBOX -->
@@ -3261,6 +3273,15 @@ function htmlBotoesPlanos(destaque){
   }).join("");
 }
 
+// Abre/fecha o modal de planos (assinar a qualquer momento)
+function abrirModalPlanos(){
+  document.getElementById("modal-planos-lista").innerHTML = htmlBotoesPlanos("pro");
+  document.getElementById("modal-planos-bg").style.display = "flex";
+}
+function fecharModalPlanos(){
+  document.getElementById("modal-planos-bg").style.display = "none";
+}
+
 function podeAddObra(){
   return state.obras.length < limiteObras();
 }
@@ -4508,6 +4529,12 @@ if ('serviceWorker' in navigator) {
       if(bar){
         document.getElementById("trial-empresa").textContent = (empresa && empresa.nome) ? empresa.nome : (udata.nome || user.email);
         document.getElementById("trial-status").textContent = statusTxt;
+        // Botão "Assinar" aparece só pra quem ainda não é pago (trial)
+        const _assinarBtn = document.getElementById("trial-assinar");
+        if(_assinarBtn){
+          const _ehPago = empresa && (empresa.plano === "ativo" || empresa.plano === "pago");
+          _assinarBtn.style.display = _ehPago ? "none" : "inline-block";
+        }
         bar.style.display = "flex";
         // mede a altura real da barra e empurra o conteúdo + ajusta o header sticky
         const h = bar.offsetHeight || 26;
