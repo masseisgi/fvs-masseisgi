@@ -2683,7 +2683,7 @@ function mgiMesclarEstado(rem){
   state.fichasCustom=_mesclarLista(state.fichasCustom,rem.fichasCustom,rmv,false);
   state.liberacoes=_ordenar(_mesclarLista(state.liberacoes||[],rem.liberacoes,rmv,true));
   state.docsCtl=_mesclarLista(state.docsCtl||[],rem.docsCtl,rmv,false);
-  ['trechos','materiais','dds'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
+  ['trechos','materiais','dds','locais'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
   state.historico=_mesclarLista(state.historico||[],rem.historico,{},false).sort((a,b)=>_ts(b.em)-_ts(a.em)).slice(0,600);
   if(rem.empresaCfg && (!state.empresaCfg || _ts(rem.empresaCfg.atualizadoEm)>_ts(state.empresaCfg.atualizadoEm))) state.empresaCfg=rem.empresaCfg;
   else if(state.empresaCfg && (!rem.empresaCfg || _ts(state.empresaCfg.atualizadoEm)>_ts(rem.empresaCfg.atualizadoEm))) _mgiLocalNovo=true;
@@ -2698,7 +2698,7 @@ function mgiSalvarLocal(){
     localStorage.setItem("mgi_acoes_ctl",JSON.stringify(state.acoesCtl||{})); localStorage.setItem("mgi_criterios",JSON.stringify(state.criterios||{}));
     localStorage.setItem("mgi_fichas",JSON.stringify(state.fichasCustom||[])); localStorage.setItem("mgi_removidos",JSON.stringify(state.removidos||{}));
     localStorage.setItem("mgi_empresa_cfg",JSON.stringify(state.empresaCfg||null));
-    ["trechos","materiais","dds"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
+    ["trechos","materiais","dds","locais"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
     localStorage.setItem("mgi_liberacoes",JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs",JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico",JSON.stringify((state.historico||[]).slice(0,600)));
   }catch(e){}
 }
@@ -2730,7 +2730,7 @@ async function enviarNuvem(){
         empresaCfg: state.empresaCfg || null,
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
-        trechos: state.trechos || [], materiais: state.materiais || [], dds: state.dds || [],
+        trechos: state.trechos || [], materiais: state.materiais || [], dds: state.dds || [], locais: state.locais || [],
         historico: (state.historico||[]).slice(0,600),
         atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
         atualizadoPor: window.MGI_USER.email || ""
@@ -2780,7 +2780,7 @@ async function carregarNuvem(){
       localStorage.setItem("mgi_fichas", JSON.stringify(state.fichasCustom||[]));
       localStorage.setItem("mgi_removidos", JSON.stringify(state.removidos||{}));
       localStorage.setItem("mgi_empresa_cfg", JSON.stringify(state.empresaCfg||null));
-      ["trechos","materiais","dds"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
+      ["trechos","materiais","dds","locais"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
       localStorage.setItem("mgi_liberacoes", JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs", JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico", JSON.stringify((state.historico||[]).slice(0,600)));
     } catch(e){}
     renderObras();
@@ -5102,6 +5102,15 @@ html.light .btn-NA.active{background:#475569;color:#fff}
 html:not(.light) .logo-img{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 2px 10px rgba(59,155,255,.18)}
 html.light .logo-img{box-shadow:0 2px 8px rgba(15,23,42,.18)}
 .pi-k{cursor:pointer}
+.pr-box{max-width:760px}.pr-tabs{display:flex;gap:6px;flex-wrap:wrap}.pr-tabs button{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:6px 12px;font:700 .8rem Barlow,sans-serif;cursor:pointer}.pr-tabs button.on{border-color:var(--cyan);background:rgba(59,155,255,.12)}
+.pr-lg{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text);margin-right:8px}.pr-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.pr-grade{display:flex;flex-direction:column;gap:4px;max-height:46vh;overflow:auto;padding:8px;background:var(--surf2);border:1px solid var(--border2);border-radius:14px}
+.pr-l{display:flex;align-items:center;gap:6px}.pr-p{min-width:30px;font:800 .74rem Barlow,sans-serif;color:var(--muted);text-align:right}
+.pr-u{display:flex;gap:4px;flex-wrap:wrap;flex:1}.pr-c{position:relative;flex:1 1 52px;min-width:46px;max-width:110px;height:34px;border:0;border-radius:7px;color:#fff;font:700 .7rem Barlow,sans-serif;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.pr-c i{position:absolute;top:-6px;right:-4px;background:#fff;color:#DC2626;border-radius:999px;font-style:normal;font-size:.62rem;padding:0 5px;border:1px solid #DC2626}
+.pr-q{overflow:auto;max-height:52vh;border:1px solid var(--border2);border-radius:12px}.pr-q table{border-collapse:collapse;font-size:.72rem}.pr-q th{position:sticky;top:0;background:var(--bg2);color:var(--text);padding:4px;height:96px;vertical-align:bottom}
+.pr-q th span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-weight:700}.pr-q td{padding:3px;text-align:center;border-top:1px solid var(--border2)}.pr-q td i{display:block;min-width:26px;height:24px;line-height:24px;border-radius:6px;color:#fff;font-style:normal;font-weight:800}
+.pr-qp{position:sticky;left:0;background:var(--bg2);color:var(--text);font-weight:700;white-space:nowrap}
 #mp-mapa{height:46vh;min-height:260px;border-radius:14px;overflow:hidden;border:1px solid var(--border2);background:var(--surf2)}
 .mp-vazio{padding:18px;color:var(--muted);font-size:.84rem;line-height:1.5}
 .mp-leg{display:flex;flex-wrap:wrap;gap:6px}.mp-leg button{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:4px 10px;font:600 .74rem Barlow,sans-serif;cursor:pointer}
@@ -5809,7 +5818,7 @@ window.mgiTrechoInfo=function(t){
   fvs.forEach(s=>Object.values(s.respostas||{}).forEach(v=>{ if(v==="C")C++; if(v==="NC")N++; }));
   const ALL=(window._mgiCalc&&window._mgiCalc.ALL)||[]; const ncAb=ALL.length?ALL.filter(a=>ids.has(a.snapId)&&a.status!=="fechada").length:N;
   const mats=vivos(state.materiais).filter(m=>(m.trechos||[]).includes(t.id));
-  let sit="planejado"; if(t.concluido) sit="concluido"; else if(ncAb) sit="nc"; else if(t.emExecucao) sit="execucao"; else if(fvs.length) sit="inspecionado"; else if(libs.some(l=>/Liberada/.test(l.situacao||""))) sit="liberado";
+  let sit="planejado"; if(ncAb) sit="nc"; else if(t.concluido) sit="concluido"; else if(t.emExecucao) sit="execucao"; else if(fvs.length) sit="inspecionado"; else if(libs.some(l=>/Liberada/.test(l.situacao||""))) sit="liberado";
   return {fvs,libs,mats,ncAb,C,N,sit};
 };
 
@@ -5885,7 +5894,7 @@ window.mgiMateriais=function(){ const L0=daObra(state.materiais).sort((a,b)=>(b.
   modal(`<h3>📦 Rastreabilidade de materiais</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Recebimento por lote ou nota fiscal e onde cada lote foi aplicado.</p>
    <input class="rg-busca" type="search" placeholder="Buscar por lote, nota fiscal, material ou fabricante" value="${$e(MBUSCA)}" onchange="MBUSCA=this.value;window.__mb=this.value;mgiMateriaisBusca(this.value)">
    ${ro()?"":`<button class="ac5-save" onclick="mgiMaterialForm()">+ Registrar recebimento</button>`}
-   <div class="rg-lista">${L1.map(m=>{ const tr=(m.trechos||[]).map(id=>(state.trechos.find(t=>t.id===id)||{}).nome).filter(Boolean); return `<div class="rg-it" style="border-left-color:${cor[m.inspecao]||"var(--border)"}" onclick="mgiMaterialForm('${m.id}')"><div class="rg-tx"><span class="rg-tp" style="color:${cor[m.inspecao]||"var(--muted)"}">${$e(m.inspecao||"Sem inspeção")} · ${(m.data||"").split("-").reverse().join("/")}</span><b>${$e(m.material)}</b><span>Lote ${$e(m.lote||"-")} · NF ${$e(m.nf||"-")} · ${$e(m.qtd||"")} ${$e(m.unidade||"")}${m.fabricante?" · "+$e(m.fabricante):""}</span><span>${tr.length?"Aplicado em: "+tr.map($e).join(", "):"Ainda não aplicado"}</span></div></div>`; }).join("")||`<p class="pi-nada">Nenhum recebimento registrado.</p>`}</div>
+   <div class="rg-lista">${L1.map(m=>{ const tr=(m.trechos||[]).map(id=>(typeof mgiNomeLocal==="function"?mgiNomeLocal(id):(state.trechos.find(t=>t.id===id)||{}).nome)).filter(Boolean); return `<div class="rg-it" style="border-left-color:${cor[m.inspecao]||"var(--border)"}" onclick="mgiMaterialForm('${m.id}')"><div class="rg-tx"><span class="rg-tp" style="color:${cor[m.inspecao]||"var(--muted)"}">${$e(m.inspecao||"Sem inspeção")} · ${(m.data||"").split("-").reverse().join("/")}</span><b>${$e(m.material)}</b><span>Lote ${$e(m.lote||"-")} · NF ${$e(m.nf||"-")} · ${$e(m.qtd||"")} ${$e(m.unidade||"")}${m.fabricante?" · "+$e(m.fabricante):""}</span><span>${tr.length?"Aplicado em: "+tr.map($e).join(", "):"Ainda não aplicado"}</span></div></div>`; }).join("")||`<p class="pi-nada">Nenhum recebimento registrado.</p>`}</div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiRastreioPDF()">PDF de rastreabilidade</button><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
 window.MBUSCA=""; window.mgiMateriaisBusca=v=>{ MBUSCA=v; mgiMateriais(); };
 window.mgiMaterialForm=function(id){ const m=id&&state.materiais.find(x=>x.id===id); MT=m?JSON.parse(JSON.stringify(m)):{id:"mt_"+Date.now(),obraId:obraId(),data:new Date().toISOString().slice(0,10),material:"",fabricante:"",fornecedor:"",lote:"",nf:"",qtd:"",unidade:"un",certificado:"",inspecao:"",obs:"",trechos:[],recebidoPor:(window.MGI_USER||{}).email||""}; mtRender(); };
@@ -5903,7 +5912,7 @@ function mtRender(){ const T=daObra(state.trechos), dis=ro()?" disabled":"";
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiMateriais()">Voltar</button>${!ro()&&state.materiais.some(x=>x.id===MT.id)?`<button class="ac5-cancel" onclick="mgiMaterialExcluir()">Excluir</button>`:""}${ro()?"":`<button class="ac5-save" onclick="mgiMaterialSalvar()">Salvar</button>`}</div>`); }
 window.mgiMaterialSalvar=function(){ mtLer(); if(!MT.material){ alert("Informe o material."); return; } MT.atualizadoEm=agora(); const i=state.materiais.findIndex(x=>x.id===MT.id); if(i>=0) state.materiais[i]=MT; else state.materiais.push(MT); log("Registrou material",MT.material+" lote "+(MT.lote||"-")); salvar(); mgiMateriais(); };
 window.mgiMaterialExcluir=function(){ if(!confirm("Excluir este registro?")) return; state.materiais=state.materiais.filter(x=>x.id!==MT.id); if(typeof mgiLapide==="function") mgiLapide(MT.id); salvar(); mgiMateriais(); };
-window.mgiRastreioPDF=function(){ const L0=daObra(state.materiais); const rows=L0.map(m=>`<tr><td>${(m.data||"").split("-").reverse().join("/")}</td><td>${$e(m.material)}</td><td>${$e(m.fabricante||"")}</td><td>${$e(m.lote||"")}</td><td>${$e(m.nf||"")}</td><td>${$e(m.certificado||"")}</td><td>${$e((m.qtd||"")+" "+(m.unidade||""))}</td><td>${$e(m.inspecao||"")}</td><td>${(m.trechos||[]).map(id=>$e((state.trechos.find(t=>t.id===id)||{}).nome||"")).join(", ")}</td></tr>`).join("");
+window.mgiRastreioPDF=function(){ const L0=daObra(state.materiais); const rows=L0.map(m=>`<tr><td>${(m.data||"").split("-").reverse().join("/")}</td><td>${$e(m.material)}</td><td>${$e(m.fabricante||"")}</td><td>${$e(m.lote||"")}</td><td>${$e(m.nf||"")}</td><td>${$e(m.certificado||"")}</td><td>${$e((m.qtd||"")+" "+(m.unidade||""))}</td><td>${$e(m.inspecao||"")}</td><td>${(m.trechos||[]).map(id=>$e((typeof mgiNomeLocal==="function"?mgiNomeLocal(id):(state.trechos.find(t=>t.id===id)||{}).nome)||"")).join(", ")}</td></tr>`).join("");
   abrirJanelaPDF(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rastreabilidade de materiais — MGI PRO</title><style>${typeof cssPDF==="function"?cssPDF():""} table{font-size:8pt}</style></head><body><h1 style="font-size:16pt;margin:0 0 2mm">Rastreabilidade de materiais</h1><p style="color:#475569;font-size:9pt;margin:0 0 5mm">${$e(obraNm(obraId()))} · emitido em ${new Date().toLocaleDateString("pt-BR")} pelo MGI PRO</p><table><tr><th>Data</th><th>Material</th><th>Fabricante</th><th>Lote</th><th>NF</th><th>Certificado</th><th>Qtd.</th><th>Inspeção</th><th>Aplicado em</th></tr>${rows}</table><div class="footer">MGI PRO, Massei Gestão Integrada.</div></body></html>`); };
 
 // ───────────────────────── DDS da qualidade ─────────────────────────
@@ -5982,7 +5991,7 @@ function contexto(){ const o=obraId(), H=new Date(); H.setHours(0,0,0,0); const 
   const tr=daObra(state.trechos).slice(0,80).map(t=>{ const i=mgiTrechoInfo(t); return `- ${t.nome}: ${SIT[i.sit][0]}, ${i.fvs.length} FVS, ${i.ncAb} NC abertas, ${t.extensao||"?"} m, DN ${t.diametro||"?"}`; }).join("\n");
   const fvs=vivos(state.fvsSalvas).filter(s=>(s.obraId||null)===o).slice(-30).map(s=>{ let C=0,N=0; Object.values(s.respostas||{}).forEach(v=>{ if(v==="C")C++; if(v==="NC")N++; }); return `- ${new Date(s.savedAt).toLocaleDateString("pt-BR")} ${s.serviceName} | trecho ${(s.info||{}).trecho||"-"} | ${C} C, ${N} NC`; }).join("\n");
   const libs=daObra(state.liberacoes).slice(-20).map(l=>`- ${l.dataPrev} ${l.frente}: ${l.situacao||"em preenchimento"}`).join("\n");
-  const mats=daObra(state.materiais).slice(-30).map(m=>`- ${m.data} ${m.material} lote ${m.lote||"-"} NF ${m.nf||"-"} ${m.inspecao||""} aplicado em ${(m.trechos||[]).map(id=>(state.trechos.find(t=>t.id===id)||{}).nome).filter(Boolean).join(", ")||"-"}`).join("\n");
+  const mats=daObra(state.materiais).slice(-30).map(m=>`- ${m.data} ${m.material} lote ${m.lote||"-"} NF ${m.nf||"-"} ${m.inspecao||""} aplicado em ${(m.trechos||[]).map(id=>(typeof mgiNomeLocal==="function"?mgiNomeLocal(id):(state.trechos.find(t=>t.id===id)||{}).nome)).filter(Boolean).join(", ")||"-"}`).join("\n");
   const docs=(state.docsCtl||[]).slice(0,30).map(d=>`- ${d.tipo}: ${d.nome} (${d.pessoa||""}) validade ${d.validade||"-"}`).join("\n");
   const dds=daObra(state.dds).slice(-10).map(d=>`- ${d.data} ${d.tema||d.servico}: ${d.participantes.length} participantes (${(d.participantes||[]).map(pNome).join(', ')})`).join("\n");
   const dia=vivos(state.diarios).filter(d=>(d.obraId||null)===o).slice(-7).map(d=>`- ${d.data}: efetivo ${(d.mo||[]).reduce((t,x)=>t+(+x.qtd||0),0)}, ${d.tempo||""}, ocorrências ${(d.ocorrencias||[]).length}`).join("\n");
@@ -5995,7 +6004,8 @@ LIBERAÇÕES DE FRENTE:\n${libs||"nenhuma"}
 MATERIAIS (rastreabilidade):\n${mats||"nenhum"}
 DOCUMENTOS E TREINAMENTOS:\n${docs||"nenhum"}
 DDS DA QUALIDADE:\n${dds||"nenhum"}
-DIÁRIOS (últimos):\n${dia||"nenhum"}`.slice(0,14000); }
+DIÁRIOS (últimos):\n${dia||"nenhum"}
+LOCAIS DO PRÉDIO (edificação):\n${(state.locais||[]).filter(l=>(l.obraId||null)===o).slice(0,150).map(l=>{ const i=typeof mgiLocalInfo==="function"?mgiLocalInfo(l):null; return `- ${l.torre} ${l.tipo==="area"?l.unidade:(l.pav+"º "+l.unidade)}: ${i?i.sit:""}${i&&i.ncAb?", "+i.ncAb+" NC abertas":""}`; }).join("\n")||"nenhum"}`.slice(0,14000); }
 window.mgiChat=function(){ chatRender(); setTimeout(()=>{ const i=document.getElementById("ch-in"); if(i) i.focus(); },100); };
 function chatRender(esperando){ const sug=["Quais ações estão vencidas?","Qual a situação dos trechos?","Onde foi aplicado o lote do último tubo recebido?","Qual a tolerância de declividade em rede de esgoto?"];
   modal(`<h3>💬 Pergunte ao MGI</h3><div class="ch-box" id="ch-box">${CHAT.length?CHAT.map(m=>`<div class="ch-m ${m.role}">${$e(m.content).replace(/\n/g,"<br>")}</div>`).join(""):`<p style="margin:0;color:var(--muted);font-size:.82rem">Pergunte sobre a obra (ações, trechos, materiais, liberações, documentos) ou sobre normas e boas práticas.</p><div class="ch-sug">${sug.map(s=>`<button onclick="mgiChatEnviar(${JSON.stringify(s).replace(/"/g,"&quot;")})">${s}</button>`).join("")}</div>`}${esperando?`<div class="ch-m assistant">Pensando...</div>`:""}</div>
@@ -6012,6 +6022,114 @@ window.mgiChatEnviar=async function(t){ const el=document.getElementById("ch-in"
   try{ const r=await callAnthropicAPI(msgs,900); CHAT.push({role:"assistant",content:((r.content||[]).map(c=>c.text||"").join("\n").trim()||"Não consegui responder agora.").replace(/\*\*/g,"")}); }
   catch(e){ CHAT.push({role:"assistant",content:"Não foi possível responder agora: "+(e.message||e)}); }
   chatRender(); };
+})();
+
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// MGI PRO · v41: Mapa do prédio (edificações) e quadro de serviços por pavimento
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+const $e=v=>(typeof acEsc==="function"?acEsc(v):String(v==null?"":v));
+const agora=()=>new Date().toISOString(), ro=()=>!!(window.MGI_USER&&window.MGI_USER.role==="fiscal");
+const obraId=()=>state.obraAtual||null, obra=()=>(state.obras||[]).find(o=>o.id===obraId())||null;
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]/g,"");
+const vivos=l=>(l||[]).filter(x=>!(state.removidos||{})[x.id]);
+function salvar(){ try{ if(typeof mgiSalvarLocal==="function") mgiSalvarLocal(); }catch(e){} if(!ro()&&typeof syncNuvem==="function") syncNuvem(); }
+function modal(h,cls){ let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m);} m.onclick=e=>{ if(e.target===m) m.remove(); }; m.innerHTML=`<div class="fm-box ${cls||"rg-box"}">${h}</div>`; }
+if(!state.locais){ try{ state.locais=JSON.parse(localStorage.getItem("mgi_locais")||"[]"); }catch(e){ state.locais=[]; } }
+const SIT={concluido:["Concluído","#0A9E6C"],nc:["Com não conformidade","#DC2626"],inspecionado:["Inspecionado","#107DE0"],execucao:["Em execução","#D97706"],liberado:["Liberado","#7c3aed"],planejado:["Planejado","#94a3b8"]};
+const pavNome=n=>n===0?"Térreo":n<0?(n===-1?"Subsolo":"Subsolo "+(-n)):n+"º pavimento";
+const locs=()=>vivos(state.locais).filter(l=>(l.obraId||null)===obraId());
+const torres=()=>[...new Set(locs().map(l=>l.torre))];
+const pavId=(t,p)=>"pav|"+t+"|"+p;
+const pavRotulo=(t,p)=>`${t} · ${pavNome(p)}`;
+const locRotulo=l=>l.tipo==="area"?`${l.torre} · ${l.unidade}`:`${l.torre} · ${pavNome(l.pav)} · ${l.unidade}`;
+window.mgiNomeLocal=function(id){ const t=(state.trechos||[]).find(x=>x.id===id); if(t) return t.nome; if(String(id).startsWith("pav|")){ const [,to,p]=id.split("|"); return pavRotulo(to,+p); } const l=(state.locais||[]).find(x=>x.id===id); return l?locRotulo(l):""; };
+// texto da FVS/liberação contém torre + pavimento (+ unidade)
+function bateTorre(n,t){ return n.includes(norm(t)); }
+function batePav(n,p){ if(p===0) return /terreo/.test(n); if(p<0) return /subsolo/.test(n); return new RegExp("(^|[^0-9])"+p+"(o|º|andar|pav|pavimento|$)").test(n.replace(/º/g,"o"))||n.includes(norm(p+"º pavimento"))||n.includes(norm(p+" andar"))||n.includes(norm(p+"o pavimento"))||n.includes(norm(p+" pavimento")); }
+function bate(txt,l){ const n=norm(txt); if(!n) return false; if(n.includes(norm(locRotulo(l)))) return true; if(!bateTorre(n,l.torre)) return false;
+  if(l.tipo==="area") return n.includes(norm(l.unidade)); if(!batePav(n,l.pav)) return false; return !/apto|apartamento|unidade|casa|sala|loja/.test(n)||n.includes(norm(l.unidade)); }
+function info(l){ const o=l.obraId||null; const fvs=vivos(state.fvsSalvas).filter(s=>(s.obraId||null)===o&&bate((s.info||{}).trecho,l)); const libs=vivos(state.liberacoes).filter(x=>(x.obraId||null)===o&&bate(x.frente,l));
+  const ids=new Set(fvs.map(s=>s.id)); const ALL=(window._mgiCalc&&window._mgiCalc.ALL)||[]; const ncAb=ALL.filter(a=>ids.has(a.snapId)&&a.status!=="fechada").length;
+  const mats=vivos(state.materiais).filter(m=>(m.trechos||[]).some(id=>id===l.id||id===pavId(l.torre,l.pav)));
+  let sit="planejado"; if(ncAb) sit="nc"; else if(l.concluido) sit="concluido"; else if(l.emExecucao) sit="execucao"; else if(fvs.length) sit="inspecionado"; else if(libs.some(x=>/Liberada/.test(x.situacao||""))) sit="liberado";
+  return {fvs,libs,mats,ncAb,sit}; }
+window.mgiLocalInfo=info;
+// ── escolha do tipo de obra ──
+const _mapaLinear=window.mgiMapaAbrir;
+window.mgiMapaAbrir=function(){ const o=obra(); if(!o) return _mapaLinear(); if(!o.tipoObra) return mgiTipoObra(); return o.tipoObra==="edificacao"?mgiPredio():_mapaLinear(); };
+window.mgiTipoObra=function(){ modal(`<h3>🗺️ Tipo de obra</h3><p style="margin:0;color:var(--muted);font-size:.82rem">Escolha como acompanhar a obra <b>${$e((obra()||{}).nome||"")}</b>. Pode trocar depois.</p>
+  <button class="rel-op" onclick="mgiTipoObraOk('linear')"><span>🚰</span><div><b>Rede linear (saneamento)</b><small>Trechos de PV a PV no mapa, com coordenadas.</small></div></button>
+  <button class="rel-op" onclick="mgiTipoObraOk('edificacao')"><span>🏢</span><div><b>Edificação (residencial ou comercial)</b><small>Torres, pavimentos e unidades na grade do prédio, com quadro de serviços por pavimento.</small></div></button>
+  <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
+window.mgiTipoObraOk=function(t){ const o=obra(); if(!o) return; o.tipoObra=t; o.atualizadoEm=agora(); try{ localStorage.setItem("mgi_obras",JSON.stringify(state.obras)); }catch(e){} salvar(); mgiMapaAbrir(); };
+// ── grade do prédio ──
+let TORRE=null, ABA="grade";
+window.mgiPredio=function(){ const T=torres(); if(!TORRE||!T.includes(TORRE)) TORRE=T[0]||null; const L=locs().filter(l=>l.torre===TORRE);
+  const cont={}; L.forEach(l=>{ const s=info(l).sit; cont[s]=(cont[s]||0)+1; }); const nC=cont.concluido||0;
+  const pavs=[...new Set(L.filter(l=>l.tipo!=="area").map(l=>l.pav))].sort((a,b)=>b-a), areas=L.filter(l=>l.tipo==="area");
+  const cel=l=>{ const i=info(l), c=SIT[i.sit][1]; return `<button class="pr-c" style="background:${c}" onclick="mgiLocalVer('${l.id}')" title="${$e(locRotulo(l))}">${$e(l.unidade)}${i.ncAb?`<i>${i.ncAb}</i>`:""}</button>`; };
+  modal(`<h3>🏢 Mapa do prédio</h3>
+   <p style="margin:0;color:var(--muted);font-size:.8rem">${$e((obra()||{}).nome||"")}${L.length?` · ${L.length} locais · ${Math.round(nC/L.length*100)}% concluído`:""} · <a href="#" onclick="mgiTipoObra();return false">trocar tipo de obra</a></p>
+   ${T.length?`<div class="pr-tabs">${T.map(t=>`<button class="${t===TORRE?"on":""}" onclick="mgiPredioTorre('${$e(t)}')">${$e(t)}</button>`).join("")}</div>`:""}
+   <div class="dd-modo"><button class="${ABA==="grade"?"on":""}" onclick="mgiPredioAba('grade')">Grade de unidades</button><button class="${ABA==="quadro"?"on":""}" onclick="mgiPredioAba('quadro')">Quadro de serviços</button></div>
+   ${ABA==="grade"?`<div class="mp-leg">${Object.entries(SIT).map(([k,[n,c]])=>`<span class="pr-lg"><i style="background:${c}"></i>${n} <b>${cont[k]||0}</b></span>`).join("")}</div>
+   <div class="pr-grade">${pavs.map(p=>`<div class="pr-l"><span class="pr-p">${p===0?"T":p<0?"S"+(-p):p+"º"}</span><div class="pr-u">${L.filter(l=>l.tipo!=="area"&&l.pav===p).map(cel).join("")}</div></div>`).join("")||`<p class="pi-nada">Cadastre a estrutura do prédio para ver a grade.</p>`}</div>
+   ${areas.length?`<b style="color:var(--text);font-size:.84rem">Áreas comuns</b><div class="pr-u">${areas.map(cel).join("")}</div>`:""}`:quadroHTML()}
+   <div class="mp-acoes">${ro()?"":`<button class="ac5-save" onclick="mgiPredioLote()">+ Torre ou bloco</button>`}<button class="ac5-cancel" onclick="mgiQuadroPDF()">PDF do quadro</button></div>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`,"rg-box pr-box"); };
+window.mgiPredioTorre=t=>{ TORRE=t; mgiPredio(); }; window.mgiPredioAba=a=>{ ABA=a; mgiPredio(); };
+// ── quadro de serviços por pavimento ──
+const PADRAO=["Fôrmas","Armação","Concreto","Alvenaria","Instalações Hidrossanitárias","Instalações Elétricas","Impermeabilização","Revestimento Argamassado","Contrapiso","Revestimento Cerâmico","Esquadrias","Pintura"];
+function colunas(){ const usados=[...new Set(vivos(state.fvsSalvas).filter(s=>(s.obraId||null)===obraId()).map(s=>s.serviceId))];
+  const sv=(typeof SERVICOS!=="undefined"?SERVICOS:[]); const pad=PADRAO.map(n=>sv.find(s=>s.cat==="construcao"&&norm(s.nome).includes(norm(n)))).filter(Boolean).map(s=>s.id);
+  return [...new Set([...usados,...pad])].map(id=>sv.find(s=>s.id===id)).filter(s=>s&&s.cat!=="saneamento").slice(0,16); }
+function celQuadro(t,p,sv){ const o=obraId(); const fv=vivos(state.fvsSalvas).filter(s=>(s.obraId||null)===o&&s.serviceId===sv.id&&bateTorre(norm((s.info||{}).trecho),t)&&batePav(norm((s.info||{}).trecho),p));
+  if(!fv.length) return ["","#e5e7eb"]; const ids=new Set(fv.map(s=>s.id)); const ALL=(window._mgiCalc&&window._mgiCalc.ALL)||[]; const nc=ALL.filter(a=>ids.has(a.snapId)&&a.status!=="fechada").length;
+  return nc?[String(nc),"#DC2626"]:["✓","#0A9E6C"]; }
+function quadroHTML(){ const L=locs().filter(l=>l.torre===TORRE&&l.tipo!=="area"); const pavs=[...new Set(L.map(l=>l.pav))].sort((a,b)=>b-a), C=colunas();
+  if(!pavs.length) return `<p class="pi-nada">Cadastre a estrutura do prédio para ver o quadro.</p>`;
+  return `<p style="margin:0;color:var(--muted);font-size:.76rem">Verde: FVS conforme. Vermelho: não conformidades abertas (número). Cinza: ainda sem FVS. Na FVS, informe no campo "Trecho / Estaca / Ponto" a torre e o pavimento, por exemplo "${$e(TORRE)} · 7º pavimento".</p>
+   <div class="pr-q"><table><tr><th>Pav.</th>${C.map(s=>`<th title="${$e(s.nome)}"><span>${$e(s.nome.replace(/^(Execução|Instalação|Instalações|Serviço) (de|da|do|das|dos) /i,"").slice(0,22))}</span></th>`).join("")}</tr>
+   ${pavs.map(p=>`<tr><td class="pr-qp">${p===0?"Térreo":p<0?"Subsolo":p+"º"}</td>${C.map(s=>{ const [t,c]=celQuadro(TORRE,p,s); return `<td><i style="background:${c}">${t}</i></td>`; }).join("")}</tr>`).join("")}</table></div>`; }
+window.mgiQuadroPDF=function(){ const T=torres(); const C=colunas(); let h="";
+  T.forEach(t=>{ const pavs=[...new Set(locs().filter(l=>l.torre===t&&l.tipo!=="area").map(l=>l.pav))].sort((a,b)=>b-a);
+    h+=`<h3>${$e(t)}</h3><table><tr><th>Pavimento</th>${C.map(s=>`<th style="font-size:6.5pt">${$e(s.nome)}</th>`).join("")}</tr>${pavs.map(p=>`<tr><td>${pavNome(p)}</td>${C.map(s=>{ const [x,c]=celQuadro(t,p,s); return `<td style="text-align:center;background:${c==="#e5e7eb"?"#f3f4f6":c};color:#fff;font-weight:700">${x==="✓"?"C":x}</td>`; }).join("")}</tr>`).join("")}</table>`; });
+  abrirJanelaPDF(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Quadro de serviços por pavimento — MGI PRO</title><style>${typeof cssPDF==="function"?cssPDF():""} table{font-size:8pt} @page{size:A4 landscape}</style></head><body><h1 style="font-size:16pt;margin:0 0 2mm">Quadro de controle de serviços por pavimento</h1><p style="color:#475569;font-size:9pt;margin:0 0 4mm">${$e((obra()||{}).nome||"")} · emitido em ${new Date().toLocaleDateString("pt-BR")} pelo MGI PRO · C = FVS conforme · número = não conformidades abertas · cinza = sem FVS</p>${h}<div class="footer">MGI PRO, Massei Gestão Integrada.</div></body></html>`); };
+// ── cadastro em lote ──
+window.mgiPredioLote=function(){ modal(`<h3>Torre ou bloco</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Cria de uma vez os pavimentos e as unidades. A numeração segue o padrão andar + número (7º andar, 4 por andar: 71, 72, 73, 74).</p>
+  <label>Nome da torre ou bloco<input id="pl-t" value="Torre ${String.fromCharCode(65+torres().length)}"></label>
+  <div class="fm-g2"><label>Do pavimento<input id="pl-de" inputmode="numeric" value="1"></label><label>Até o pavimento<input id="pl-ate" inputmode="numeric" value="10"></label></div>
+  <div class="fm-g2"><label>Unidades por andar<input id="pl-u" inputmode="numeric" value="4"></label><label>Nome da unidade<select id="pl-n"><option>Apto</option><option>Sala</option><option>Casa</option><option>Loja</option><option>Unidade</option></select></label></div>
+  <label>Áreas comuns</label><div class="emp-ck">${["Subsolo / garagem","Térreo / hall","Cobertura","Fachada","Barrilete / casa de máquinas","Áreas de lazer"].map(a=>`<label><input type="checkbox" class="pl-a" value="${a}"${/Térreo|Cobertura|Fachada/.test(a)?" checked":""}> ${a}</label>`).join("")}</div>
+  <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiPredio()">Voltar</button><button class="ac5-save" onclick="mgiPredioLoteOk()">Criar</button></div>`); };
+window.mgiPredioLoteOk=function(){ const g=i=>(document.getElementById(i)||{}).value||""; const t=g("pl-t").trim(), a=parseInt(g("pl-de"),10), b=parseInt(g("pl-ate"),10), u=parseInt(g("pl-u"),10), nm=g("pl-n");
+  if(!t||isNaN(a)||isNaN(b)||b<a||!(u>0)||(b-a+1)*u>2000){ alert("Confira os dados (máximo de 2.000 unidades por torre)."); return; }
+  if(torres().includes(t)&&!confirm("Já existe "+t+". Acrescentar mais pavimentos nela?")) return;
+  const o=obraId(); let n=0;
+  for(let p=a;p<=b;p++) for(let k=1;k<=u;k++){ const num=p<=0?(p===0?"T":"S"+(-p))+String(k).padStart(2,"0"):String(p)+String(k).padStart(u>9?2:1,"0"); state.locais.push({id:"lc_"+Date.now().toString(36)+"_"+p+"_"+k,obraId:o,torre:t,pav:p,unidade:nm+" "+num,tipo:"unidade",atualizadoEm:agora()}); n++; }
+  document.querySelectorAll(".pl-a:checked").forEach((c,i)=>{ state.locais.push({id:"lc_"+Date.now().toString(36)+"_a"+i,obraId:o,torre:t,pav:99,unidade:c.value,tipo:"area",atualizadoEm:agora()}); n++; });
+  TORRE=t; try{ mgiLog("Cadastrou estrutura do prédio",t+" ("+n+" locais)"); }catch(e){} salvar(); mgiPredio(); };
+window.mgiLocalVer=function(id){ const l=state.locais.find(x=>x.id===id); if(!l) return; const i=info(l), [n,c]=SIT[i.sit];
+  modal(`<h3>${$e(locRotulo(l))}</h3><p style="margin:0"><span class="st-pill" style="background:${c}">${n}</span></p>
+   <div class="pet-s"><b>FVS (${i.fvs.length})</b>${i.fvs.map(s=>`<p>${new Date(s.savedAt).toLocaleDateString("pt-BR")} · ${$e(s.serviceName||"FVS")}</p>`).join("")||`<p>Nenhuma. Na FVS, escreva "${$e(l.tipo==="area"?locRotulo(l):pavRotulo(l.torre,l.pav))}" no campo "Trecho / Estaca / Ponto".</p>`}${i.ncAb?`<p style="color:var(--red)"><b>${i.ncAb} não conformidade(s) aberta(s).</b></p>`:""}</div>
+   <div class="pet-s"><b>Liberações (${i.libs.length})</b>${i.libs.map(x=>`<p>${$e(x.situacao||"Em preenchimento")} · ${$e(x.frente)}</p>`).join("")||"<p>Nenhuma.</p>"}</div>
+   <div class="pet-s"><b>Materiais aplicados (${i.mats.length})</b>${i.mats.map(m=>`<p>${$e(m.material)} · lote ${$e(m.lote||"-")}</p>`).join("")||"<p>Nenhum lote vinculado.</p>"}</div>
+   ${ro()?"":`<div class="emp-ck"><label><input type="checkbox" id="lc-exe"${l.emExecucao?" checked":""}> Em execução</label><label><input type="checkbox" id="lc-con"${l.concluido?" checked":""}> Concluído</label></div>`}
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiPredio()">Voltar</button>${ro()?"":`<button class="ac5-cancel" onclick="mgiLocalExcluir('${l.id}')">Excluir</button><button class="ac5-save" onclick="mgiLocalSalvar('${l.id}')">Salvar</button>`}</div>`); };
+window.mgiLocalSalvar=function(id){ const l=state.locais.find(x=>x.id===id); if(!l) return; l.emExecucao=!!document.getElementById("lc-exe").checked; l.concluido=!!document.getElementById("lc-con").checked; l.atualizadoEm=agora(); salvar(); mgiPredio(); };
+window.mgiLocalExcluir=function(id){ if(!confirm("Excluir este local?")) return; state.locais=state.locais.filter(x=>x.id!==id); if(typeof mgiLapide==="function") mgiLapide(id); salvar(); mgiPredio(); };
+// ── materiais: vincular aos pavimentos quando a obra for edificação ──
+const _mf=window.mgiMaterialForm;
+window.mgiMaterialForm=function(id){ _mf(id); const o=obra(); if(!o||o.tipoObra!=="edificacao") return; const box=[...document.querySelectorAll(".pet-s")].find(x=>/Aplicado nos trechos/.test(x.textContent)); if(!box) return;
+  const m=id&&(state.materiais||[]).find(x=>x.id===id); const sel=(m&&m.trechos)||[]; const ops=[]; torres().forEach(t=>{ [...new Set(locs().filter(l=>l.torre===t&&l.tipo!=="area").map(l=>l.pav))].sort((a,b)=>a-b).forEach(p=>ops.push([pavId(t,p),pavRotulo(t,p)])); locs().filter(l=>l.torre===t&&l.tipo==="area").forEach(l=>ops.push([l.id,locRotulo(l)])); });
+  box.innerHTML=`<b>Aplicado nos pavimentos</b>${ops.length?`<div class="mt-trs">${ops.map(([v,n])=>`<label><input type="checkbox" class="mt-tr" value="${v}"${sel.includes(v)?" checked":""}${ro()?" disabled":""}> ${$e(n)}</label>`).join("")}</div>`:"<p>Cadastre a estrutura do prédio no Mapa da obra para vincular onde o lote foi aplicado.</p>"}`; };
+// ── sugestões no campo de local da FVS ──
+document.addEventListener("focusin",e=>{ if(!e.target||e.target.id!=="fvs-trecho") return; const o=obra(); if(!o||o.tipoObra!=="edificacao") return; setTimeout(()=>{ const dl=document.getElementById("dl-trechos"); if(!dl) return;
+  const ops=[]; torres().forEach(t=>{ [...new Set(locs().filter(l=>l.torre===t&&l.tipo!=="area").map(l=>l.pav))].sort((a,b)=>a-b).forEach(p=>ops.push(pavRotulo(t,p))); locs().filter(l=>l.torre===t).forEach(l=>ops.push(locRotulo(l))); });
+  dl.innerHTML=ops.slice(0,800).map(x=>`<option value="${$e(x)}">`).join(""); },30); });
 })();
 
 </script>
