@@ -60,6 +60,11 @@
 })();
 </script>
 
+<script>
+/* Versão Google Play: identifica o app instalado pela loja e oculta a contratação de planos */
+(function(){try{var q=new URLSearchParams(location.search);if(q.get("origem")==="play"||(document.referrer||"").indexOf("android-app://")===0)localStorage.setItem("mgi_play","1");window.MGI_PLAY=localStorage.getItem("mgi_play")==="1";if(window.MGI_PLAY)document.documentElement.classList.add("mgi-play");}catch(e){window.MGI_PLAY=false;}})();
+</script>
+<style>.mgi-play #trial-assinar,.mgi-play a[href*="wa.me"][href*="assinar"],.mgi-play a[href*="Assinar%20MGI"]{display:none!important}</style>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -2838,6 +2843,7 @@ async function assinarPlano(plano){
 
 // Gera os botões de assinatura (cartão). 'destaque' = id do plano em evidência.
 function htmlBotoesPlanos(destaque){
+  if(window.MGI_PLAY) return '<div style="color:#94a3b8;font-size:.85rem;margin-bottom:16px;line-height:1.5">O acesso da sua empresa é gerenciado pelo administrador da conta. Fale com ele para regularizar.</div>';
   const planos = [
     {id:"basico",     nome:"Básico",     preco:"R$ 297",   desc:"1 obra"},
     {id:"pro",        nome:"Pro",        preco:"R$ 597",   desc:"até 3 obras"},
@@ -2859,6 +2865,7 @@ function htmlBotoesPlanos(destaque){
 
 // Abre/fecha o modal de planos (assinar a qualquer momento)
 function abrirModalPlanos(){
+  if(window.MGI_PLAY){ alert("O plano da sua empresa é gerenciado pelo administrador da conta."); return; }
   document.getElementById("modal-planos-lista").innerHTML = htmlBotoesPlanos("pro");
   document.getElementById("modal-planos-bg").style.display = "flex";
 }
@@ -5724,7 +5731,7 @@ window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine
     ${op("💾","Exportar backup completo","Arquivo com todos os dados da empresa (LGPD e segurança).","mgiBackup()")}
     <label class="rel-op" style="cursor:pointer"><span>♻️</span><div><b>Restaurar backup</b><small>Mescla um arquivo de backup com os dados atuais.</small></div><input type="file" accept=".json,application/json" style="display:none" onchange="mgiRestaurar(this)"></label>
     ${op("🎓","Ver o tutorial","Passo a passo das principais funções.","mgiTutorial(true)")}
-    ${typeof abrirModalPlanos==="function"?op("💳","Planos e assinatura","Trocar de plano ou assinar.","mgiFechar();abrirModalPlanos()"):""}
+    ${typeof abrirModalPlanos==="function"&&!window.MGI_PLAY?op("💳","Planos e assinatura","Trocar de plano ou assinar.","mgiFechar();abrirModalPlanos()"):""}
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
 window.mgiTutorial=function(forcar){ if(!forcar&&localStorage.getItem("mgi_tutorial_ok")) return; const P=[
   ["👋 Bem-vindo ao MGI PRO","Em poucos passos você controla a qualidade da obra: inspeções, ações corretivas, diário e relatórios."],

@@ -53,10 +53,10 @@
 
   <header class="doc">
     <h1>Política de Privacidade — MGI PRO</h1>
-    <div class="meta">Massei Gestão Integrada Ltda. · CNPJ 54.493.541/0001-28<br>Última atualização: junho de 2026</div>
+    <div class="meta">Massei Gestão Integrada Ltda. · CNPJ 54.493.541/0001-28<br>Última atualização: novembro de 2026</div>
   </header>
 
-  <p>Esta Política de Privacidade descreve como a <strong>Massei Gestão Integrada Ltda.</strong>, inscrita no CNPJ sob o nº 54.493.541/0001-28, com sede na Avenida Aníbal Correia, nº 193, Votupoca, CEP 06447-010, Barueri/SP ("MGI", "nós"), trata dados pessoais no âmbito da plataforma <strong>MGI PRO</strong> ("Plataforma"), em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD).</p>
+  <p>Esta Política de Privacidade descreve como a <strong>Massei Gestão Integrada Ltda.</strong>, inscrita no CNPJ sob o nº 54.493.541/0001-28, com sede na Avenida Aníbal Correia, nº 193, Apto 93 B, Parque Viana, CEP 06447-010, Barueri/SP ("MGI", "nós"), trata dados pessoais no âmbito da plataforma <strong>MGI PRO</strong> ("Plataforma"), em conformidade com a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD).</p>
 
   <h2>1. Papéis no tratamento de dados</h2>
   <p>A Plataforma envolve dois tipos de dados, com papéis distintos sob a LGPD:</p>
@@ -71,8 +71,13 @@
     <tr><td>Cadastrais</td><td>Nome, e-mail, telefone, empresa, CNPJ/CPF, cargo</td></tr>
     <tr><td>De acesso e uso</td><td>Endereço IP, dispositivo, navegador, data/hora de acesso, logs de atividade</td></tr>
     <tr><td>De faturamento</td><td>Dados necessários à cobrança da Assinatura</td></tr>
-    <tr><td>Conteúdo do Cliente</td><td>Registros, formulários, imagens e dados inseridos no uso da ferramenta</td></tr>
+    <tr><td>Conteúdo do Cliente</td><td>Registros, formulários, imagens e dados inseridos no uso da ferramenta (FVS, auditorias, diários de obra, ações corretivas, liberações de frente, documentos e treinamentos)</td></tr>
+    <tr><td>Fotos e localização</td><td>Fotos tiradas pelo aplicativo, com carimbo de data, hora, obra, serviço, responsável e, quando autorizado pelo usuário no aparelho, coordenadas GPS do local da foto. A localização é coletada somente no momento da foto e não há rastreamento contínuo</td></tr>
+    <tr><td>Equipe e permissões</td><td>Nome e e-mail de pessoas convidadas, papel na empresa (administrador, membro ou fiscalização) e autoria dos registros</td></tr>
+    <tr><td>Assinaturas e identidade visual</td><td>Assinaturas desenhadas na tela para liberações e relatórios, logotipos e dados da empresa inseridos para os relatórios</td></tr>
+    <tr><td>Registro de alterações</td><td>Histórico de quem criou, alterou ou excluiu registros, para rastreabilidade em auditorias</td></tr>
   </table>
+  <p>O aplicativo usa a <strong>câmera</strong> apenas quando o usuário toca para tirar uma foto, o <strong>microfone</strong> apenas quando o usuário aciona o ditado por voz (o áudio é convertido em texto pelo próprio sistema do aparelho e não é armazenado pela MGI) e as <strong>notificações</strong> apenas se o usuário ativar os avisos de prazo.</p>
 
   <h2>3. Finalidades e bases legais</h2>
   <ul>
@@ -86,8 +91,10 @@
   <p>A MGI não vende dados pessoais. Para operar a Plataforma, utiliza prestadores de serviço que podem tratar dados em nosso nome, sob obrigações de confidencialidade e segurança:</p>
   <table>
     <tr><th>Prestador</th><th>Finalidade</th></tr>
-    <tr><td>Google (Firebase / Firestore)</td><td>Autenticação, banco de dados e hospedagem de dados</td></tr>
-    <tr><td>Netlify</td><td>Hospedagem da aplicação web/PWA</td></tr>
+    <tr><td>Google (Firebase Authentication, Firestore, Storage e Cloud Functions)</td><td>Autenticação, banco de dados, armazenamento das fotos e funções do servidor</td></tr>
+    <tr><td>GitHub (GitHub Pages)</td><td>Hospedagem da aplicação web e do aplicativo instalável</td></tr>
+    <tr><td>Anthropic (Claude)</td><td>Inteligência artificial que sugere ações corretivas, resumos e análise de fotos de não conformidades, somente quando o usuário aciona esses recursos. Os dados enviados não são usados para treinar modelos</td></tr>
+    <tr><td>Google Workspace (Gmail)</td><td>Envio do resumo mensal por e-mail aos destinatários cadastrados pela empresa</td></tr>
     <tr><td>Mercado Pago</td><td>Processamento de cobranças e pagamentos da Assinatura</td></tr>
   </table>
   <p>Dados também poderão ser compartilhados com autoridades públicas quando exigido por lei ou ordem judicial.</p>
@@ -109,16 +116,22 @@
   <p>Nos termos do art. 18 da LGPD, o titular pode solicitar: confirmação da existência de tratamento; acesso aos dados; correção de dados incompletos ou desatualizados; anonimização, bloqueio ou eliminação de dados desnecessários; portabilidade; informação sobre compartilhamento; e revogação do consentimento. As solicitações podem ser feitas pelos canais indicados abaixo.</p>
   <p><em>Observação:</em> quando o pedido se referir ao Conteúdo do Cliente (no qual a MGI é operadora), a solicitação será encaminhada ao Cliente controlador ou atendida conforme suas instruções.</p>
 
-  <h2>9. Encarregado (DPO) e contato</h2>
+  <h2>9. Exclusão da conta e dos dados</h2>
+  <p>O usuário pode solicitar a exclusão da sua conta e dos dados associados a qualquer momento, pelo e-mail <a href="mailto:thiago@masseisgi.com?subject=Exclus%C3%A3o%20de%20conta%20MGI%20PRO">thiago@masseisgi.com</a>, com o assunto "Exclusão de conta MGI PRO", informando o e-mail de login. O pedido é atendido em até 15 dias. São excluídos: conta de acesso, dados cadastrais, registros e fotos da empresa (quando o pedido for feito pelo administrador). Podem ser mantidos, pelo prazo legal, somente os dados necessários ao cumprimento de obrigações fiscais e legais. O administrador também pode exportar um backup completo dos dados antes da exclusão, em Ferramentas, no próprio aplicativo.</p>
+
+  <h2>10. Aplicativo Android (Google Play)</h2>
+  <p>O aplicativo MGI PRO distribuído pela Google Play acessa o mesmo serviço da versão web, com a mesma conta e os mesmos dados. As práticas descritas nesta Política se aplicam integralmente ao aplicativo. O aplicativo não exibe anúncios e não compartilha dados com terceiros para fins de publicidade.</p>
+
+  <h2>11. Encarregado (DPO) e contato</h2>
   <p>Para exercer seus direitos ou esclarecer dúvidas sobre o tratamento de dados, contate o Encarregado de Proteção de Dados (DPO) da MGI:</p>
   <ul>
     <li>Encarregado (DPO): Thiago Massei</li>
     <li>E-mail: <a href="mailto:thiago@masseisgi.com">thiago@masseisgi.com</a></li>
     <li>Massei Gestão Integrada Ltda. — CNPJ 54.493.541/0001-28</li>
-    <li>Avenida Aníbal Correia, nº 193, Votupoca, CEP 06447-010, Barueri/SP</li>
+    <li>Avenida Aníbal Correia, nº 193, Apto 93 B, Parque Viana, CEP 06447-010, Barueri/SP</li>
   </ul>
 
-  <h2>10. Alterações desta Política</h2>
+  <h2>12. Alterações desta Política</h2>
   <p>Esta Política poderá ser atualizada para refletir mudanças legais ou operacionais. A versão vigente estará sempre disponível na Plataforma, com indicação da data de atualização. Alterações relevantes serão comunicadas.</p>
 
   <div class="box">
