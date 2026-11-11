@@ -3,7 +3,7 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v21';
+const CACHE_NAME = 'mgi-pro-v36';
 
 const ASSETS = [
   './manifest.json',
@@ -30,6 +30,8 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  try { const u = new URL(event.request.url); if (/\/(admin|login|demo)\.html$/.test(u.pathname)) return; } catch(e) {}
+
   const req = event.request;
 
   // Nunca intercepta chamadas externas (API, Firebase, Google)

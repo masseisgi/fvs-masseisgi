@@ -136,6 +136,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════
@@ -208,6 +209,32 @@ function traduzErro(code){
 }
 
 // ═══════════════════════════════════════════════════════════
+// CONVITE PARA ENTRAR NA EQUIPE DE UMA EMPRESA
+// ═══════════════════════════════════════════════════════════
+const CONVITE = (new URLSearchParams(location.search).get("convite") || sessionStorage.getItem("mgi_convite") || "").trim().toUpperCase();
+if(CONVITE) sessionStorage.setItem("mgi_convite", CONVITE);
+async function aceitarConviteAtual(nome){
+  const fn = firebase.app().functions("southamerica-east1").httpsCallable("aceitarConvite");
+  const r = await fn({ codigo: CONVITE, nome: nome || "" });
+  sessionStorage.removeItem("mgi_convite");
+  return r.data || {};
+}
+function msgErroConvite(e){ return (e && e.code && String(e.code).indexOf("functions/")===0) ? (e.message || "Convite inválido.") : null; }
+document.addEventListener("DOMContentLoaded", function(){
+  if(!CONVITE) return;
+  const emp = document.getElementById("signup-empresa");
+  if(emp && emp.closest(".field")) emp.closest(".field").style.display = "none";
+  document.querySelectorAll(".trial-badge").forEach(x=>x.style.display="none");
+  const card = document.querySelector(".login-card") || document.body;
+  const tabs = card.querySelector(".tabs");
+  const b = document.createElement("div");
+  b.style.cssText = "background:rgba(20,206,141,.12);border:1px solid rgba(20,206,141,.45);color:#d1fae5;border-radius:12px;padding:12px 14px;margin:0 0 14px;font:600 13px Barlow,Arial,sans-serif;line-height:1.4";
+  b.innerHTML = "👥 Você recebeu um convite para entrar na equipe de uma empresa no MGI PRO.<br><span style='font-weight:400;opacity:.85'>Já tem conta? Entre normalmente. Não tem? Crie sua conta: você entra direto na empresa que te convidou.</span>";
+  if(tabs) card.insertBefore(b, tabs); else card.insertBefore(b, card.firstChild);
+  try{ switchTab("signup"); }catch(e){}
+});
+
+// ═══════════════════════════════════════════════════════════
 // CRIAR EMPRESA (tenant) + USUÁRIO no Firestore
 // ═══════════════════════════════════════════════════════════
 async function criarEmpresaEUsuario(user, nomeEmpresa, nomeUsuario){
@@ -258,7 +285,7 @@ async function cadastrar(){
   const email = document.getElementById("signup-email").value.trim();
   const senha = document.getElementById("signup-senha").value;
 
-  if(!empresa){ showMsg("Informe o nome da empresa.", "error"); return; }
+  if(!empresa && !CONVITE){ showMsg("Informe o nome da empresa.", "error"); return; }
   if(!nome){ showMsg("Informe seu nome.", "error"); return; }
   if(!email){ showMsg("Informe seu e-mail.", "error"); return; }
   if(senha.length < 6){ showMsg("A senha precisa de ao menos 6 caracteres.", "error"); return; }
@@ -266,11 +293,12 @@ async function cadastrar(){
   setLoading("btn-signup", true);
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, senha);
-    await criarEmpresaEUsuario(cred.user, empresa, nome);
-    showMsg("Conta criada! Redirecionando...", "success");
+    if(CONVITE){ await aceitarConviteAtual(nome); }
+    else { await criarEmpresaEUsuario(cred.user, empresa, nome); }
+    showMsg(CONVITE ? "Conta criada e convite aceito! Entrando..." : "Conta criada! Redirecionando...", "success");
     setTimeout(()=>{ window.location.href = APP_URL; }, 1200);
   } catch(e){
-    showMsg(traduzErro(e.code), "error");
+    showMsg(msgErroConvite(e) || traduzErro(e.code), "error");
     setLoading("btn-signup", false);
   }
 }
@@ -286,10 +314,10 @@ async function loginEmail(){
   setLoading("btn-login", true);
   try {
     await auth.signInWithEmailAndPassword(email, senha);
-    showMsg("Entrando...", "success");
+    if(CONVITE){ await aceitarConviteAtual(""); showMsg("Convite aceito! Entrando...", "success"); } else { showMsg("Entrando...", "success"); }
     setTimeout(()=>{ window.location.href = APP_URL; }, 800);
   } catch(e){
-    showMsg(traduzErro(e.code), "error");
+    showMsg(msgErroConvite(e) || traduzErro(e.code), "error");
     setLoading("btn-login", false);
   }
 }
@@ -305,7 +333,10 @@ async function loginGoogle(){
     const user = result.user;
     // Verifica se já existe usuário no Firestore
     const userDoc = await db.collection("usuarios").doc(user.uid).get();
-    if(!userDoc.exists){
+    if(CONVITE){
+      await aceitarConviteAtual(user.displayName || "");
+      showMsg("Convite aceito! Entrando...", "success");
+    } else if(!userDoc.exists){
       // primeiro acesso via Google: cria empresa com nome provisório
       const nomeEmpresa = (user.displayName ? user.displayName + " - Empresa" : "Minha Empresa");
       await criarEmpresaEUsuario(user, nomeEmpresa, user.displayName);
@@ -315,7 +346,7 @@ async function loginGoogle(){
     }
     setTimeout(()=>{ window.location.href = APP_URL; }, 1000);
   } catch(e){
-    showMsg(traduzErro(e.code), "error");
+    showMsg(msgErroConvite(e) || traduzErro(e.code), "error");
   }
 }
 
