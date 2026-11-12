@@ -94,8 +94,11 @@ svg text{fill:var(--mu);font-size:10px}
 firebase.initializeApp({apiKey:"AIzaSyCCmp1pH56xwRvqceZ_pG73J30_kTLUtCU",authDomain:"mgi-pro.firebaseapp.com",projectId:"mgi-pro",storageBucket:"mgi-pro.firebasestorage.app",messagingSenderId:"157049569327",appId:"1:157049569327:web:d1779979320f49e1c2c6da",measurementId:"G-KF5E64P9ZT"});
 const auth=firebase.auth(), db=firebase.firestore(), TS=firebase.firestore.Timestamp;
 const SUPER="thiago@masseisgi.com", DIA=864e5;
-const PRECO={"Básico":297,"Pro":597,"Enterprise":1297};
-const COTA={"Básico":30,"Pro":100,"Enterprise":99999};
+const PRECO={"Essencial":397,"Profissional":897,"Contrato":1897,"Corporativo":0,"Básico":297,"Pro":597,"Enterprise":1297};
+const NOVOS=["Essencial","Profissional","Contrato","Corporativo"];
+const DESC={"Essencial":"1 obra · 5 usuários","Profissional":"3 obras · 15 usuários","Contrato":"6 obras · ilimitados","Corporativo":"sob consulta"};
+const COTA={"Essencial":30,"Profissional":100,"Contrato":99999,"Corporativo":99999,"Básico":30,"Pro":100,"Enterprise":99999};
+const valor=e=>e.valorMensal||PRECO[e.planoNome]||0;
 let E=[], USERS={}, DADOS={}, NOTIF=[], TAB="geral", F={st:"todas",q:"",ord:"recentes",plano:""}, ATUAL=null;
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dt=v=>v&&v.toDate?v.toDate():(v?new Date(v):null);
@@ -150,7 +153,7 @@ function render(){ const A=alertas(), nn=NOTIF.filter(n=>!n.lida).length;
 function aba(k){ TAB=k; render(); scrollTo(0,0); }
 
 function geral(A){ const c={}; E.forEach(e=>{ const s=status(e); c[s]=(c[s]||0)+1; });
-  const mrr=E.filter(e=>status(e)==="ativo").reduce((t,e)=>t+(PRECO[e.planoNome]||0),0);
+  const mrr=E.filter(e=>status(e)==="ativo").reduce((t,e)=>t+valor(e),0);
   const ia=E.reduce((t,e)=>t+(e.iaUsadas||0),0), us=Object.values(USERS).reduce((t,l)=>t+l.length,0), fvs=Object.values(DADOS).reduce((t,d)=>t+(d.fvs||0),0);
   const conv=(c.ativo||0)+(c.expirado||0)?Math.round((c.ativo||0)/((c.ativo||0)+(c.expirado||0))*100):0;
   const K=(n,l,cl,sub,st)=>`<div class="k" style="--c:${cl}" onclick="${st?`F.st='${st}';aba('empresas')`:""}"><b>${n}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
@@ -181,13 +184,13 @@ function empresas(){ const q=F.q.toLowerCase();
   L.sort(ordem[F.ord]); const c={}; E.forEach(e=>{ const s=status(e); c[s]=(c[s]||0)+1; });
   return `<div class="tools"><input type="search" placeholder="🔍 Buscar por nome, e-mail ou código" value="${esc(F.q)}" oninput="F.q=this.value;deb()">
     <select onchange="F.ord=this.value;render()">${[["recentes","Mais recentes"],["atividade","Última atividade"],["vencimento","Vencimento do teste"],["uso","Mais uso (FVS)"],["ia","Mais uso de IA"],["nome","Nome (A-Z)"]].map(([k,n])=>`<option value="${k}"${F.ord===k?" selected":""}>${n}</option>`).join("")}</select>
-    <select onchange="F.plano=this.value;render()"><option value="">Todos os planos</option>${Object.keys(PRECO).map(p=>`<option${F.plano===p?" selected":""}>${p}</option>`).join("")}</select></div>
+    <select onchange="F.plano=this.value;render()"><option value="">Todos os planos</option>${Object.keys(PRECO).filter(p=>E.some(e=>e.planoNome===p)||NOVOS.includes(p)).map(p=>`<option${F.plano===p?" selected":""}>${p}</option>`).join("")}</select></div>
    <div class="chips">${[["todas","Todas",E.length,"var(--bl)"],...Object.entries(ST).map(([k,v])=>[k,v[0],c[k]||0,v[2]])].map(([k,n,v,cl])=>`<button class="${F.st===k?"on":""}" style="--c:${cl}" onclick="F.st='${k}';render()">${n} · ${v}</button>`).join("")}</div>
    <div class="lista">${L.map(cardEmp).join("")||`<p class="vazio">Nenhuma empresa com esses filtros.</p>`}</div>`; }
 let _t; function deb(){ clearTimeout(_t); _t=setTimeout(()=>{ const p=document.activeElement&&document.activeElement.selectionStart; render(); const i=document.querySelector('.tools input'); if(i){ i.focus(); try{ i.setSelectionRange(p,p); }catch(e){} } },250); }
 function cardEmp(e){ const s=status(e), [sl,sc]=ST[s], u=DADOS[e.id]||{}, us=(USERS[e.id]||[]).length, d=dias(e);
   const cota=e.iaCota||0, ia=e.iaUsadas||0, pc=cota&&cota<99999?Math.min(100,ia/cota*100):0;
-  const info=s==="trial"?`Teste termina ${d<=0?"hoje":d===1?"amanhã":`em ${d} dias`} (${fd(e.trialFim)})`:s==="expirado"?`Teste expirou em ${fd(e.trialFim)}`:s==="ativo"?`Plano ${esc(e.planoNome||"pago")} · ${brl(PRECO[e.planoNome]||0)}/mês`:s==="cortesia"?`Cortesia ${esc(e.planoNome||"")}${e.planoFim?` até ${fd(e.planoFim)}`:""}`:"Acesso desativado";
+  const info=s==="trial"?`Teste termina ${d<=0?"hoje":d===1?"amanhã":`em ${d} dias`} (${fd(e.trialFim)})`:s==="expirado"?`Teste expirou em ${fd(e.trialFim)}`:s==="ativo"?`Plano ${esc(e.planoNome||"pago")} · ${brl(valor(e))}/mês`:s==="cortesia"?`Cortesia ${esc(e.planoNome||"")}${e.planoFim?` até ${fd(e.planoFim)}`:""}`:"Acesso desativado";
   return `<div class="emp"><div class="emp-t"><div class="av" style="background:${cor(e.nome||e.id)}">${esc(ini(e.nome||e.donoEmail))}</div><div class="nm"><b>${esc(e.nome||"(sem nome)")}</b><small>${esc(e.donoEmail||"—")}</small></div><span class="bd ${sc}">${sl}</span></div>
    <div class="lin"><span>${info}</span><span>desde ${fd(e.criadoEm)}</span></div>
    <div class="mt"><div><b>${u.obras||0}</b><span>Obras</span></div><div><b>${u.fvs||0}</b><span>FVS</span></div><div><b>${u.diar||0}</b><span>Diários</span></div><div><b>${us}</b><span>Usuários</span></div></div>
@@ -203,14 +206,15 @@ async function lida(id){ try{ await db.collection("notificacoes_admin").doc(id).
 function abrir(h){ document.getElementById("sb").innerHTML=h; document.getElementById("sh").classList.add("on"); }
 function fechar(){ document.getElementById("sh").classList.remove("on"); }
 let PL=null;
-function planoSheet(id){ ATUAL=E.find(e=>e.id===id); PL={p:ATUAL.planoNome||"Pro",cort:!!ATUAL.cortesia}; planoRender(); }
+function planoSheet(id){ ATUAL=E.find(e=>e.id===id); PL={p:NOVOS.includes(ATUAL.planoNome)?ATUAL.planoNome:"Profissional",cort:!!ATUAL.cortesia}; planoRender(); }
 function planoRender(){ const e=ATUAL; abrir(`<h3>Plano de ${esc(e.nome||e.donoEmail)}</h3>
-  <div class="opts">${Object.keys(PRECO).map(p=>`<button class="opt ${PL.p===p?"on":""}" onclick="PL.p='${p}';planoRender()"><b>${p}</b><small>${brl(PRECO[p])}/mês · ${p==="Básico"?"1 obra":p==="Pro"?"até 3 obras":"ilimitado"}</small></button>`).join("")}</div>
+  <div class="opts">${NOVOS.map(p=>`<button class="opt ${PL.p===p?"on":""}" onclick="PL.p='${p}';planoRender()"><b>${p}</b><small>${PRECO[p]?brl(PRECO[p])+"/mês":"valor combinado"} · ${DESC[p]}</small></button>`).join("")}</div>${e.planoNome&&!NOVOS.includes(e.planoNome)?`<p style="margin:0;color:var(--ye);font-size:.8rem">Plano atual: ${esc(e.planoNome)} (tabela antiga, ${brl(PRECO[e.planoNome]||0)}/mês). Ao salvar, a empresa passa para a tabela nova.</p>`:""}
+  <label>Valor mensal combinado (opcional, para Corporativo ou condição especial)<input id="pl-v" type="number" placeholder="Ex.: 2400" value="${e.valorMensal||""}"></label>
   <label style="flex-direction:row;align-items:center;gap:8px;color:var(--tx)"><input type="checkbox" id="pl-c" ${PL.cort?"checked":""} onchange="PL.cort=this.checked"> Cortesia (uso gratuito, não entra na receita)</label>
   <label>Cota de IA por mês<input id="pl-q" type="number" value="${e.iaCota&&e.iaCota!==10?e.iaCota:COTA[PL.p]}"></label>
   <label>Validade (opcional, para cortesias e contratos)<input id="pl-f" type="date" value="${e.planoFim?dt(e.planoFim).toISOString().slice(0,10):""}"></label>
   <div class="row"><button class="btn g" onclick="fechar()">Cancelar</button><button class="btn" onclick="salvarPlano()">Salvar</button></div>`); }
-async function salvarPlano(){ const e=ATUAL, f=document.getElementById("pl-f").value; const up={plano:"ativo",planoNome:PL.p,ativo:true,cortesia:!!document.getElementById("pl-c").checked,iaCota:parseInt(document.getElementById("pl-q").value)||COTA[PL.p],obrasIlimitadas:PL.p==="Enterprise",planoFim:f?TS.fromDate(new Date(f+"T23:59:59")):null};
+async function salvarPlano(){ const e=ATUAL, f=document.getElementById("pl-f").value; const v=parseInt(document.getElementById("pl-v").value)||0; const up={plano:"ativo",planoNome:PL.p,ativo:true,cortesia:!!document.getElementById("pl-c").checked,iaCota:parseInt(document.getElementById("pl-q").value)||COTA[PL.p],obrasIlimitadas:PL.p==="Corporativo",valorMensal:v||null,planoFim:f?TS.fromDate(new Date(f+"T23:59:59")):null};
   await gravar(e.id,up,`${e.nome||"Empresa"}: plano ${PL.p}${up.cortesia?" (cortesia)":""}`); }
 function testeSheet(id){ ATUAL=E.find(e=>e.id===id); abrir(`<h3>Estender teste</h3><p style="margin:0;color:var(--mu)">${esc(ATUAL.nome||ATUAL.donoEmail)} · atual: ${fd(ATUAL.trialFim)}</p><div class="opts">${[3,7,14,30].map(n=>`<button class="opt" onclick="estender('${id}',${n})"><b>+${n} dias</b><small>a partir de ${status(ATUAL)==="expirado"?"hoje":"o fim atual"}</small></button>`).join("")}</div><div class="row"><button class="btn g" onclick="fechar()">Cancelar</button></div>`); }
 async function estender(id,n){ const e=E.find(x=>x.id===id); const base=Math.max(Date.now(),+(dt(e.trialFim)||0)); await gravar(id,{trialFim:TS.fromDate(new Date(base+n*DIA)),ativo:true,plano:"trial"},`${e.nome||"Empresa"}: teste estendido em ${n} dias`); }

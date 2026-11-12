@@ -2753,9 +2753,11 @@ function limiteObras(){
   // plano ativo: depende do planoNome
   if(emp.plano === "ativo"){
     const pn = (emp.planoNome || "").toLowerCase();
-    if(pn.includes("enterprise")) return Infinity; // Enterprise: ilimitado
-    if(pn.includes("pro")) return 3;               // Pro: até 3 obras
-    return 1; // Básico
+    if(pn.includes("corporativo")) return Infinity;  // Corporativo: sob consulta
+    if(pn.includes("enterprise")) return Infinity;   // Enterprise (clientes antigos): ilimitado
+    if(pn.includes("contrato")) return 6;            // Contrato: até 6 obras
+    if(pn.includes("pro")) return 3;                 // Profissional (e Pro antigo): até 3 obras
+    return 1; // Essencial (e Básico antigo)
   }
   // trial: permite 1 obra (pra experimentar)
   return 1;
@@ -2790,9 +2792,9 @@ async function assinarPlano(plano){
 function htmlBotoesPlanos(destaque){
   if(window.MGI_PLAY) return '<div style="color:#94a3b8;font-size:.85rem;margin-bottom:16px;line-height:1.5">O acesso da sua empresa é gerenciado pelo administrador da conta. Fale com ele para regularizar.</div>';
   const planos = [
-    {id:"basico",     nome:"Básico",     preco:"R$ 297",   desc:"1 obra"},
-    {id:"pro",        nome:"Pro",        preco:"R$ 597",   desc:"até 3 obras"},
-    {id:"enterprise", nome:"Enterprise", preco:"R$ 1.297", desc:"obras ilimitadas"}
+    {id:"basico",     nome:"Essencial",    preco:"R$ 397",   desc:"1 obra · 5 usuários"},
+    {id:"pro",        nome:"Profissional", preco:"R$ 897",   desc:"até 3 obras · 15 usuários"},
+    {id:"enterprise", nome:"Contrato",     preco:"R$ 1.897", desc:"até 6 obras · usuários ilimitados"}
   ];
   return planos.map(p=>{
     const hot = p.id===destaque;
@@ -2805,7 +2807,7 @@ function htmlBotoesPlanos(destaque){
       + '<span>💳 ' + p.nome + ' <span style="font-weight:500;opacity:.75;font-size:.73rem">· ' + p.desc + '</span></span>'
       + '<span>' + p.preco + '<span style="font-weight:500;opacity:.7;font-size:.7rem">/mês</span></span>'
       + '</button>';
-  }).join("");
+  }).join("") + '<div style="font-size:.74rem;color:#94a3b8;line-height:1.5;margin:4px 2px 12px">Mais de 6 obras, plano anual (2 meses de desconto) ou implantação assistida: <a href="https://wa.me/5511974946171?text=Quero%20saber%20sobre%20o%20plano%20Corporativo%20do%20MGI%20PRO" target="_blank" style="color:#14CE8D">fale com a Massei</a>.</div>';
 }
 
 // Abre/fecha o modal de planos (assinar a qualquer momento)
@@ -5043,6 +5045,12 @@ html.light .btn-NA.active{background:#475569;color:#fff}
 html:not(.light) .logo-img{box-shadow:0 0 0 1px rgba(255,255,255,.14),0 2px 10px rgba(59,155,255,.18)}
 html.light .logo-img{box-shadow:0 2px 8px rgba(15,23,42,.18)}
 .pi-k{cursor:pointer}
+.lgpd-av{margin:0;font-size:.74rem;color:var(--muted);background:var(--surf2);border:1px dashed var(--border2);border-radius:10px;padding:7px 10px;line-height:1.4}
+#mgi-aceite{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+#mgi-aceite .ac-box{background:var(--bg2);border-radius:18px;max-width:460px;width:100%;padding:20px;display:flex;flex-direction:column;gap:12px;color:var(--text)}
+#mgi-aceite h3{margin:0}#mgi-aceite p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.5}#mgi-aceite a{color:var(--cyan)}
+#mgi-aceite label{display:flex;gap:10px;align-items:flex-start;font-size:.86rem;line-height:1.4;cursor:pointer}#mgi-aceite input{margin-top:3px;width:18px;height:18px;flex:0 0 auto}
+#mgi-aceite button{background:var(--grad);color:#fff;border:0;border-radius:12px;padding:12px;font:800 .95rem Barlow,sans-serif;cursor:pointer}#mgi-aceite button:disabled{opacity:.45;cursor:not-allowed}
 .pr-box{max-width:760px}.pr-tabs{display:flex;gap:6px;flex-wrap:wrap}.pr-tabs button{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:999px;padding:6px 12px;font:700 .8rem Barlow,sans-serif;cursor:pointer}.pr-tabs button.on{border-color:var(--cyan);background:rgba(59,155,255,.12)}
 .pr-lg{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text);margin-right:8px}.pr-lg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .pr-grade{display:flex;flex-direction:column;gap:4px;max-height:46vh;overflow:auto;padding:8px;background:var(--surf2);border:1px solid var(--border2);border-radius:14px}
@@ -5445,9 +5453,10 @@ body.mod-inicio .prog-wrap{display:none}
         if(hdr){ hdr.style.top = h + "px"; }
       }
       // guarda dados globais para uso futuro (cota IA etc.)
-      window.MGI_USER = { uid:user.uid, email:user.email, tenantId:tenantId, role:udata.role||"user" };
+      window.MGI_USER = { uid:user.uid, email:user.email, tenantId:tenantId, role:udata.role||"user", nome:udata.nome||"", aceite:udata.aceite||null };
       window.MGI_EMPRESA = empresa;
       liberarApp();
+      try{ setTimeout(mgiVerificarAceite,600); }catch(e){}
     } catch(err){
       console.error("Auth guard erro:", err);
       bloquearComMensagem('<div style="text-align:center;max-width:340px;padding:24px;font-family:Barlow,sans-serif"><div style="font-size:2rem;margin-bottom:10px">⚠️</div><div style="color:var(--text);font-weight:700;margin-bottom:8px">Erro ao verificar acesso</div><div style="color:#94a3b8;font-size:.85rem;margin-bottom:18px">Verifique sua conexão e tente novamente.</div><button onclick="location.reload()" style="background:linear-gradient(90deg,#14CE8D,#107DE0);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:800;cursor:pointer;margin-right:8px">Recarregar</button><button onclick="mgiLogout()" style="background:transparent;border:1px solid #334155;color:#94a3b8;border-radius:10px;padding:12px 20px;font-weight:600;cursor:pointer">Sair</button></div>');
@@ -5525,7 +5534,7 @@ function libRender(){
     ${LIB_GRUPOS.map(([g,its],gi)=>`<div class="lib-g"><b>${gi+1}. ${g}</b>${its.map((t,ii)=>{ const k=gi+"_"+ii; return `<div class="lib-i"><span>${t}</span><div class="lib-bs">${btn(k,"C","✓","#0A9E6C")}${btn(k,"NC","✗","#DC2626")}${btn(k,"NA","NA","#64748b")}</div>${LIB.resp[k]==="NC"?`<textarea class="lib-obs" data-k="${k}" rows="2" placeholder="Pendência e prazo para resolver"${ro}>${$e(LIB.obs[k]||"")}</textarea>`:""}</div>`; }).join("")}</div>`).join("")}
     <div class="lib-sit">Situação sugerida: <b style="color:${sg.sug==="Liberada"?"var(--green)":sg.sug==="Não liberada"?"var(--red)":"var(--yellow)"}">${sg.sug||"preencha o checklist"}</b>${sg.crit?` <small>(${sg.crit} pendência(s) de documentação ou segurança impedem a liberação)</small>`:""}</div>
     <label>Parecer final<textarea id="lib-parecer" rows="2" placeholder="Condições e ressalvas da liberação"${ro}>${$e(LIB.parecer)}</textarea></label>
-    <div class="lib-ass">${["resp","qual","sst","fiscal"].map(pad).join("")}</div>
+    <p class="lgpd-av">🔒 Nomes e assinaturas são registrados como evidência da liberação, conforme a LGPD.</p><div class="lib-ass">${["resp","qual","sst","fiscal"].map(pad).join("")}</div>
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiLibLista()">Voltar</button>${LIB.id&&(state.liberacoes||[]).some(l=>l.id===LIB.id)&&!souFiscal()?`<button class="ac5-cancel" onclick="mgiLibExcluir()">Excluir</button>`:""}${ro?"":`<button class="ac5-save" onclick="mgiLibSalvar()">Salvar</button>`}</div>`,"rg-box");
 }
 window.mgiLibResp=function(k,v){ libLer(); LIB.resp[k]=LIB.resp[k]===v?"":v; libRender(); };
@@ -5619,7 +5628,7 @@ if(!state.docsCtl){ try{ state.docsCtl=JSON.parse(localStorage.getItem("mgi_docs
 window.mgiDocs=function(){ const H=new Date(); H.setHours(0,0,0,0); const L=(state.docsCtl||[]).slice().sort((a,b)=>(a.validade||"9").localeCompare(b.validade||"9")); const ro=souFiscal();
   const st=d=>{ if(!d.validade) return ["Sem validade","var(--muted)"]; const n=Math.round((new Date(d.validade+"T00:00:00")-H)/864e5); return n<0?["Vencido há "+(-n)+" dias","var(--red)"]:n<=30?["Vence em "+n+" dias","var(--yellow)"]:["Válido","var(--green)"]; };
   modal(`<h3>🗂️ Documentos e treinamentos</h3><p style="margin:0;color:var(--muted);font-size:.82rem">ART, licenças, ASO, treinamentos de NR, certificados de calibração e laudos, com aviso de vencimento.</p>
-    ${ro?"":`<div class="doc-f"><select id="doc-tipo">${["Treinamento NR","ASO","ART","Licença","Certificado de calibração","Laudo","Outro"].map(t=>`<option>${t}</option>`).join("")}</select><input id="doc-nome" placeholder="Descrição (ex.: NR-35 trabalho em altura)"><input id="doc-pessoa" placeholder="Pessoa, equipamento ou empresa"><input type="date" id="doc-val"><button class="ac5-save" onclick="mgiDocAdd()">Adicionar</button></div>`}
+    ${ro?"":`<div class="doc-f"><select id="doc-tipo">${["Treinamento NR","ASO","ART","Licença","Certificado de calibração","Laudo","Outro"].map(t=>`<option>${t}</option>`).join("")}</select><input id="doc-nome" placeholder="Descrição (ex.: NR-35 trabalho em altura)"><input id="doc-pessoa" placeholder="Pessoa, equipamento ou empresa"><input type="date" id="doc-val"><button class="ac5-save" onclick="mgiDocAdd()">Adicionar</button></div><p class="lgpd-av">🔒 Para ASO, registre somente a validade. Não inclua resultado, diagnóstico ou restrições médicas: são dados de saúde (dados sensíveis na LGPD).</p>`}
     <div class="rg-lista">${L.map(d=>{const [t,c]=st(d);return `<div class="rg-it" style="border-left-color:${c}"><div class="rg-tx"><span class="rg-tp" style="color:${c}">${t}</span><b>${$e(d.tipo)}: ${$e(d.nome)}</b><span>${$e(d.pessoa||"")}${d.validade?" · validade "+d.validade.split("-").reverse().join("/"):""}</span></div>${ro?"":`<div class="rg-bt"><button onclick="mgiDocDel('${d.id}')">Excluir</button></div>`}</div>`;}).join("")||`<p class="pi-nada">Nenhum documento cadastrado.</p>`}</div>
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`,"rg-box"); };
 window.mgiDocAdd=function(){ const g=i=>(document.getElementById(i)||{}).value||""; if(!g("doc-nome")){ alert("Informe a descrição."); return; } state.docsCtl.push({id:"doc_"+Date.now(),tipo:g("doc-tipo"),nome:g("doc-nome"),pessoa:g("doc-pessoa"),validade:g("doc-val"),atualizadoEm:agoraISO()}); mgiLog("Cadastrou documento",g("doc-nome")); persistir(); mgiDocs(); };
@@ -5862,7 +5871,7 @@ function ddPasso(p){
     return modal(`<h3>Pergunta ${p} de ${DD.perguntas.length}</h3><b style="color:var(--text)">${$e(q.q)}</b>${q.ops.map((o,k)=>`<button class="dd-op${r===undefined?"":k===q.certa?" ok":k===r?" er":""}" ${r===undefined?`onclick="mgiDDSResp(${p},${k})"`:"disabled"}>${$e(o)}</button>`).join("")}${r!==undefined?`<p style="margin:0;font-size:.82rem;color:${r===q.certa?"var(--green)":"var(--red)"}"><b>${r===q.certa?"Correto.":"Resposta certa destacada em verde."}</b> ${$e(q.exec)}</p>`:""}<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDSPasso(${p-1})">Voltar</button>${r!==undefined?`<button class="ac5-save" onclick="mgiDDSPasso(${p+1})">${p<DD.perguntas.length?"Próxima":"Presença"}</button>`:""}</div>`); }
   if(!DD.participantes.length) DD.participantes.push({nome:"",funcao:"",assin:null});
   const nAss=DD.participantes.filter(x=>x.assin).length;
-  modal(`<h3>Lista de presença</h3><p style="margin:0;color:var(--muted);font-size:.8rem">${DD.participantes.length} participante(s), ${nAss} assinatura(s). Cada pessoa assina no próprio aparelho do ministrante.</p>
+  modal(`<h3>Lista de presença</h3><p style="margin:0;color:var(--muted);font-size:.8rem">${DD.participantes.length} participante(s), ${nAss} assinatura(s). Cada pessoa assina no próprio aparelho do ministrante.</p><p class="lgpd-av">🔒 Nome, função e assinatura são registrados como evidência de treinamento, conforme a política de privacidade da empresa e a LGPD.</p>
    <div class="dd-lista">${DD.participantes.map((x,i)=>`<div class="dd-p"><span class="dd-n">${i+1}</span><div class="dd-pc"><input class="dd-pn" placeholder="Nome" value="${$e(x.nome)}"><input class="dd-pf" placeholder="Função" value="${$e(x.funcao)}" list="dl-funcoes"></div><div class="dd-pa">${x.assin?`<img src="${x.assin}" onclick="mgiDDSAssinarP(${i})">`:`<button onclick="mgiDDSAssinarP(${i})">✍️ Assinar</button>`}<button class="dd-x" onclick="mgiDDSRemP(${i})" title="Remover">✕</button></div></div>`).join("")}</div>
    <datalist id="dl-funcoes">${["Encarregado","Pedreiro","Servente","Armador","Carpinteiro","Operador de máquina","Motorista","Topógrafo","Técnico de segurança","Técnico de qualidade","Engenheiro","Eletricista","Encanador","Soldador","Apontador"].map(f=>`<option value="${f}">`).join("")}</datalist>
    <button class="ac5-cancel" onclick="mgiDDSAddP()">+ Adicionar participante</button>
@@ -6034,6 +6043,28 @@ document.addEventListener("focusin",e=>{ if(!e.target||e.target.id!=="fvs-trecho
   dl.innerHTML=ops.slice(0,800).map(x=>`<option value="${$e(x)}">`).join(""); },30); });
 })();
 
+</script>
+<script>
+// ===== LGPD: aceite registrado dos Termos de Uso e da Política de Privacidade =====
+const MGI_TERMOS_VERSAO="2026-11";
+function mgiVerificarAceite(){
+  const u=window.MGI_USER; if(!u||!u.uid||document.getElementById("mgi-aceite")||/demo\.html|Previa/i.test(location.pathname)||window.__MGI_PREVIA) return;
+  if(u.aceite&&u.aceite.versao===MGI_TERMOS_VERSAO) return;
+  const ov=document.createElement("div"); ov.id="mgi-aceite";
+  ov.innerHTML=`<div class="ac-box"><h3>🔒 Termos e privacidade</h3>
+   <p>${u.aceite?"Atualizamos os nossos documentos para incluir os novos recursos (equipe, fotos com localização, inteligência artificial e relatórios automáticos).":"Antes de começar, leia e aceite os nossos documentos."} Eles explicam como os dados da sua obra e da sua equipe são tratados, conforme a LGPD (Lei 13.709/2018).</p>
+   <label><input type="checkbox" id="ac-t"> <span>Li e aceito os <a href="termos-de-uso.html" target="_blank">Termos de Uso</a> e a <a href="politica-de-privacidade.html" target="_blank">Política de Privacidade</a>.</span></label>
+   <label><input type="checkbox" id="ac-m"> <span>Aceito receber novidades e conteúdos do MGI PRO por e-mail e WhatsApp (opcional, pode cancelar quando quiser).</span></label>
+   <button id="ac-ok" disabled>Continuar</button><p style="font-size:.74rem">Versão ${MGI_TERMOS_VERSAO}. Dúvidas sobre seus dados: thiago@masseisgi.com</p></div>`;
+  document.body.appendChild(ov);
+  const t=ov.querySelector("#ac-t"), b=ov.querySelector("#ac-ok"); t.onchange=()=>{ b.disabled=!t.checked; };
+  b.onclick=async()=>{ b.disabled=true; b.textContent="Registrando...";
+    const ac={versao:MGI_TERMOS_VERSAO,termos:true,politica:true,marketing:!!ov.querySelector("#ac-m").checked,em:new Date().toISOString(),dispositivo:(navigator.userAgent||"").slice(0,140)};
+    try{ if(typeof firebase!=="undefined"&&firebase.firestore){ await firebase.firestore().collection("usuarios").doc(u.uid).set({aceite:{...ac,servidorEm:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true}); }
+      u.aceite=ac; try{ mgiLog("Aceitou os Termos de Uso e a Política de Privacidade","versão "+MGI_TERMOS_VERSAO+(ac.marketing?", com marketing":"")); }catch(e){}
+      ov.remove();
+    }catch(e){ b.disabled=false; b.textContent="Continuar"; alert("Não foi possível registrar o aceite agora. Verifique a internet e tente de novo."); } };
+}
 </script>
 </body>
 </html>
