@@ -206,7 +206,7 @@
       <a href="#recursos">Recursos</a>
       <a href="#como">Como funciona</a>
       <a href="#planos">Planos</a>
-      <a href="#faq">Dúvidas</a>
+      <a href="#guia">Guia grátis</a><a href="#faq">Dúvidas</a>
       <a href="login.html" style="font-weight:600;color:var(--text)">Entrar</a>
       <a href="login.html" class="nav-cta">Testar grátis</a>
     </div>
@@ -447,6 +447,86 @@
 </section>
 
 <!-- FAQ -->
+
+<!-- ===== GUIA GRATUITO (MGI-EBK-001) ===== -->
+<style>
+.guia-sec{padding:72px 20px;background:linear-gradient(180deg,rgba(10,158,108,.07),rgba(11,99,214,.07))}
+.guia-wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:300px 1fr 1fr;gap:36px;align-items:center}
+.guia-capa{width:100%;border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);transform:rotate(-2deg)}
+.guia-txt .eb{display:inline-block;font:700 .72rem/1 Barlow,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#2bd38d;border:1px solid rgba(43,211,141,.45);border-radius:999px;padding:6px 12px;margin-bottom:14px}
+.guia-txt h2{font-size:clamp(1.6rem,3vw,2.3rem);line-height:1.12;margin:0 0 12px;color:#fff}
+.guia-txt p{color:#b9c6d6;margin:0 0 14px}
+.guia-txt ul{list-style:none;padding:0;margin:0}.guia-txt li{padding:5px 0 5px 26px;position:relative;color:#dbe6f3}.guia-txt li::before{content:"✓";position:absolute;left:0;color:#2bd38d;font-weight:800}
+.guia-form{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px}
+.guia-form h3{margin:0 0 4px;color:#fff;font-size:1.15rem}.guia-form .sub{color:#93a4bb;font-size:.85rem;margin:0 0 14px}
+.guia-form label{display:block;font-size:.78rem;color:#b9c6d6;margin:0 0 4px;font-weight:600}
+.guia-form input,.guia-form select{width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.16);color:#fff;border-radius:10px;padding:11px 12px;font:inherit;font-size:.95rem;margin-bottom:10px}
+.guia-form select option{color:#111}
+.guia-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.guia-ck{display:flex;gap:9px;align-items:flex-start;font-size:.76rem!important;font-weight:400!important;color:#93a4bb!important;margin:4px 0 14px!important;line-height:1.45}
+.guia-ck input{width:auto;margin:2px 0 0;flex:none}.guia-ck a{color:#2bd38d}
+.guia-btn{width:100%;border:0;border-radius:12px;padding:14px;background:linear-gradient(90deg,#0aa557,#0b63d6);color:#fff;font:800 1rem Barlow,sans-serif;cursor:pointer}
+.guia-btn:disabled{opacity:.6}
+.guia-ok{text-align:center}.guia-ok b{display:block;font-size:1.2rem;color:#fff;margin-bottom:6px}.guia-ok p{color:#b9c6d6;font-size:.9rem}
+.guia-ok a.guia-btn{display:block;text-decoration:none;margin:12px 0}.guia-ok .lk{color:#2bd38d;font-weight:700;text-decoration:none;font-size:.9rem}
+.guia-err{color:#fca5a5;font-size:.82rem;margin-top:8px}
+@media(max-width:900px){.guia-wrap{grid-template-columns:1fr;gap:26px}.guia-capa{max-width:170px;display:block;margin:0 auto}.guia-2{grid-template-columns:1fr}}
+</style>
+<section class="guia-sec" id="guia">
+ <div class="guia-wrap">
+  <div><img class="guia-capa" src="guia/guia-capa.jpg" alt="Capa do guia Obra sem papelada" loading="lazy" width="420" height="594"></div>
+  <div class="guia-txt">
+   <span class="eb">Guia gratuito · 20 páginas</span>
+   <h2>Obra sem papelada</h2>
+   <p>Guia prático de qualidade, segurança e meio ambiente para obras de saneamento e edificações residenciais, escrito por quem audita obra todos os dias.</p>
+   <ul>
+    <li>O que a fiscalização, o cliente e a auditoria realmente cobram</li>
+    <li>Diário de obra que serve de prova e FVS com critério</li>
+    <li>Não conformidade com 5 porquês e plano 5W2H</li>
+    <li>Liberação de frente, rastreabilidade de materiais e DDS</li>
+    <li>Auditorias ISO 9001, 14001, 45001 e PBQP-H integradas</li>
+    <li>Listas de verificação e modelos prontos para copiar</li>
+   </ul>
+  </div>
+  <div class="guia-form">
+   <form id="formGuia" name="guia" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+    <input type="hidden" name="form-name" value="guia">
+    <input type="hidden" name="origem" value="mgipro.app">
+    <p hidden><label>Não preencha: <input name="bot-field"></label></p>
+    <h3>Baixe grátis</h3><p class="sub">Preencha e o download começa na hora.</p>
+    <label for="g-nome">Nome *</label><input id="g-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+    <div class="guia-2"><div><label for="g-emp">Empresa</label><input id="g-emp" name="empresa" autocomplete="organization" placeholder="Construtora ou consórcio"></div>
+    <div><label for="g-fun">Função</label><input id="g-fun" name="funcao" placeholder="Ex.: engenheiro de obra"></div></div>
+    <div class="guia-2"><div><label for="g-wa">WhatsApp *</label><input id="g-wa" name="whatsapp" type="tel" required autocomplete="tel" placeholder="(11) 90000-0000"></div>
+    <div><label for="g-em">E-mail</label><input id="g-em" name="email" type="email" autocomplete="email" placeholder="voce@empresa.com.br"></div></div>
+    <label for="g-tipo">Tipo de obra</label><select id="g-tipo" name="tipo_obra"><option value="">Selecione</option><option>Saneamento</option><option>Edificação residencial</option><option>Edificação comercial ou industrial</option><option>Infraestrutura e outras</option></select>
+    <label class="guia-ck"><input type="checkbox" name="consentimento" value="Sim, autorizo" required><span>Autorizo a Massei Gestão Integrada a usar estes dados para enviar o guia e entrar em contato sobre seus serviços, conforme a <a href="politica-de-privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>. Posso revogar quando quiser.</span></label>
+    <button class="guia-btn" id="guiaBtn" type="submit">📥 Baixar o guia grátis</button>
+    <div class="guia-err" id="guiaErr"></div>
+   </form>
+   <div class="guia-ok" id="guiaOk" hidden>
+    <b>Pronto! Seu guia está baixando.</b>
+    <p>Se o download não começar, toque no botão abaixo.</p>
+    <a class="guia-btn" id="guiaLink" href="guia/MGI-EBK-001_Obra-sem-papelada.pdf" download>📥 Baixar o guia (PDF)</a>
+    <a class="lk" href="https://mgipro.app/demo.html" target="_blank" rel="noopener">Veja o MGI PRO funcionando, sem cadastro →</a>
+   </div>
+  </div>
+ </div>
+</section>
+<script>
+(function(){var f=document.getElementById('formGuia');if(!f)return;var b=document.getElementById('guiaBtn'),er=document.getElementById('guiaErr');
+function pronto(){f.hidden=true;var ok=document.getElementById('guiaOk');ok.hidden=false;try{document.getElementById('guiaLink').click();}catch(e){}
+ try{if(window.gtag)gtag('event','download_guia');}catch(e){}}
+f.addEventListener('submit',function(e){e.preventDefault();er.textContent='';
+ var wa=(f.whatsapp.value||'').replace(/\D/g,'');if(wa.length<10){er.textContent='Informe o WhatsApp com DDD.';f.whatsapp.focus();return;}
+ b.disabled=true;b.textContent='Enviando...';
+ var body=new URLSearchParams(new FormData(f)).toString();
+ fetch('https://masseisgi.com/',{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body})
+ .then(function(r){pronto();})
+ .catch(function(){pronto();});
+});})();
+</script>
+<!-- ===== FIM GUIA ===== -->
 <section class="block" id="faq" style="padding-top:0">
   <div class="wrap">
     <div class="sec-head center reveal" style="margin-left:auto;margin-right:auto">

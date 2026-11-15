@@ -75,16 +75,17 @@
     <tr><td>Fotos e localização</td><td>Fotos tiradas pelo aplicativo, com carimbo de data, hora, obra, serviço, responsável e, quando autorizado pelo usuário no aparelho, coordenadas GPS do local da foto. A localização é coletada somente no momento da foto e não há rastreamento contínuo</td></tr>
     <tr><td>Equipe e permissões</td><td>Nome e e-mail de pessoas convidadas, papel na empresa (administrador, membro ou fiscalização) e autoria dos registros</td></tr>
     <tr><td>Assinaturas e identidade visual</td><td>Assinaturas desenhadas na tela para liberações e relatórios, logotipos e dados da empresa inseridos para os relatórios</td></tr>
+    <tr><td>Contatos do site e de materiais</td><td>Nome, empresa, função, e-mail, WhatsApp e tipo de obra informados para baixar materiais (como guias) ou pedir diagnóstico, com o registro do consentimento</td></tr>
     <tr><td>Registro de alterações</td><td>Histórico de quem criou, alterou ou excluiu registros, para rastreabilidade em auditorias</td></tr>
   </table>
-  <p>O aplicativo usa a <strong>câmera</strong> apenas quando o usuário toca para tirar uma foto, o <strong>microfone</strong> apenas quando o usuário aciona o ditado por voz (o áudio é convertido em texto pelo próprio sistema do aparelho e não é armazenado pela MGI) e as <strong>notificações</strong> apenas se o usuário ativar os avisos de prazo.</p>
+  <p>O aplicativo usa a <strong>câmera</strong> apenas quando o usuário toca para tirar uma foto, o <strong>microfone</strong> apenas quando o usuário aciona o ditado por voz (o áudio é convertido em texto pelo reconhecimento de voz do navegador ou do sistema do aparelho, que pode ser processado pelo fornecedor do navegador, como Google ou Apple; o áudio não é armazenado pela MGI, apenas o texto resultante, quando o usuário salva o registro), a <strong>localização</strong> apenas ao tirar fotos ou ao tocar em Clima automático e as <strong>notificações</strong> apenas se o usuário ativar os avisos de prazo.</p>
 
   <h2>3. Finalidades e bases legais</h2>
   <ul>
     <li><strong>Execução do contrato</strong> (art. 7º, V, LGPD): criar e manter a conta, prestar o serviço, processar pagamentos.</li>
     <li><strong>Cumprimento de obrigação legal/regulatória</strong> (art. 7º, II): emissão fiscal, guarda de registros.</li>
     <li><strong>Legítimo interesse</strong> (art. 7º, IX): segurança da Plataforma, prevenção a fraudes, melhoria do serviço.</li>
-    <li><strong>Consentimento</strong> (art. 7º, I): comunicações de marketing, quando aplicável, sempre revogável.</li>
+    <li><strong>Consentimento</strong> (art. 7º, I): envio de materiais solicitados no site (como guias para download), contato comercial e comunicações de marketing, sempre revogável a qualquer momento pelo WhatsApp ou e-mail indicados nesta Política.</li>
   </ul>
 
   <h2>4. Compartilhamento e operadores (subprocessadores)</h2>
@@ -93,8 +94,10 @@
     <tr><th>Prestador</th><th>Finalidade</th></tr>
     <tr><td>Google (Firebase Authentication, Firestore, Storage e Cloud Functions)</td><td>Autenticação, banco de dados, armazenamento das fotos e funções do servidor</td></tr>
     <tr><td>GitHub (GitHub Pages)</td><td>Hospedagem da aplicação web e do aplicativo instalável</td></tr>
-    <tr><td>Anthropic (Claude)</td><td>Inteligência artificial que sugere ações corretivas, resumos e análise de fotos de não conformidades, somente quando o usuário aciona esses recursos. Os dados enviados não são usados para treinar modelos</td></tr>
+    <tr><td>Anthropic (Claude)</td><td>Inteligência artificial que sugere ações corretivas, resumos e análise de fotos, organiza relatos falados em diários, fichas, liberações e auditorias, e lê fotos de notas fiscais e de listas de presença, somente quando o usuário aciona esses recursos. Os dados enviados não são usados para treinar modelos</td></tr>
     <tr><td>Google Workspace (Gmail)</td><td>Envio do resumo mensal por e-mail aos destinatários cadastrados pela empresa</td></tr>
+    <tr><td>Netlify</td><td>Hospedagem do site masseisgi.com e recebimento dos formulários de contato e de download de materiais</td></tr>
+    <tr><td>Open-Meteo</td><td>Consulta do clima do dia a partir das coordenadas aproximadas da obra, somente quando o usuário toca em Clima automático, sem envio de nome ou outro dado identificável</td></tr>
     <tr><td>Mercado Pago</td><td>Processamento de cobranças e pagamentos da Assinatura</td></tr>
   </table>
   <p>Dados também poderão ser compartilhados com autoridades públicas quando exigido por lei ou ordem judicial.</p>
@@ -105,6 +108,7 @@
   <h2>6. Armazenamento, retenção e segurança</h2>
   <ul>
     <li>Os dados são mantidos pelo período necessário às finalidades informadas e às obrigações legais.</li>
+    <li>Os contatos informados para baixar materiais ou pedir diagnóstico são mantidos por até 24 meses após o último contato, ou até a revogação do consentimento, o que ocorrer primeiro.</li>
     <li>Encerrada a Assinatura, o Conteúdo do Cliente poderá ser excluído ou devolvido conforme solicitação do Cliente, respeitados os prazos legais de guarda.</li>
     <li>A MGI adota medidas técnicas e administrativas de segurança (controle de acesso, criptografia em trânsito, segregação multi-tenant) para proteger os dados contra acessos não autorizados, perda ou destruição.</li>
   </ul>
