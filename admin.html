@@ -72,6 +72,7 @@ main{max-width:1100px;margin:0 auto;padding:14px 16px 90px}
 svg text{fill:var(--mu);font-size:10px}
 .leg{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.78rem;color:var(--mu)}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .nt{padding:10px;border-bottom:1px solid var(--bd)}.nt:last-child{border:0}.nt b{font-size:.88rem}.nt small{color:var(--mu);display:block}
+.rt{width:100%;border-collapse:collapse;font-size:.8rem}.rt th{text-align:left;color:var(--mu);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--bd,#22304d);white-space:nowrap}.rt td{padding:7px 8px;border-bottom:1px solid var(--bd,#22304d);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -133,7 +134,8 @@ function resumoDados(d){ const arr=k=>Array.isArray(d[k])?d[k]:[]; let ult=0;
   ["fvsSalvas","auditoriasSalvas","liberacoes","dds"].forEach(k=>arr(k).forEach(x=>{ const t=+new Date(x.savedAt||x.atualizadoEm||x.data||0); if(t>ult) ult=t; }));
   arr("diarios").forEach(x=>{ const t=+new Date(x.atualizadoEm||(x.data?x.data+"T12:00:00":0)); if(t>ult) ult=t; });
   const t2=dt(d.atualizadoEm||d.updatedAt); if(t2&&+t2>ult) ult=+t2;
-  return {fvs:arr("fvsSalvas").length,aud:arr("auditoriasSalvas").length,diar:arr("diarios").length,lib:arr("liberacoes").length,obras:arr("obras").length,dds:arr("dds").length,ult:ult?new Date(ult):null,emails:(d.empresaCfg||{}).emails||""}; }
+  const med=[]; [["diarios","diario"],["fvsSalvas","fvs"],["auditoriasSalvas","auditoria"],["liberacoes","liberacao"],["materiais","material"],["dds","dds"]].forEach(([k,t])=>arr(k).forEach(x=>{ if(x&&x._med&&x._med.min>0) med.push({t,min:x._med.min,ia:!!x._med.ia,em:+new Date(x._med.em||x.atualizadoEm||x.savedAt||0)}); }));
+  return {med,fvs:arr("fvsSalvas").length,aud:arr("auditoriasSalvas").length,diar:arr("diarios").length,lib:arr("liberacoes").length,obras:arr("obras").length,dds:arr("dds").length,ult:ult?new Date(ult):null,emails:(d.empresaCfg||{}).emails||""}; }
 
 function status(e){ if(e.ativo===false) return "inativo"; if(e.plano==="ativo") return e.cortesia?"cortesia":"ativo"; const f=dt(e.trialFim); if(f&&f<new Date()) return "expirado"; return "trial"; }
 const ST={ativo:["Ativo","st-ativo","var(--gr)"],cortesia:["Cortesia","st-cortesia","var(--pu)"],trial:["Em teste","st-trial","var(--ye)"],expirado:["Expirado","st-expirado","var(--rd)"],inativo:["Inativo","st-inativo","var(--mu)"]};
@@ -151,10 +153,10 @@ function alertas(){ const A=[];
   }); return A.sort((a,b)=>a.p-b.p); }
 
 function render(){ const A=alertas(), nn=NOTIF.filter(n=>!n.lida).length;
-  document.getElementById("tabs").innerHTML=[["geral","Visão geral"],["empresas","Empresas",E.length],["alertas","Alertas",A.length],["notif","Notificações",nn]].map(([k,n,c])=>`<button class="${TAB===k?"on":""}" onclick="aba('${k}')">${n}${c&&k!=="empresas"?`<span class="n">${c}</span>`:c?` <small>${c}</small>`:""}</button>`).join("");
+  document.getElementById("tabs").innerHTML=[["geral","Visão geral"],["empresas","Empresas",E.length],["alertas","Alertas",A.length],["result","Resultados"],["notif","Notificações",nn]].map(([k,n,c])=>`<button class="${TAB===k?"on":""}" onclick="aba('${k}')">${n}${c&&k!=="empresas"?`<span class="n">${c}</span>`:c?` <small>${c}</small>`:""}</button>`).join("");
   document.getElementById("fab").style.display=TAB==="empresas"?"block":"none";
   const m=document.getElementById("main");
-  if(TAB==="geral") m.innerHTML=geral(A); else if(TAB==="empresas") m.innerHTML=empresas(); else if(TAB==="alertas") m.innerHTML=alertasHTML(A); else m.innerHTML=notifHTML(); }
+  if(TAB==="geral") m.innerHTML=geral(A); else if(TAB==="empresas") m.innerHTML=empresas(); else if(TAB==="alertas") m.innerHTML=alertasHTML(A); else if(TAB==="result") m.innerHTML=resultadosHTML(); else m.innerHTML=notifHTML(); }
 function aba(k){ TAB=k; render(); scrollTo(0,0); }
 
 function geral(A){ const c={}; E.forEach(e=>{ const s=status(e); c[s]=(c[s]||0)+1; });
@@ -203,6 +205,34 @@ function cardEmp(e){ const s=status(e), [sl,sc]=ST[s], u=DADOS[e.id]||{}, us=(US
    <div class="acts">${s==="ativo"||s==="cortesia"?`<button class="mini b" onclick="planoSheet('${e.id}')">Trocar plano</button>`:`<button class="mini g" onclick="planoSheet('${e.id}')">Ativar plano</button><button class="mini y" onclick="testeSheet('${e.id}')">Estender teste</button>`}
     <button class="mini" onclick="cotaSheet('${e.id}')">Cota IA</button><a class="mini g" href="${wa(e)}" target="_blank">WhatsApp</a><button class="mini" onclick="detalhes('${e.id}')">Detalhes</button>
     ${s==="inativo"?`<button class="mini g" onclick="reativar('${e.id}')">Reativar</button>`:`<button class="mini r" onclick="desativar('${e.id}')">Desativar</button>`}</div></div>`; }
+
+// ── Resultados: tempo economizado medido pelo próprio app ──
+const FORM={diario:["📅","Diário de obra",30],fvs:["🔧","FVS",20],auditoria:["📋","Auditoria",90],liberacao:["🚧","Liberação de frente",25],material:["📦","Recebimento de material",15],dds:["🎓","DDS",20]};
+const HORA_PADRAO=80; let RP=30, RE="todas";
+function baseDe(e,t){ return ((e&&e.medBase)||{})[t]||FORM[t][2]; }
+function horaDe(e){ return (e&&e.medHora)||HORA_PADRAO; }
+function calcRes(e){ const d=DADOS[e.id]||{}, desde=Date.now()-RP*DIA, L=(d.med||[]).filter(x=>x.em>=desde); const por={};
+  Object.keys(FORM).forEach(t=>{ const l=L.filter(x=>x.t===t); if(!l.length) return; const n=l.length, med=l.reduce((a,x)=>a+x.min,0)/n, b=baseDe(e,t), eco=Math.max(0,b-med);
+    por[t]={n,med,b,eco,h:eco*n/60,ia:l.filter(x=>x.ia).length/n}; });
+  const h=Object.values(por).reduce((a,x)=>a+x.h,0), n=Object.values(por).reduce((a,x)=>a+x.n,0); return {por,h,n,rs:h*horaDe(e)}; }
+const f1=v=>v.toLocaleString("pt-BR",{maximumFractionDigits:1}), pc=v=>Math.round(v*100)+"%";
+function resultadosHTML(){ const L=E.filter(e=>RE==="todas"||e.id===RE).map(e=>({e,r:calcRes(e)})); const tot=L.reduce((a,x)=>({h:a.h+x.r.h,rs:a.rs+x.r.rs,n:a.n+x.r.n}),{h:0,rs:0,n:0});
+  const K=(v,l,cl,sub)=>`<div class="k" style="--c:${cl}"><b>${v}</b><span>${l}</span>${sub?`<small>${sub}</small>`:""}</div>`;
+  return `<div class="tools"><select onchange="RP=+this.value;render()">${[[7,"Últimos 7 dias (teste grátis)"],[30,"Últimos 30 dias"],[90,"Últimos 90 dias"],[365,"Últimos 12 meses"]].map(([v,n])=>`<option value="${v}"${RP===v?" selected":""}>${n}</option>`).join("")}</select>
+    <select onchange="RE=this.value;render()"><option value="todas">Todas as empresas</option>${E.map(e=>`<option value="${e.id}"${RE===e.id?" selected":""}>${esc(e.nome||e.donoEmail)}</option>`).join("")}</select></div>
+   <div class="kpis">${K(f1(tot.h)+" h","Horas economizadas","var(--gr)","no período")}${K(brl(tot.rs),"Valor economizado","var(--bl)","horas × valor da hora")}${K(tot.n,"Registros medidos","var(--tx)","tempo cronometrado pelo app")}</div>
+   ${L.map(({e,r})=>`<div class="card"><h3>${esc(e.nome||e.donoEmail)} <small>· ${f1(r.h)} h · ${brl(r.rs)} · hora a ${brl(horaDe(e))}</small></h3>
+     ${r.n?`<div style="overflow-x:auto"><table class="rt"><thead><tr><th>Formulário</th><th>Registros</th><th>Antes (min)</th><th>Com o app (min)</th><th>Economia</th><th>Horas</th><th>Com voz/IA</th></tr></thead><tbody>${Object.entries(r.por).map(([t,x])=>`<tr><td>${FORM[t][0]} ${FORM[t][1]}</td><td>${x.n}</td><td>${f1(x.b)}</td><td>${f1(x.med)}</td><td><b style="color:var(--gr)">${x.b?pc(x.eco/x.b):"—"}</b></td><td>${f1(x.h)}</td><td>${pc(x.ia)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="vazio">Nenhum registro medido no período. A medição começa sozinha quando a equipe salva diário, FVS, auditoria, liberação, material ou DDS no app.</p>`}
+     <div class="acts"><button class="mini" onclick="baseSheet('${e.id}')">Tempos de antes e valor da hora</button><button class="mini b" onclick="copiarRes('${e.id}')">Copiar resumo para WhatsApp</button></div></div>`).join("")||`<p class="vazio">Nenhuma empresa.</p>`}
+   <p style="color:var(--mu);font-size:.78rem;line-height:1.5">Como é medido: o app soma o tempo em que a pessoa está mexendo no formulário, do primeiro toque até salvar, e desconta pausas maiores que 2 minutos. "Antes" é o tempo do jeito antigo (papel, Excel), informado por empresa; o padrão vem da prática de obra e pode ser ajustado.</p>`; }
+function baseSheet(id){ ATUAL=E.find(e=>e.id===id); abrir(`<h3>Tempos de antes</h3><p style="margin:0;color:var(--mu)">${esc(ATUAL.nome||ATUAL.donoEmail)} · minutos para preencher cada formulário do jeito antigo (pergunte à equipe na demonstração)</p>
+  ${Object.keys(FORM).map(t=>`<label>${FORM[t][0]} ${FORM[t][1]}<input id="mb-${t}" type="number" value="${baseDe(ATUAL,t)}"></label>`).join("")}
+  <label>Valor da hora do engenheiro (R$)<input id="mb-hora" type="number" value="${horaDe(ATUAL)}"></label>
+  <div class="row"><button class="btn g" onclick="fechar()">Cancelar</button><button class="btn" onclick="salvarBase()">Salvar</button></div>`); }
+async function salvarBase(){ const b={}; Object.keys(FORM).forEach(t=>{ const v=parseFloat(document.getElementById("mb-"+t).value); if(v>0) b[t]=v; }); await gravar(ATUAL.id,{medBase:b,medHora:parseFloat(document.getElementById("mb-hora").value)||HORA_PADRAO},"Tempos de antes atualizados"); TAB="result"; render(); }
+function copiarRes(id){ const e=E.find(x=>x.id===id), r=calcRes(e);
+  const t=`*MGI PRO · resultado dos últimos ${RP} dias*\n${e.nome||""}\n\n`+Object.entries(r.por).map(([k,x])=>`${FORM[k][0]} ${FORM[k][1]}: ${f1(x.b)} → ${f1(x.med)} min por registro (${x.b?pc(x.eco/x.b):"—"} mais rápido), ${x.n} registros`).join("\n")+`\n\n⏱️ *${f1(r.h)} horas economizadas*, cerca de *${brl(r.rs)}* em horas de engenharia.`;
+  navigator.clipboard.writeText(t).then(()=>toast("✅ Resumo copiado")).catch(()=>prompt("Copie o resumo:",t)); }
 
 function notifHTML(){ return `<div class="card"><h3>Notificações <small>· avisos enviados pelo app</small></h3>${NOTIF.map(n=>`<div class="nt" style="opacity:${n.lida?.55:1}"><b>${esc(n.titulo||n.tipo||"Aviso")}</b><small>${esc(n.mensagem||n.texto||n.email||"")}</small><small>${fd(n.criadoEm)}</small>${n.lida?"":`<button class="mini" style="margin-top:6px" onclick="lida('${n.id}')">Marcar como lida</button>`}</div>`).join("")||`<p class="vazio">Nenhuma notificação.</p>`}</div>`; }
 async function lida(id){ try{ await db.collection("notificacoes_admin").doc(id).update({lida:true}); const n=NOTIF.find(x=>x.id===id); if(n) n.lida=true; render(); }catch(e){ toast("Erro: "+e.message,1); } }

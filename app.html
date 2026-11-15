@@ -6668,6 +6668,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // ═════════════════════════════════════════════════════════════════════════════
 // MGI PRO · v45: Manual do usuário dentro do app (botão ❓ em cada ferramenta)
 // MGI PRO · v46: cota de IA por plano (300/1.000/3.000) e pacotes avulsos
+// MGI PRO · v47: medição automática do tempo de preenchimento (painel admin › Resultados)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -6774,6 +6775,49 @@ botaoTopo(); document.addEventListener("DOMContentLoaded",botaoTopo); setTimeout
   try{ var q=new URLSearchParams(location.search).get("ia");
     if(q){ history.replaceState(null,"",location.pathname); window.addEventListener("load",function(){ setTimeout(function(){
       aviso(q==="ok"?"✅ Pagamento aprovado. Os usos extras entram na sua conta em instantes.":q==="pendente"?"⏳ Pagamento em análise. Os usos extras entram assim que for aprovado.":"Pagamento não concluído. Você pode tentar de novo em Ferramentas › Uso da IA.",null); },1200); }); } }catch(e){}
+})();
+</script>
+
+<!-- ===== MEDIÇÃO AUTOMÁTICA DE TEMPO DE PREENCHIMENTO (v47) ===== -->
+<script>
+(function(){
+  // Tempo ATIVO por formulário: soma os intervalos entre toques, contando no máximo 2 min por intervalo
+  var LIM=120000, ACC={}, ULT={}, IA={}, atual=null;
+  var LISTAS={diarios:"diario",fvsSalvas:"fvs",auditoriasSalvas:"auditoria",liberacoes:"liberacao",materiais:"material",dds:"dds"};
+  function tipo(el){
+    if(!el||!el.closest) return null;
+    if(el.closest("#diario-page0")||el.closest("#dfc")) return "diario";
+    if(el.closest("#fvs-page0")||el.closest("#fvs-page1")) return "fvs";
+    if(el.closest("#iso-page0")||el.closest("#iso-page1")||el.closest("#iso-page2")) return "auditoria";
+    var m=el.closest("#ficha-modal");
+    if(m){ var h=((m.querySelector("h3")||{}).textContent||"");
+      if(/libera/i.test(h)) return "liberacao";
+      if(/materia|recebimento|nota fiscal/i.test(h)) return "material";
+      if(/DDS|di[aá]logo/i.test(h)) return "dds";
+      return atual; }  // modal de voz ou de apoio: conta para o formulário em uso
+    return null; }
+  function marcar(e){ var t=tipo(e.target); if(!t) return; atual=t; var n=Date.now();
+    if(ULT[t]) ACC[t]=(ACC[t]||0)+Math.min(n-ULT[t],LIM); ULT[t]=n; }
+  ["input","change","click","keydown"].forEach(function(ev){ document.addEventListener(ev,marcar,true); });
+  // Voz ou IA usada no formulário atual
+  window.mgiMedIA=function(){ if(atual) IA[atual]=true; };
+  if(typeof callAnthropicAPI==="function"){ var _c=callAnthropicAPI;
+    window.callAnthropicAPI=callAnthropicAPI=async function(){ var t=atual; var r=await _c.apply(this,arguments); if(t) IA[t]=true; return r; }; }
+  function ts(x){ return Date.parse(x.atualizadoEm||x.savedAt||x.criadoEm||0)||0; }
+  // Antes de sincronizar, grava o tempo no registro salvo agora (ou soma, se for edição)
+  function anotar(){
+    try{ var agora=Date.now();
+      Object.keys(LISTAS).forEach(function(k){ var t=LISTAS[k], ms=ACC[t]||0, lst=state[k];
+        if(!ms||!Array.isArray(lst)||!lst.length) return;
+        var r=null; lst.forEach(function(x){ if(x&&ts(x)>agora-120000&&(!r||ts(x)>ts(r))) r=x; });
+        if(!r) return;
+        var min=Math.round(ms/6000)/10, m=r._med||{min:0,ia:false,n:0};
+        m.min=Math.round((m.min+min)*10)/10; m.ia=m.ia||!!IA[t]; m.n=(m.n||0)+1; m.em=new Date().toISOString();
+        if(window.MGI_USER&&window.MGI_USER.email&&!m.por) m.por=window.MGI_USER.email;
+        r._med=m; ACC[t]=0; ULT[t]=0; IA[t]=false; });
+    }catch(e){} }
+  if(typeof syncNuvem==="function"){ var _s=syncNuvem; window.syncNuvem=syncNuvem=function(){ anotar(); return _s.apply(this,arguments); }; }
+  if(typeof mgiSalvarLocal==="function"){ var _l=mgiSalvarLocal; window.mgiSalvarLocal=mgiSalvarLocal=function(){ anotar(); return _l.apply(this,arguments); }; }
 })();
 </script>
 
