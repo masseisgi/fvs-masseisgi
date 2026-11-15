@@ -5369,7 +5369,7 @@ body.mod-inicio .prog-wrap{display:none}
   const LOGIN_URL = "login.html";
 
   // Dados de uma empresa nunca ficam no aparelho para a próxima conta
-  var MANTER=["mgi_tema","mgi_play","mgi_tutorial_ok"];
+  var MANTER=["mgi_tema","mgi_play","mgi_tutorial_ok","mgi_reset_feito"];
   window.mgiLimparLocal = function(){
     try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("mgi_")===0 && MANTER.indexOf(k)<0) localStorage.removeItem(k); }); }catch(e){}
   };
@@ -5476,6 +5476,12 @@ body.mod-inicio .prog-wrap{display:none}
           localStorage.setItem("mgi_tenant", tenantId);
         }
       }catch(e){ console.warn("isolamento local:", e); }
+      // Limpeza pedida pelo painel (Zerar dados): apaga a cópia local uma vez por pedido
+      try{
+        const _rq = empresa && empresa.resetLocalEm ? Number(empresa.resetLocalEm) : 0;
+        const _ok = Number(localStorage.getItem("mgi_reset_feito") || 0);
+        if(_rq && _rq > _ok){ mgiLimparLocal(); localStorage.setItem("mgi_tenant", tenantId); localStorage.setItem("mgi_reset_feito", String(_rq)); location.reload(); return; }
+      }catch(e){ console.warn("reset local:", e); }
       // guarda dados globais para uso futuro (cota IA etc.)
       window.MGI_USER = { uid:user.uid, email:user.email, tenantId:tenantId, role:udata.role||"user", nome:udata.nome||"", aceite:udata.aceite||null };
       window.MGI_EMPRESA = empresa;
@@ -6690,6 +6696,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v46: cota de IA por plano (300/1.000/3.000) e pacotes avulsos
 // MGI PRO · v47: medição automática do tempo de preenchimento (painel admin › Resultados)
 // MGI PRO · v48: dados isolados por empresa no aparelho (troca de conta limpa o celular)
+// MGI PRO · v50: Zerar dados no painel também limpa os celulares da equipe
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){

@@ -265,7 +265,7 @@ async function salvarCota(){ const q=iaUso(ATUAL), c=parseInt(document.getElemen
   await gravar(ATUAL.id,up,"Cota de IA atualizada"); }
 async function zerarDados(id){ const e=E.find(x=>x.id===id); const u=DADOS[id]||{};
   if(!confirm(`Zerar TODOS os dados de ${e.nome||"esta empresa"}? Apaga obras (${u.obras||0}), FVS (${u.fvs||0}), diários (${u.diar||0}), auditorias, liberações, materiais, DDS e configurações. A empresa, o plano e a equipe continuam. Não dá para desfazer.`)) return;
-  try{ await db.collection("dados").doc(id).delete(); DADOS[id]={med:[],obras:0,fvs:0,diar:0}; toast("🧹 Dados zerados. Peça para a equipe sair e entrar de novo no app."); fechar(); render(); }catch(err){ alert("Não foi possível zerar: "+err.message); } }
+  try{ await db.collection("dados").doc(id).delete(); await db.collection("empresas").doc(id).update({resetLocalEm:Date.now()}); DADOS[id]={med:[],obras:0,fvs:0,diar:0}; toast("🧹 Dados zerados. Peça para a equipe sair e entrar de novo no app."); fechar(); render(); }catch(err){ alert("Não foi possível zerar: "+err.message); } }
 async function desativar(id){ const e=E.find(x=>x.id===id); if(!confirm(`Desativar ${e.nome||"esta empresa"}? A equipe perde o acesso ao app (os dados são mantidos).`)) return; await gravar(id,{ativo:false,plano:"trial"},`${e.nome||"Empresa"} desativada`); }
 async function reativar(id){ const e=E.find(x=>x.id===id); await gravar(id,{ativo:true},`${e.nome||"Empresa"} reativada`); }
 async function gravar(id,up,msg){ try{ await db.collection("empresas").doc(id).update({...up,adminAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()}); const e=E.find(x=>x.id===id); Object.assign(e,up); fechar(); render(); toast("✅ "+msg); }catch(err){ toast("Erro: "+err.message,1); } }
