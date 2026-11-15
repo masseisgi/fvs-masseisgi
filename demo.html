@@ -2852,9 +2852,9 @@ async function assinarPlano(plano){
 function htmlBotoesPlanos(destaque){
   if(window.MGI_PLAY) return '<div style="color:#94a3b8;font-size:.85rem;margin-bottom:16px;line-height:1.5">O acesso da sua empresa é gerenciado pelo administrador da conta. Fale com ele para regularizar.</div>';
   const planos = [
-    {id:"basico",     nome:"Essencial",    preco:"R$ 397",   desc:"1 obra · 5 usuários"},
-    {id:"pro",        nome:"Profissional", preco:"R$ 897",   desc:"até 3 obras · 15 usuários"},
-    {id:"enterprise", nome:"Contrato",     preco:"R$ 1.897", desc:"até 6 obras · usuários ilimitados"}
+    {id:"basico",     nome:"Essencial",    preco:"R$ 497",   desc:"1 obra · 5 usuários · 300 usos de IA/mês"},
+    {id:"pro",        nome:"Profissional", preco:"R$ 997",   desc:"até 3 obras · 15 usuários · 1.000 usos de IA/mês"},
+    {id:"enterprise", nome:"Contrato",     preco:"R$ 2.197", desc:"até 6 obras · usuários ilimitados · 3.000 usos de IA/mês"}
   ];
   return planos.map(p=>{
     const hot = p.id===destaque;
@@ -2867,7 +2867,7 @@ function htmlBotoesPlanos(destaque){
       + '<span>💳 ' + p.nome + ' <span style="font-weight:500;opacity:.75;font-size:.73rem">· ' + p.desc + '</span></span>'
       + '<span>' + p.preco + '<span style="font-weight:500;opacity:.7;font-size:.7rem">/mês</span></span>'
       + '</button>';
-  }).join("") + '<div style="font-size:.74rem;color:#94a3b8;line-height:1.5;margin:4px 2px 12px">Mais de 6 obras, plano anual (2 meses de desconto) ou implantação assistida: <a href="https://wa.me/5511974946171?text=Quero%20saber%20sobre%20o%20plano%20Corporativo%20do%20MGI%20PRO" target="_blank" style="color:#14CE8D">fale com a Massei</a>.</div>';
+  }).join("") + '<div style="font-size:.74rem;color:#94a3b8;line-height:1.5;margin:4px 2px 12px">Precisa de mais IA? Pacotes avulsos a partir de R$ 97 em Ferramentas › Uso da IA. Mais de 6 obras, plano anual (2 meses de desconto) ou implantação assistida: <a href="https://wa.me/5511974946171?text=Quero%20saber%20sobre%20o%20plano%20Corporativo%20do%20MGI%20PRO" target="_blank" style="color:#14CE8D">fale com a Massei</a>.</div>';
 }
 
 // Abre/fecha o modal de planos (assinar a qualquer momento)
@@ -3984,13 +3984,17 @@ async function callAnthropicAPI(messages, maxTokens){
     const functions = firebase.app().functions("southamerica-east1");
     const gerarIA = functions.httpsCallable("gerarIA");
     const result = await gerarIA({ messages: messages, maxTokens: maxTokens || 1200 });
+    try { if(result.data && result.data._mgiUso && window.mgiIAUso) window.mgiIAUso(result.data._mgiUso); } catch(_){}
     return result.data;
   } catch(e){
     // Traduz os erros vindos da função
     const code = e.code || "";
     const msg = e.message || "";
     if(code === "functions/resource-exhausted" || msg.includes("limite")){
-      throw new Error("Você atingiu o limite de gerações de IA do seu período de teste. Assine o MGI PRO para continuar usando a IA.");
+      const d = e.details || {};
+      try { if(window.mgiIALimite) window.mgiIALimite(d); } catch(_){}
+      if(d.tipo === "mes") throw new Error("A cota de IA do seu plano acabou neste mês. Compre um pacote avulso em Ferramentas › Uso da IA ou mude de plano.");
+      throw new Error("Você usou toda a IA do período de teste. Assine o MGI PRO para continuar usando a IA.");
     } else if(code === "functions/permission-denied" || msg.includes("teste terminou") || msg.includes("suspensa")){
       throw new Error("Seu acesso à IA expirou. Assine o MGI PRO para continuar. Fale com a Massei: thiago@masseisgi.com");
     } else if(code === "functions/unauthenticated"){
@@ -5785,6 +5789,7 @@ window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine
     ${op("🕓","Registro de alterações","Quem fez o quê e quando.","mgiHistorico()")}
     ${op("💾","Exportar backup completo","Arquivo com todos os dados da empresa (LGPD e segurança).","mgiBackup()")}
     <label class="rel-op" style="cursor:pointer"><span>♻️</span><div><b>Restaurar backup</b><small>Mescla um arquivo de backup com os dados atuais.</small></div><input type="file" accept=".json,application/json" style="display:none" onchange="mgiRestaurar(this)"></label>
+    ${typeof mgiIAPainel==="function"?op("⚡","Uso da IA",(function(){ const u=mgiIAUsoAtual(); return u.cota?u.usadas.toLocaleString("pt-BR")+" de "+u.cota.toLocaleString("pt-BR")+" usos"+(u.teste?" do teste":" este mês")+(u.extra?" · "+u.extra.toLocaleString("pt-BR")+" extras":"")+". Pacotes avulsos.":"Consulte o uso e compre pacotes avulsos."; })(),"mgiFechar();mgiIAPainel()"):""}
     ${op("📘","Manual do usuário","Passo a passo de todas as ferramentas, com busca.","mgiAjuda()")}
     ${op("🎓","Ver o tutorial","Passo a passo das principais funções.","mgiTutorial(true)")}
     ${typeof abrirModalPlanos==="function"&&!window.MGI_PLAY?op("💳","Planos e assinatura","Trocar de plano ou assinar.","mgiFechar();abrirModalPlanos()"):""}
@@ -6796,6 +6801,89 @@ function marcar(){ document.querySelectorAll("#ficha-modal h3, .modal-obra h3, #
   const b=document.createElement("button"); b.type="button"; b.className="aj-q"; b.textContent="❓ Como usar"; b.onclick=e=>{ e.stopPropagation(); mgiAjuda(m[1]); }; h.appendChild(b); }); }
 new MutationObserver(()=>{ try{ marcar(); }catch(e){} }).observe(document.body,{childList:true,subtree:true});
 botaoTopo(); document.addEventListener("DOMContentLoaded",botaoTopo); setTimeout(botaoTopo,1500);
+})();
+</script>
+
+<!-- ===== COTA DE IA POR PLANO E PACOTES AVULSOS (v46) ===== -->
+<style>
+.ia-barra{height:10px;background:var(--surf2);border:1px solid var(--border2);border-radius:99px;overflow:hidden}
+.ia-barra i{display:block;height:100%;background:linear-gradient(90deg,#14CE8D,#107DE0);border-radius:99px}
+.ia-barra.alto i{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.ia-pac{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--surf2);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;cursor:pointer;font:700 .9rem Barlow,sans-serif;color:var(--text)}
+.ia-pac span{text-align:left}.ia-pac small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
+.ia-pac b{color:#14CE8D;white-space:nowrap}
+#ia-aviso{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6000;background:#0f172a;color:#fff;border:1px solid #f59e0b;border-radius:12px;padding:12px 14px;font:600 .84rem Barlow,sans-serif;width:min(92vw,420px);box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center}
+#ia-aviso button{margin-left:auto;background:#14CE8D;color:#04241a;border:none;border-radius:8px;padding:7px 10px;font:800 .78rem Barlow,sans-serif;cursor:pointer;white-space:nowrap}
+</style>
+<script>
+(function(){
+  var COTAS={"Essencial":300,"Profissional":1000,"Contrato":3000,"Corporativo":null,"Básico":300,"Pro":1000,"Enterprise":3000};
+  var PACOTES=[{id:"p300",usos:300,valor:"R$ 97"},{id:"p1000",usos:1000,valor:"R$ 247"}];
+  var MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  function mesAtual(){ return new Date(Date.now()-3*36e5).toISOString().slice(0,7); }
+  function nomeMes(m){ var n=parseInt((m||mesAtual()).slice(5,7),10); return MESES[(n||1)-1]; }
+  function num(n){ return Number(n||0).toLocaleString("pt-BR"); }
+  function pago(){ var e=window.MGI_EMPRESA||{}; return e.plano==="ativo"||e.plano==="pago"; }
+  function cotaPlano(e){ var n=(e.planoNome||""), base=300; for(var k in COTAS){ if(n.toLowerCase().indexOf(k.toLowerCase())>=0){ base=COTAS[k]; if(k!=="Pro") break; } }
+    if(e.iaCotaMensal!=null) return e.iaCotaMensal; if(base===null||(e.iaCota||0)>=99999) return null; return Math.max(e.iaCota||0,base); }
+
+  // Uso atual: vem da última resposta da IA; sem ela, do cadastro da empresa
+  window.mgiIAUsoAtual=function(){
+    if(window.MGI_IA_USO) return window.MGI_IA_USO;
+    var e=window.MGI_EMPRESA||{}, m=mesAtual();
+    if(pago()) return {usadas:e.iaMes===m?(e.iaUsadasMes||0):0,cota:cotaPlano(e),extra:e.iaExtra||0,teste:false,mes:m};
+    return {usadas:e.iaUsadas||0,cota:Math.max(e.iaCota||0,50),extra:e.iaExtra||0,teste:true,mes:m};
+  };
+
+  function aviso(txt,botao){ var t=document.getElementById("ia-aviso"); if(t) t.remove(); t=document.createElement("div"); t.id="ia-aviso";
+    t.innerHTML='<span>'+txt+'</span>'+(botao?'<button onclick="document.getElementById(\'ia-aviso\').remove();mgiIAPainel()">'+botao+'</button>':'');
+    document.body.appendChild(t); setTimeout(function(){ if(t.parentNode) t.remove(); },9000); }
+
+  // Chamado a cada resposta da IA
+  window.mgiIAUso=function(u){ if(!u) return; window.MGI_IA_USO=u; try{ localStorage.setItem("mgi_ia_uso",JSON.stringify(u)); }catch(e){}
+    if(!u.cota) return; var pc=u.usadas/u.cota, chave="mgi_ia_aviso_"+(u.teste?"teste":u.mes), ja=0;
+    try{ ja=parseInt(localStorage.getItem(chave)||"0",10); }catch(e){}
+    var nivel=pc>=1?100:pc>=0.9?90:pc>=0.8?80:0;
+    if(nivel&&nivel>ja){ try{ localStorage.setItem(chave,String(nivel)); }catch(e){}
+      if(nivel===100&&u.extra>0) aviso("⚡ A cota do mês acabou. Agora a IA usa os seus "+num(u.extra)+" usos extras.","Ver uso");
+      else if(nivel<100) aviso("⚡ Você já usou "+Math.round(pc*100)+"% da IA "+(u.teste?"do período de teste":"de "+nomeMes(u.mes))+" ("+num(u.usadas)+" de "+num(u.cota)+").",u.teste?"Assinar":"Ver opções"); } };
+
+  // Chamado quando a cota acaba
+  window.mgiIALimite=function(d){ d=d||{}; window.MGI_IA_USO={usadas:d.usadas||0,cota:d.cota||0,extra:0,teste:d.tipo==="teste",mes:mesAtual()};
+    setTimeout(function(){ mgiIAPainel(true); },50); };
+
+  function fecharModal(){ var m=document.getElementById("ficha-modal"); if(m) m.remove(); }
+  window.mgiIAPainel=function(esgotou){
+    var u=mgiIAUsoAtual(), e=window.MGI_EMPRESA||{}, ilim=!u.cota, pc=ilim?0:Math.min(100,u.usadas/u.cota*100);
+    var tit=u.teste?"no período de teste":"em "+nomeMes(u.mes);
+    var h='<h3>⚡ Uso da IA</h3>';
+    if(esgotou) h+='<div style="background:rgba(239,68,68,.1);border:1px solid #ef4444;border-radius:10px;padding:10px 12px;font-size:.85rem;color:var(--text)">'+(u.teste?"Você usou toda a IA do período de teste. Assine um plano para continuar preenchendo falando.":"A cota de IA do seu plano acabou neste mês. Compre um pacote avulso ou mude de plano. O restante do app continua funcionando normalmente.")+'</div>';
+    h+='<div style="font-size:.9rem;color:var(--text)"><b>'+(ilim?num(u.usadas)+" usos "+tit+" (sem limite)":num(u.usadas)+" de "+num(u.cota)+" usos "+tit)+'</b></div>';
+    if(!ilim) h+='<div class="ia-barra'+(pc>=80?" alto":"")+'"><i style="width:'+pc.toFixed(1)+'%"></i></div>';
+    h+='<div style="font-size:.8rem;color:var(--muted);line-height:1.5">'+(u.teste?"O teste grátis inclui 50 usos de IA.":"Plano "+(e.planoNome||"")+(ilim?"":" · "+num(u.cota)+" usos por mês, renovados no dia 1º.")+(u.extra?" · <b style=\"color:var(--text)\">"+num(u.extra)+" usos extras</b> disponíveis.":""))+'<br>Cada uso é um preenchimento feito pela IA: um diário contado, uma FVS falada, uma nota fiscal lida, um DDS montado.</div>';
+    if(window.MGI_PLAY){ h+='<div style="font-size:.8rem;color:var(--muted)">Para aumentar a cota, fale com o administrador da sua empresa.</div>'; }
+    else if(u.teste){ h+='<button class="ia-pac" onclick="document.getElementById(\'ficha-modal\').remove();abrirModalPlanos()"><span>💳 Assinar o MGI PRO<small>Essencial 300 · Profissional 1.000 · Contrato 3.000 usos por mês</small></span><b>a partir de R$ 497</b></button>'; }
+    else { h+='<div style="font-weight:800;font-size:.86rem;color:var(--text);margin-top:4px">Pacotes avulsos</div><div style="font-size:.76rem;color:var(--muted);margin-top:-6px">Pagamento único. Os usos extras não vencem e só são gastos depois da cota do mês.</div>';
+      PACOTES.forEach(function(p){ h+='<button class="ia-pac" data-pac onclick="mgiComprarPacoteIA(\''+p.id+'\')"><span>+'+num(p.usos)+' usos de IA<small>'+(p.id==="p1000"?"melhor preço por uso":"para fechar o mês")+'</small></span><b>'+p.valor+'</b></button>'; });
+      h+='<button class="ia-pac" onclick="document.getElementById(\'ficha-modal\').remove();abrirModalPlanos()"><span>⬆️ Mudar de plano<small>Profissional 1.000 · Contrato 3.000 usos por mês</small></span><b>›</b></button>'; }
+    h+='<div class="ac5-acoes"><button class="ac5-cancel" onclick="document.getElementById(\'ficha-modal\').remove()">Fechar</button></div>';
+    var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); }
+    m.onclick=function(ev){ if(ev.target===m) m.remove(); }; m.innerHTML='<div class="fm-box">'+h+'</div>';
+  };
+
+  window.mgiComprarPacoteIA=async function(id){
+    var bs=document.querySelectorAll("[data-pac]"); bs.forEach(function(b){ b.style.opacity=".55"; b.style.pointerEvents="none"; });
+    try{ var r=await firebase.app().functions("southamerica-east1").httpsCallable("comprarPacoteIA")({pacote:id});
+      if(r.data&&r.data.init_point){ location.href=r.data.init_point; return; }
+      alert("Não foi possível iniciar o pagamento. Tente novamente.");
+    }catch(e){ alert(e.message||"Não foi possível iniciar o pagamento."); }
+    bs.forEach(function(b){ b.style.opacity="1"; b.style.pointerEvents="auto"; });
+  };
+
+  // Volta do pagamento do pacote
+  try{ var q=new URLSearchParams(location.search).get("ia");
+    if(q){ history.replaceState(null,"",location.pathname); window.addEventListener("load",function(){ setTimeout(function(){
+      aviso(q==="ok"?"✅ Pagamento aprovado. Os usos extras entram na sua conta em instantes.":q==="pendente"?"⏳ Pagamento em análise. Os usos extras entram assim que for aprovado.":"Pagamento não concluído. Você pode tentar de novo em Ferramentas › Uso da IA.",null); },1200); }); } }catch(e){}
 })();
 </script>
 
