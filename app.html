@@ -6697,6 +6697,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v47: medição automática do tempo de preenchimento (painel admin › Resultados)
 // MGI PRO · v48: dados isolados por empresa no aparelho (troca de conta limpa o celular)
 // MGI PRO · v50: Zerar dados no painel também limpa os celulares da equipe
+// MGI PRO · v51: Voltar e Início em todas as telas e botão voltar do celular
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -6846,6 +6847,104 @@ botaoTopo(); document.addEventListener("DOMContentLoaded",botaoTopo); setTimeout
     }catch(e){} }
   if(typeof syncNuvem==="function"){ var _s=syncNuvem; window.syncNuvem=syncNuvem=function(){ anotar(); return _s.apply(this,arguments); }; }
   if(typeof mgiSalvarLocal==="function"){ var _l=mgiSalvarLocal; window.mgiSalvarLocal=mgiSalvarLocal=function(){ anotar(); return _l.apply(this,arguments); }; }
+})();
+</script>
+
+<!-- ===== NAVEGAÇÃO: VOLTAR E INÍCIO EM TODAS AS TELAS + BOTÃO VOLTAR DO CELULAR (v51) ===== -->
+<style>
+.nv-bar{position:sticky;top:-16px;z-index:5;margin:-16px -16px 2px;padding:10px 12px;display:flex;gap:8px;background:var(--bg2);border-bottom:1px solid var(--border)}
+.nv-bar button,#nv-hdr button{display:inline-flex;align-items:center;gap:6px;background:var(--surf2,rgba(255,255,255,.06));border:1px solid var(--border2,var(--border));color:var(--text);border-radius:10px;padding:8px 12px;font:700 .82rem Barlow,sans-serif;cursor:pointer;line-height:1}
+.nv-bar .nv-ini,#nv-hdr .nv-ini{margin-left:auto}
+#nv-hdr{display:none;gap:6px;align-items:center}
+#nv-hdr button{padding:8px 10px}
+body:not(.mod-inicio) #nv-hdr{display:flex}
+@media(max-width:420px){ #nv-hdr .nv-txt{display:none} body:not(.mod-inicio) #header .hdr-top>img{display:none} body:not(.mod-inicio) #nv-hdr button{padding:8px 9px} }
+</style>
+<script>
+(function(){
+  var PILHA=[], atual=null, MODS=[], restaurando=false, profundidade=0, ignorarPop=0;
+  var LISTAS=[[/rastreabilidade de materiais/i,"mgiMateriais"],[/^\W*DDS\s*$/i,"mgiDDS"],[/ferramentas/i,"mgiFerramentas"]];
+  function titulo(m){ var h=m&&m.querySelector(".fm-box h3"); return h?h.textContent.replace(/❓\s*Como usar/,"").trim():""; }
+  function empurrarHistorico(){ try{ history.pushState({mgi:++profundidade},""); }catch(e){} }
+
+  // ── Barra Voltar / Início dentro de cada janela ──
+  function barra(m){
+    var box=m.querySelector(".fm-box"); if(!box||box.querySelector(".nv-bar")) return;
+    var b=document.createElement("div"); b.className="nv-bar";
+    b.innerHTML='<button type="button" onclick="mgiVoltar()">← Voltar</button><button type="button" class="nv-ini" onclick="mgiInicio()">🏠 Início</button>';
+    box.insertBefore(b,box.firstChild);
+  }
+  function observarModal(m){
+    if(m.__nv) return; m.__nv=true;
+    new MutationObserver(function(){ registrar(m); }).observe(m,{childList:true});
+    atual=null; PILHA=[]; registrar(m); empurrarHistorico();
+  }
+  function registrar(m){
+    if(!document.body.contains(m)) return;
+    barra(m);
+    var t=titulo(m), html=m.innerHTML;
+    if(restaurando){ restaurando=false; atual={t:t,html:html}; return; }
+    if(atual&&atual.t!==t&&!m.querySelector("#vz-txt")&&!(atual.html.indexOf('id="vz-txt"')>=0)){ PILHA.push(atual); empurrarHistorico(); }
+    if(!atual||atual.t!==t||true) atual={t:t,html:html};
+  }
+  new MutationObserver(function(ms){
+    ms.forEach(function(x){
+      x.addedNodes.forEach(function(n){ if(n.id==="ficha-modal") observarModal(n); if(n.id==="mgi-ajuda"||n.id==="mgi-pad") empurrarHistorico(); });
+      x.removedNodes.forEach(function(n){ if(n.id==="ficha-modal"){ PILHA=[]; atual=null; n.__nv=false; } });
+    });
+  }).observe(document.body,{childList:true});
+  var fm=document.getElementById("ficha-modal"); if(fm) observarModal(fm);
+
+  // ── Histórico das telas principais (módulo e aba) ──
+  var _sw=window.switchModule, _gt=window.goTab;
+  function posAtual(){ var mod=state.currentModule||"inicio", tab=mod==="iso"?state.isoTab:mod==="fvs"?state.fvsTab:mod==="diario"?state.diarioTab:0; return [mod,tab||0]; }
+  if(typeof _sw==="function") window.switchModule=switchModule=function(mod){ var p=posAtual(); var r=_sw.apply(this,arguments); if(!restaurando&&p[0]!==mod){ MODS.push(p); empurrarHistorico(); } return r; };
+  if(typeof _gt==="function") window.goTab=goTab=function(mod,n){ var p=posAtual(); var r=_gt.apply(this,arguments); if(!restaurando&&state.currentModule===mod&&p[0]===mod&&p[1]!==n){ MODS.push(p); empurrarHistorico(); } return r; };
+
+  // ── Voltar: fecha a camada de cima ou volta à tela anterior ──
+  function visivel(id){ var e=document.getElementById(id); return e&&e.style.display&&e.style.display!=="none"; }
+  function voltarUmPasso(){
+    var aj=document.getElementById("mgi-ajuda"); if(aj){ aj.remove(); return true; }
+    var pad=document.getElementById("mgi-pad"); if(pad){ pad.remove(); return true; }
+    if(visivel("modal-planos-bg")){ document.getElementById("modal-planos-bg").style.display="none"; return true; }
+    if(visivel("modal-gerenciar-bg")||visivel("modal-obra-bg")){ try{ fecharModalObra(); }catch(e){} return true; }
+    var m=document.getElementById("ficha-modal");
+    if(m){
+      if(m.querySelector("#vz-txt")&&typeof mgiVozCancelar==="function"){ mgiVozCancelar(); return true; }
+      var ant=PILHA.pop();
+      if(ant){ var fn=null; LISTAS.forEach(function(l){ if(l[0].test(ant.t)&&typeof window[l[1]]==="function") fn=window[l[1]]; });
+        restaurando=true; if(fn){ try{ fn(); }catch(e){ m.innerHTML=ant.html; } } else m.innerHTML=ant.html; return true; }
+      m.remove(); return true;
+    }
+    var p=MODS.pop();
+    if(p){ restaurando=true; try{ switchModule(p[0]); if(p[0]!=="inicio") goTab(p[0],p[1]); }catch(e){} restaurando=false; scrollTo(0,0); return true; }
+    if(state.currentModule&&state.currentModule!=="inicio"){ restaurando=true; switchModule("inicio"); restaurando=false; scrollTo(0,0); return true; }
+    return false;
+  }
+  window.mgiVoltar=function(){ if(profundidade>0){ history.back(); } else voltarUmPasso(); };
+  window.addEventListener("popstate",function(){
+    if(profundidade>0) profundidade--;
+    if(ignorarPop>0){ ignorarPop--; return; }
+    if(!voltarUmPasso()&&profundidade>0) history.back();   // entrada sobrando: segue voltando até sair do app
+  });
+
+  // ── Início: fecha tudo e vai para a tela inicial ──
+  window.mgiInicio=function(){
+    ["mgi-ajuda","mgi-pad","ficha-modal"].forEach(function(id){ var e=document.getElementById(id); if(e) e.remove(); });
+    ["modal-planos-bg","modal-gerenciar-bg","modal-obra-bg"].forEach(function(id){ var e=document.getElementById(id); if(e) e.style.display="none"; });
+    PILHA=[]; atual=null; MODS=[];
+    restaurando=true; try{ switchModule("inicio"); }catch(e){} restaurando=false; scrollTo(0,0);
+    if(profundidade>0){ ignorarPop=1; var n=profundidade; profundidade=0; try{ history.go(-n); }catch(e){} }
+  };
+
+  // ── Botões no cabeçalho das telas Auditoria, FVS e Diário ──
+  function cabecalho(){
+    var top=document.querySelector("#header .hdr-top"); if(!top||document.getElementById("nv-hdr")) return;
+    var d=document.createElement("div"); d.id="nv-hdr";
+    d.innerHTML='<button type="button" onclick="mgiVoltar()" title="Voltar">←<span class="nv-txt"> Voltar</span></button><button type="button" class="nv-ini" onclick="mgiInicio()" title="Início">🏠<span class="nv-txt"> Início</span></button>';
+    top.insertBefore(d,top.firstChild);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",cabecalho); else cabecalho();
 })();
 </script>
 
