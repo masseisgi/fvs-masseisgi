@@ -1042,7 +1042,7 @@ let state = {
   fvsTab: 0,
   currentService: null,
   fvsRespostas:{}, fvsObservacoes:{}, fvsAcoes:{}, fvsLoadingAC:{}, fvsExpandedAC:{}, fvsFotos:{},
-  fvsInfo:{obra:"",resp:"",data:new Date().toISOString().split("T")[0],trecho:""},
+  fvsInfo:{obra:"",resp:"",data:(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().split("T")[0])(new Date()),trecho:""},
   // DIÁRIO
   diarioTab: 0,
   diarioAtual: null, // registro em edição
@@ -1815,7 +1815,7 @@ function renderRelatorioFVS(){
 function novoRegistroDiario(){
   return {
     id: "d_"+Date.now(),
-    data: new Date().toISOString().split("T")[0],
+    data: (d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().split("T")[0])(new Date()),
     obra: "", resp: "", mestre: "",
     tempo: "", tempM: "", tempT: "", chuvaH: "", parou: "Não",
     manha: false, tarde: false, noite: false,
@@ -2167,7 +2167,7 @@ function renderHistorico(){
         ${moTotal>0?`<span class="diary-chip green">👷 ${moTotal} pessoas</span>`:""}
         ${atCount>0?`<span class="diary-chip">🔨 ${atCount} atividade(s)</span>`:""}
         ${ocCount>0?`<span class="diary-chip red">⚠️ ${ocCount} ocorrência(s)</span>`:""}
-        ${d.parou!=="Não"?`<span class="diary-chip yellow">⏸ ${d.parou}</span>`:""}
+        ${d.parou&&d.parou!=="Não"?`<span class="diary-chip yellow">⏸ ${d.parou}</span>`:""}
         ${(d.fotos||[]).length>0?`<span class="diary-chip">📷 ${d.fotos.length} foto(s)</span>`:""}
       </div>
     </div>`;
@@ -3153,7 +3153,7 @@ function salvarFVS(){
 
 function novaFVS(){
   if(!confirm("Iniciar nova FVS? A atual será perdida se não tiver sido salva.")) return;
-  state.fvsInfo = {obra:"",resp:"",data:new Date().toISOString().split("T")[0],trecho:""};
+  state.fvsInfo = {obra:"",resp:"",data:(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().split("T")[0])(new Date()),trecho:""};
   state.fvsRespostas = {};
   state.fvsObservacoes = {};
   state.fvsAcoes = {};
@@ -5508,7 +5508,7 @@ const LIB_GRUPOS=[
  ["Qualidade e execução",["Locação topográfica conferida","Materiais recebidos, inspecionados e aprovados","Equipamentos inspecionados e adequados ao serviço","Procedimento de execução e FVS do serviço disponíveis","Laboratório de controle tecnológico acionado quando aplicável"]],
  ["Comunicação",["Aviso aos moradores e comércio realizado","Comunicação com a fiscalização e a operação feita"]]
 ];
-function libNova(){ return {id:"lib_"+Date.now(),obraId:state.obraAtual||null,obraNome:obraNome(state.obraAtual),frente:"",endereco:"",servico:"",dataPrev:new Date().toISOString().slice(0,10),resp:{},obs:{},fotos:{},parecer:"",situacao:"",assin:{},criadoEm:agoraISO(),autor:(window.MGI_USER||{}).email||""}; }
+function libNova(){ return {id:"lib_"+Date.now(),obraId:state.obraAtual||null,obraNome:obraNome(state.obraAtual),frente:"",endereco:"",servico:"",dataPrev:(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))(new Date()),resp:{},obs:{},fotos:{},parecer:"",situacao:"",assin:{},criadoEm:agoraISO(),autor:(window.MGI_USER||{}).email||""}; }
 let LIB=null;
 window.mgiLibLista=function(){
   const L=(state.liberacoes||[]).filter(x=>!state.removidos||!state.removidos[x.id]).slice().sort((a,b)=>(b.dataPrev||"").localeCompare(a.dataPrev||""));
@@ -5527,7 +5527,7 @@ function libRender(){
   const ro=souFiscal()?" disabled":"", sg=libSituacao();
   const btn=(k,v,n,c)=>`<button class="lib-b${LIB.resp[k]===v?" on":""}" style="${LIB.resp[k]===v?`background:${c};color:#fff;border-color:${c}`:""}" onclick="mgiLibResp('${k}','${v}')"${ro}>${n}</button>`;
   const pad=k=>`<div class="lib-as"><label>${{resp:"Responsável pela frente",qual:"Qualidade",sst:"Segurança do trabalho",fiscal:"Fiscalização (opcional)"}[k]}<input id="lib-as-${k}" value="${$e((LIB.assin[k]||{}).nome||"")}" placeholder="Nome"${ro}></label>${(LIB.assin[k]||{}).img?`<img src="${LIB.assin[k].img}">`:""}${ro?"":`<button onclick="mgiLibAssinar('${k}')">${(LIB.assin[k]||{}).img?"Assinar de novo":"✍️ Assinar neste aparelho"}</button>`}</div>`;
-  modal(`<h3>🚧 Liberação de frente</h3>
+  modal(`<h3>🚧 Liberação de frente</h3>${ro?"":`<div class="vz-bar"><button class="vz-main" onclick="mgiLibVoz()">🎤 Falar a vistoria da frente<small>a IA marca a lista e escreve as pendências</small></button><button class="vz-sec" onclick="mgiLibPendC()">✓ Pendentes<br>= C</button></div>`}
     <label>Frente ou trecho<input id="lib-frente" value="${$e(LIB.frente)}" placeholder="Ex.: Rua Jayme Fontes, PV-08 a PV-12"${ro}></label>
     <label>Endereço<input id="lib-end" value="${$e(LIB.endereco)}"${ro}></label>
     <div class="fm-g2"><label>Serviço previsto<input id="lib-serv" value="${$e(LIB.servico)}" placeholder="Ex.: Rede coletora por VCA"${ro}></label><label>Data prevista<input type="date" id="lib-data" value="${$e(LIB.dataPrev)}"${ro}></label></div>
@@ -5537,6 +5537,7 @@ function libRender(){
     <p class="lgpd-av">🔒 Nomes e assinaturas são registrados como evidência da liberação, conforme a LGPD.</p><div class="lib-ass">${["resp","qual","sst","fiscal"].map(pad).join("")}</div>
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiLibLista()">Voltar</button>${LIB.id&&(state.liberacoes||[]).some(l=>l.id===LIB.id)&&!souFiscal()?`<button class="ac5-cancel" onclick="mgiLibExcluir()">Excluir</button>`:""}${ro?"":`<button class="ac5-save" onclick="mgiLibSalvar()">Salvar</button>`}</div>`,"rg-box");
 }
+window.mgiLibAPI={get:()=>LIB,set:x=>{ LIB=x; },grupos:LIB_GRUPOS,render:()=>libRender(),ler:()=>libLer()};
 window.mgiLibResp=function(k,v){ libLer(); LIB.resp[k]=LIB.resp[k]===v?"":v; libRender(); };
 window.mgiLibAssinar=function(k){ libLer(); mgiPadAssinatura("Assinatura: "+((LIB.assin[k]||{}).nome||""),img=>{ LIB.assin[k]=LIB.assin[k]||{}; LIB.assin[k].img=img; LIB.assin[k].em=agoraISO(); libRender(); }); };
 window.mgiLibSalvar=function(){ libLer(); if(!LIB.frente){ alert("Informe a frente ou trecho."); return; } LIB.situacao=libSituacao().sug; LIB.atualizadoEm=agoraISO(); LIB.obraNome=LIB.obraNome||obraNome(LIB.obraId);
@@ -5673,6 +5674,7 @@ window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine
     ${op("🕓","Registro de alterações","Quem fez o quê e quando.","mgiHistorico()")}
     ${op("💾","Exportar backup completo","Arquivo com todos os dados da empresa (LGPD e segurança).","mgiBackup()")}
     <label class="rel-op" style="cursor:pointer"><span>♻️</span><div><b>Restaurar backup</b><small>Mescla um arquivo de backup com os dados atuais.</small></div><input type="file" accept=".json,application/json" style="display:none" onchange="mgiRestaurar(this)"></label>
+    ${op("📘","Manual do usuário","Passo a passo de todas as ferramentas, com busca.","mgiAjuda()")}
     ${op("🎓","Ver o tutorial","Passo a passo das principais funções.","mgiTutorial(true)")}
     ${typeof abrirModalPlanos==="function"&&!window.MGI_PLAY?op("💳","Planos e assinatura","Trocar de plano ou assinar.","mgiFechar();abrirModalPlanos()"):""}
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
@@ -5808,10 +5810,10 @@ window.mgiMateriais=function(){ const L0=daObra(state.materiais).sort((a,b)=>(b.
    <div class="rg-lista">${L1.map(m=>{ const tr=(m.trechos||[]).map(id=>(typeof mgiNomeLocal==="function"?mgiNomeLocal(id):(state.trechos.find(t=>t.id===id)||{}).nome)).filter(Boolean); return `<div class="rg-it" style="border-left-color:${cor[m.inspecao]||"var(--border)"}" onclick="mgiMaterialForm('${m.id}')"><div class="rg-tx"><span class="rg-tp" style="color:${cor[m.inspecao]||"var(--muted)"}">${$e(m.inspecao||"Sem inspeção")} · ${(m.data||"").split("-").reverse().join("/")}</span><b>${$e(m.material)}</b><span>Lote ${$e(m.lote||"-")} · NF ${$e(m.nf||"-")} · ${$e(m.qtd||"")} ${$e(m.unidade||"")}${m.fabricante?" · "+$e(m.fabricante):""}</span><span>${tr.length?"Aplicado em: "+tr.map($e).join(", "):"Ainda não aplicado"}</span></div></div>`; }).join("")||`<p class="pi-nada">Nenhum recebimento registrado.</p>`}</div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiRastreioPDF()">PDF de rastreabilidade</button><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
 window.MBUSCA=""; window.mgiMateriaisBusca=v=>{ MBUSCA=v; mgiMateriais(); };
-window.mgiMaterialForm=function(id){ const m=id&&state.materiais.find(x=>x.id===id); MT=m?JSON.parse(JSON.stringify(m)):{id:"mt_"+Date.now(),obraId:obraId(),data:new Date().toISOString().slice(0,10),material:"",fabricante:"",fornecedor:"",lote:"",nf:"",qtd:"",unidade:"un",certificado:"",inspecao:"",obs:"",trechos:[],recebidoPor:(window.MGI_USER||{}).email||""}; mtRender(); };
+window.mgiMaterialForm=function(id){ const m=id&&state.materiais.find(x=>x.id===id); MT=m?JSON.parse(JSON.stringify(m)):{id:"mt_"+Date.now(),obraId:obraId(),data:(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))(new Date()),material:"",fabricante:"",fornecedor:"",lote:"",nf:"",qtd:"",unidade:"un",certificado:"",inspecao:"",obs:"",trechos:[],recebidoPor:(window.MGI_USER||{}).email||""}; mtRender(); };
 function mtLer(){ const g=i=>(document.getElementById(i)||{}).value; if(g("mt-mat")===undefined) return; ["data","material","fabricante","fornecedor","lote","nf","qtd","unidade","certificado","inspecao","obs"].forEach(k=>{ const v=g("mt-"+({data:"dt",material:"mat",fabricante:"fab",fornecedor:"forn",lote:"lote",nf:"nf",qtd:"qtd",unidade:"un",certificado:"cert",inspecao:"insp",obs:"obs"})[k]); if(v!==undefined) MT[k]=v; }); MT.trechos=[...document.querySelectorAll(".mt-tr:checked")].map(x=>x.value); }
 function mtRender(){ const T=daObra(state.trechos), dis=ro()?" disabled":"";
-  modal(`<h3>Recebimento de material</h3>
+  modal(`<h3>Recebimento de material</h3>${ro()?"":`<div class="vz-bar"><button class="vz-main" onclick="mgiMatNF()">📷 Ler a nota fiscal<small>a IA preenche material, NF, quantidade e fornecedor</small></button><button class="vz-sec" onclick="mgiMatVoz()">🎤 Falar</button></div>`}
    <label>Material<input id="mt-mat" value="${$e(MT.material)}" placeholder="Tubo PVC ocre DN 200 JEI"${dis}></label>
    <div class="fm-g2"><label>Data<input type="date" id="mt-dt" value="${$e(MT.data)}"${dis}></label><label>Nota fiscal<input id="mt-nf" value="${$e(MT.nf)}"${dis}></label></div>
    <div class="fm-g2"><label>Lote<input id="mt-lote" value="${$e(MT.lote)}"${dis}></label><label>Certificado ou laudo<input id="mt-cert" value="${$e(MT.certificado)}" placeholder="Nº do certificado"${dis}></label></div>
@@ -5846,10 +5848,10 @@ window.mgiDDSNovo=function(modo,tipo){ modo=modo||"tema"; tipo=tipo||(window.__d
   modal(`<h3>Novo DDS</h3>
    <label>Tipo de DDS</label><div class="dd-modo dd-tipo">${Object.entries(DDT).map(([k,v])=>`<button class="${tipo===k?"on":""}" onclick="mgiDDSNovo('${modo}','${k}')">${v[1]} ${v[0]}</button>`).join("")}</div>
    <label>Como montar</label><div class="dd-modo"><button class="${modo==="tema"?"on":""}" onclick="mgiDDSNovo('tema','${tipo}')">✨ Tema livre (IA monta)</button><button class="${modo==="servico"?"on":""}" onclick="mgiDDSNovo('servico','${tipo}')">🔧 Por serviço da FVS</button></div>
-   ${modo==="tema"?`<label>Tema do DDS<textarea id="dd-tema" rows="2" placeholder="${tipo==='sst'?'Ex.: trabalho em vala acima de 1,25 m':tipo==='ambiental'?'Ex.: destinação de resíduos da obra':'Ex.: cuidados no lançamento de tubo PEAD na vala'}"></textarea></label>
+   ${modo==="tema"?`<button class="vz-sec" style="width:100%;padding:10px;margin:6px 0" onclick="mgiDDNovoVoz('${tipo}')">🎤 Falar o tema, a frente e o serviço</button><label>Tema do DDS<textarea id="dd-tema" rows="2" placeholder="${tipo==='sst'?'Ex.: trabalho em vala acima de 1,25 m':tipo==='ambiental'?'Ex.: destinação de resíduos da obra':'Ex.: cuidados no lançamento de tubo PEAD na vala'}"></textarea></label>
      <label>Serviço relacionado (opcional)<select id="dd-sv"><option value="">Nenhum</option>${SERVICOS.map(s=>`<option value="${s.id}">${$e(s.nome)}</option>`).join("")}</select></label>`
    :`<label>Serviço<select id="dd-sv">${SERVICOS.map(s=>`<option value="${s.id}">${$e(s.nome)}</option>`).join("")}</select></label>`}
-   <div class="fm-g2"><label>Data<input type="date" id="dd-dt" value="${new Date().toISOString().slice(0,10)}"></label><label>Perguntas<select id="dd-n"><option>3</option><option>5</option></select></label></div>
+   <div class="fm-g2"><label>Data<input type="date" id="dd-dt" value="${(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))(new Date())}"></label><label>Perguntas<select id="dd-n"><option>3</option><option>5</option></select></label></div>
    <div class="fm-g2"><label>Frente ou trecho<input id="dd-fr" placeholder="PV-08 a PV-12"></label><label>Ministrado por<input id="dd-min" value="${$e((window.MGI_USER||{}).nome||"")}"></label></div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDS()">Voltar</button><button class="ac5-save" onclick="mgiDDSIniciar('${modo}','${tipo}')">${modo==="tema"?"Gerar com IA":"Iniciar"}</button></div>`); };
 window.mgiDDSIniciar=async function(modo,tipo){ tipo=tipo||"qualidade"; const T=DDT[tipo]; const g=i=>(document.getElementById(i)||{}).value||""; const sv=SERVICOS.find(s=>s.id===g("dd-sv")); const n=parseInt(g("dd-n"),10)||3;
@@ -5864,6 +5866,8 @@ window.mgiDDSIniciar=async function(modo,tipo){ tipo=tipo||"qualidade"; const T=
     DD={...base,serviceId:sv?sv.id:"",servico:sv?sv.nome:"",tema:j.titulo||tema,temaPedido:tema,pontos:j.pontos.slice(0,8),perguntas:j.perguntas.slice(0,n).map(q=>({q:q.q,ops:(q.ops||[]).slice(0,4),certa:Math.max(0,Math.min((q.ops||[]).length-1,+q.certa||0)),exec:q.explicacao||""})),geradoPorIA:true};
     ddPasso(0);
   }catch(e){ modal(`<h3>Não foi possível montar com IA</h3><p style="color:var(--muted)">${$e(e.message||e)}. Verifique a internet e tente de novo, ou monte o DDS a partir de um serviço da FVS.</p><div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDSNovo('servico')">Usar serviço da FVS</button><button class="ac5-save" onclick="mgiDDSNovo('tema')">Tentar de novo</button></div>`); } };
+window.mgiDDAPI={get:()=>DD,passo:p=>ddPasso(p),ler:()=>lerPart()};
+window.mgiMTAPI={get:()=>MT,set:x=>{ MT=x; },render:()=>mtRender(),ler:()=>mtLer()};
 function lerPart(){ document.querySelectorAll(".dd-p").forEach((r,i)=>{ const p=DD.participantes[i]; if(!p) return; p.nome=r.querySelector(".dd-pn").value; p.funcao=r.querySelector(".dd-pf").value; }); }
 function ddPasso(p){
   if(p===0) return modal(`<h3>${tipoDD(DD)[1]} ${$e(DD.tema)}</h3><p style="margin:0;color:var(--muted);font-size:.8rem">${DD.geradoPorIA?"Conteúdo sugerido pela IA. Ajuste a fala ao que a equipe vai executar hoje.":"Leia com a equipe os pontos principais do procedimento."}</p>${DD.pontos.map((i,k)=>`<div class="pet-e"><span>${k+1}</span><div><b>${$e(i.t)}</b><p>${$e(i.texto)}</p></div></div>`).join("")}<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDS()">Cancelar</button><button class="ac5-save" onclick="mgiDDSPasso(1)">Perguntas</button></div>`);
@@ -5874,6 +5878,7 @@ function ddPasso(p){
   modal(`<h3>Lista de presença</h3><p style="margin:0;color:var(--muted);font-size:.8rem">${DD.participantes.length} participante(s), ${nAss} assinatura(s). Cada pessoa assina no próprio aparelho do ministrante.</p><p class="lgpd-av">🔒 Nome, função e assinatura são registrados como evidência de treinamento, conforme a política de privacidade da empresa e a LGPD.</p>
    <div class="dd-lista">${DD.participantes.map((x,i)=>`<div class="dd-p"><span class="dd-n">${i+1}</span><div class="dd-pc"><input class="dd-pn" placeholder="Nome" value="${$e(x.nome)}"><input class="dd-pf" placeholder="Função" value="${$e(x.funcao)}" list="dl-funcoes"></div><div class="dd-pa">${x.assin?`<img src="${x.assin}" onclick="mgiDDSAssinarP(${i})">`:`<button onclick="mgiDDSAssinarP(${i})">✍️ Assinar</button>`}<button class="dd-x" onclick="mgiDDSRemP(${i})" title="Remover">✕</button></div></div>`).join("")}</div>
    <datalist id="dl-funcoes">${["Encarregado","Pedreiro","Servente","Armador","Carpinteiro","Operador de máquina","Motorista","Topógrafo","Técnico de segurança","Técnico de qualidade","Engenheiro","Eletricista","Encanador","Soldador","Apontador"].map(f=>`<option value="${f}">`).join("")}</datalist>
+   <div class="vz-bar"><button class="vz-sec" style="flex:1;width:auto;padding:9px" onclick="mgiDDVoz()">🎤 Ditar nomes</button><button class="vz-sec" style="flex:1;width:auto;padding:9px" onclick="mgiDDFoto()">📷 Foto da lista</button><button class="vz-sec" style="flex:1;width:auto;padding:9px" onclick="mgiDDRepetir()">👥 Equipe do último</button></div>
    <button class="ac5-cancel" onclick="mgiDDSAddP()">+ Adicionar participante</button>
    <div class="lib-as"><label>Ministrante<input value="${$e(DD.ministrante)}" disabled></label>${DD.assin?`<img src="${DD.assin}">`:""}<button onclick="mgiDDSAssinar()">${DD.assin?"Assinar de novo":"✍️ Assinatura do ministrante"}</button></div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDSPasso(${DD.perguntas.length})">Voltar</button><button class="ac5-save" onclick="mgiDDSSalvar()">Concluir DDS</button></div>`);
@@ -6066,5 +6071,622 @@ function mgiVerificarAceite(){
     }catch(e){ b.disabled=false; b.textContent="Continuar"; alert("Não foi possível registrar o aceite agora. Verifique a internet e tente de novo."); } };
 }
 </script>
+<style>
+body:has(.df-modal) #mgi-mic{display:none!important}
+#dfc{background:linear-gradient(135deg,rgba(16,125,224,.14),rgba(10,158,108,.14));border:1px solid rgba(20,206,141,.35);border-radius:14px;padding:14px;margin-bottom:12px}
+#dfc .df-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+#dfc h4{margin:0;font:800 1rem Barlow,sans-serif;color:var(--text,#e5eefc)}
+#dfc .df-sub{font-size:.74rem;color:var(--muted);margin:0 0 10px}
+#dfc .df-prog{font:700 .68rem Barlow,sans-serif;background:rgba(20,206,141,.15);color:var(--green);border-radius:999px;padding:4px 10px;white-space:nowrap}
+#dfc .df-bar{height:5px;border-radius:9px;background:rgba(148,163,184,.25);overflow:hidden;margin-bottom:12px}
+#dfc .df-bar i{display:block;height:100%;background:var(--grad,linear-gradient(90deg,#107DE0,#0A9E6C));transition:width .4s}
+#dfc .df-main{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:12px;padding:15px;background:var(--grad,linear-gradient(90deg,#107DE0,#0A9E6C));color:#fff;font:800 .98rem Barlow,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(16,125,224,.25)}
+#dfc .df-main small{display:block;font-weight:600;font-size:.7rem;opacity:.9}
+#dfc .df-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+#dfc .df-b{display:flex;gap:8px;align-items:center;text-align:left;background:var(--bg2,rgba(15,23,42,.5));border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--text,#e5eefc);cursor:pointer;font:700 .76rem Barlow,sans-serif;line-height:1.15}
+#dfc .df-b span{font-size:1.25rem}
+#dfc .df-b small{display:block;font-weight:500;color:var(--muted);font-size:.64rem;margin-top:2px}
+#dfc .df-b:disabled{opacity:.5}
+#dfc .df-auto{margin-top:10px;font-size:.68rem;color:var(--muted)}
+#df-desfazer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:6000;background:#0f172a;color:#fff;border-radius:12px;padding:10px 12px;font:600 .8rem Barlow,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;gap:8px;align-items:center;width:min(92vw,440px);box-sizing:border-box}
+#df-desfazer span{flex:1;line-height:1.3}
+#df-desfazer button{background:transparent;border:1px solid #64748b;color:#fff;border-radius:8px;padding:5px 10px;font:700 .74rem Barlow,sans-serif;cursor:pointer}
+.df-modal textarea{width:100%;min-height:150px;font:500 .95rem Barlow,sans-serif;border-radius:10px;padding:12px;box-sizing:border-box}
+.df-rec{width:100%;border:0;border-radius:12px;padding:16px;font:800 1rem Barlow,sans-serif;color:#fff;background:#DC2626;cursor:pointer;margin:8px 0}
+.df-rec.on{animation:dfpulse 1.2s infinite}
+@keyframes dfpulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.6)}70%{box-shadow:0 0 0 14px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.df-ex{font-size:.74rem;color:var(--muted);background:rgba(148,163,184,.1);border-radius:10px;padding:10px;margin:6px 0 10px;line-height:1.4}
+.df-ck{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.df-ck label{display:flex;gap:8px;align-items:flex-start;font-size:.82rem;background:rgba(148,163,184,.08);border-radius:8px;padding:8px;cursor:pointer}
+.df-ck small{color:var(--muted)}
+</style>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// MGI PRO · v44: Diário de obra fácil
+// Contar o dia por voz ou texto e a IA preenche, repetir o último dia,
+// clima automático, puxar o que já foi registrado no app, IA pelas fotos,
+// redação das observações, sugestões de preenchimento e rascunho automático.
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+if(typeof renderDiarioForm!=="function") return;
+const $e=v=>(typeof acEsc==="function"?acEsc(v):String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]));
+const TEMPOS=["☀️ Ensolarado","⛅ Parc. nublado","☁️ Nublado","🌧️ Chuvoso","⛈️ Tempestade"];
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const vivos=l=>(l||[]).filter(x=>x&&!(state.removidos||{})[x.id]);
+const obraId=()=>state.obraAtual||null;
+const obraNome=()=>((state.obras||[]).find(o=>o.id===obraId())||{}).nome||"";
+const ro=()=>!!(window.MGI_USER&&window.MGI_USER.role==="fiscal");
+const RASC="mgi_diario_rascunho";
+function tempoDe(v){ const n=norm(v); if(!n) return ""; if(n.includes("tempest")||n.includes("temporal")) return TEMPOS[4]; if(n.includes("chuv")) return TEMPOS[3]; if(n.includes("parc")) return TEMPOS[1]; if(n.includes("nublad")) return TEMPOS[2]; if(n.includes("sol")||n.includes("limpo")) return TEMPOS[0]; return ""; }
+
+function diariosObra(){ return vivos(state.diarios).filter(d=>(d.obraId||null)===obraId()||(!d.obraId&&!obraId())); }
+function ultimoDiario(excetoId,antesDe){ return diariosObra().filter(d=>d.id!==excetoId&&(!antesDe||d.data<antesDe)).sort((a,b)=>(b.data||"").localeCompare(a.data||"")||String(b.atualizadoEm||"").localeCompare(String(a.atualizadoEm||"")))[0]; }
+function D(){ if(!state.diarioAtual) state.diarioAtual=novoRegistroDiario(); return state.diarioAtual; }
+function sincronizarCampos(){ try{ saveDiario(); }catch(e){} }
+
+// ─────────── Desfazer a última ação automática ───────────
+let ANTES=null;
+function guardar(){ sincronizarCampos(); ANTES=JSON.parse(JSON.stringify(D())); }
+function aviso(txt,comDesfazer){ let t=document.getElementById("df-desfazer"); if(t) t.remove(); t=document.createElement("div"); t.id="df-desfazer";
+  t.innerHTML=`<span>${txt}</span>${comDesfazer?`<button onclick="mgiDfDesfazer()">Desfazer</button>`:""}<button onclick="this.parentNode.remove()">OK</button>`; document.body.appendChild(t); clearTimeout(aviso._t); aviso._t=setTimeout(()=>{ t.remove(); },9000); }
+window.mgiDfDesfazer=function(){ if(!ANTES) return; state.diarioAtual=ANTES; ANTES=null; renderDiarioForm(); const t=document.getElementById("df-desfazer"); if(t) t.remove(); };
+
+// ─────────── Mesclar dados no registro (sem apagar o que já foi digitado) ───────────
+function aplicar(j,origem){
+  const d=D(); const n={mo:0,eq:0,at:0,oc:0};
+  if(j.tempo){ const t=tempoDe(j.tempo); if(t) d.tempo=t; }
+  ["tempM","tempT","chuvaH"].forEach(k=>{ if(j[k]!=null&&String(j[k]).trim()!=="") d[k]=String(j[k]).replace(/°\s*C?/gi,"").trim(); });
+  if(j.parou&&["Não","Parcial","Sim"].includes(j.parou)) d.parou=j.parou;
+  if(j.turnos){ ["manha","tarde","noite"].forEach(k=>{ if(j.turnos[k]===true) d[k]=true; }); }
+  if(j.mestre&&!d.mestre) d.mestre=j.mestre;
+  (j.mo||[]).forEach(m=>{ if(!m||!m.funcao) return; const i=d.mo.findIndex(x=>norm(x.funcao)===norm(m.funcao)); const v={funcao:m.funcao,qtd:m.qtd!=null?String(m.qtd):"",horas:m.horas||""};
+    if(i>=0){ if(v.qtd) d.mo[i].qtd=v.qtd; if(v.horas) d.mo[i].horas=v.horas; } else { d.mo.push(v); } n.mo++; });
+  (j.eq||[]).forEach(e=>{ if(!e||!e.nome) return; const i=d.eq.findIndex(x=>norm(x.nome)===norm(e.nome)); const v={nome:e.nome,ht:e.ht||"",hp:e.hp||""};
+    if(i>=0){ if(v.ht) d.eq[i].ht=v.ht; if(v.hp) d.eq[i].hp=v.hp; } else d.eq.push(v); n.eq++; });
+  (j.atividades||[]).forEach(a=>{ if(!a||!a.desc) return; if(d.atividades.some(x=>norm(x.desc)===norm(a.desc)&&norm(x.local)===norm(a.local))) return; const vazia=d.atividades.findIndex(x=>!x.desc&&!x.local&&!x.quant);
+    const v={desc:a.desc,local:a.local||"",quant:a.quant||""}; if(vazia>=0) d.atividades[vazia]=v; else d.atividades.push(v); n.at++; });
+  (j.ocorrencias||[]).forEach(o=>{ if(!o||!o.desc) return; if(d.ocorrencias.some(x=>norm(x.desc)===norm(o.desc))) return; d.ocorrencias.push({tipo:o.tipo||"Registro",desc:o.desc}); n.oc++; });
+  if(j.obs&&String(j.obs).trim()){ d.obs=d.obs&&!d.obs.includes(j.obs)?(d.obs.trim()+"\n"+j.obs.trim()):j.obs.trim(); }
+  renderDiarioForm();
+  const partes=[n.mo&&n.mo+" função(ões)",n.eq&&n.eq+" equipamento(s)",n.at&&n.at+" atividade(s)",n.oc&&n.oc+" ocorrência(s)"].filter(Boolean);
+  aviso("✅ "+origem+(partes.length?": "+partes.join(", "):"")+". Confira e salve.",true);
+}
+
+function lerJSON(r){ const txt=(r.content||[]).map(c=>c.text||"").join("").replace(/```json|```/g,"").trim(); return JSON.parse(txt.slice(txt.indexOf("{"),txt.lastIndexOf("}")+1)); }
+
+function contexto(){
+  const u=ultimoDiario(D().id); const tr=vivos(state.trechos).filter(t=>(t.obraId||null)===obraId()).map(t=>t.nome).filter(Boolean).slice(0,40);
+  return `Obra: ${obraNome()||D().obra||"não informada"}. Data do registro: ${D().data} (${diaSemana(D().data)}).`
+   +(u?`\nÚltimo diário (${u.data}): equipe ${(u.mo||[]).map(m=>(m.qtd||"?")+" "+m.funcao).join(", ")||"-"}; equipamentos ${(u.eq||[]).map(e=>e.nome).join(", ")||"-"}; atividades ${(u.atividades||[]).map(a=>a.desc+(a.local?" ("+a.local+")":"")).join("; ")||"-"}.`:"")
+   +(tr.length?`\nTrechos cadastrados na obra: ${tr.join(", ")}.`:"");
+}
+const ESQUEMA=`Responda SOMENTE com um JSON válido, sem comentários, neste formato:
+{"tempo":"Ensolarado|Parc. nublado|Nublado|Chuvoso|Tempestade ou vazio","tempM":"","tempT":"","chuvaH":"ex.: 2h (14h às 16h) ou vazio","parou":"Não|Parcial|Sim ou vazio","turnos":{"manha":true,"tarde":true,"noite":false},
+"mo":[{"funcao":"Pedreiro","qtd":"4","horas":"8h"}],"eq":[{"nome":"Retroescavadeira","ht":"6h","hp":"2h"}],
+"atividades":[{"desc":"Assentamento de rede coletora PVC DN 200","local":"PV-08 a PV-09","quant":"42 m"}],
+"ocorrencias":[{"tipo":"Chuva|Falta material|Visita|Acidente|Recebimento|Interferência|Segurança|Meio ambiente|Outro","desc":""}],"obs":""}
+Regras: use apenas o que foi informado, não invente quantidades, nomes ou horários; campos não citados ficam vazios ou listas vazias.
+Escreva as atividades em linguagem técnica de diário de obra (substantivo + serviço + material/diâmetro), uma por serviço e local.
+Funções no singular com inicial maiúscula (Pedreiro, Servente, Encarregado, Operador de retroescavadeira). Se a pessoa disser "mesma equipe de ontem", copie a equipe do último diário do contexto.
+Visitas, interferências, falta de material, acidentes, recebimentos e problemas vão para ocorrências. Em "obs" coloque só o que não couber nos outros campos.`;
+
+// ─────────── 1. Contar o dia (voz ou texto) ───────────
+let REC=null;
+window.mgiDfContar=function(){
+  if(ro()) return;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  modalDf(`<h3>🎤 Conte como foi o dia</h3>
+   <div class="df-ex">Fale do jeito que você falaria no rádio. Exemplo: <i>"Hoje sol, manhã e tarde. Equipe: 1 encarregado, 4 pedreiros, 6 serventes e o operador. Retro trabalhou 7 horas e o caminhão ficou parado 2 horas por falta de frente. Assentamos 42 metros de PVC 200 do PV-08 ao PV-09 e fizemos 2 ligações na Rua das Flores. A fiscal da Sabesp visitou às 10h. Faltou anel de borracha à tarde."</i></div>
+   ${SR?`<button class="df-rec" id="df-rec" onclick="mgiDfGravar()">🎤 Toque para falar</button>`:`<p class="df-ex">Seu navegador não tem ditado por voz. Use o microfone do teclado do celular para ditar no campo abaixo.</p>`}
+   <textarea id="df-txt" placeholder="Ou escreva aqui, sem se preocupar com a forma...">${$e(window._dfTxt||"")}</textarea>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDfParar();mgiDfFechar()">Cancelar</button><button class="ac5-save" id="df-ir" onclick="mgiDfProcessar()">✨ Preencher o diário</button></div>`);
+  if(SR) setTimeout(()=>mgiDfGravar(),250);
+};
+window.mgiDfGravar=function(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; const b=document.getElementById("df-rec"); if(!SR||!b) return;
+  if(REC){ mgiDfParar(); return; }
+  try{ REC=new SR(); REC.lang="pt-BR"; REC.continuous=true; REC.interimResults=true; }catch(e){ return; }
+  const ta=document.getElementById("df-txt"); const base=(ta.value?ta.value.trim()+" ":""); let finais="";
+  REC.onresult=ev=>{ let inter=""; for(let i=ev.resultIndex;i<ev.results.length;i++){ const t=ev.results[i][0].transcript; if(ev.results[i].isFinal) finais+=t.trim()+" "; else inter+=t; } ta.value=base+finais+inter; window._dfTxt=ta.value; };
+  REC.onend=()=>{ REC=null; const bb=document.getElementById("df-rec"); if(bb){ bb.textContent="🎤 Continuar falando"; bb.classList.remove("on"); } };
+  REC.onerror=()=>{};
+  b.textContent="⏹ Ouvindo... toque para parar"; b.classList.add("on"); try{ REC.start(); }catch(e){ REC=null; }
+};
+window.mgiDfParar=function(){ if(REC){ try{ REC.stop(); }catch(e){} REC=null; } };
+window.mgiDfProcessar=async function(){
+  mgiDfParar(); const ta=document.getElementById("df-txt"); const txt=(ta&&ta.value||"").trim(); window._dfTxt=txt;
+  if(txt.length<8){ alert("Conte um pouco do dia (equipe, máquinas, o que foi feito, problemas)."); return; }
+  const b=document.getElementById("df-ir"); if(b){ b.disabled=true; b.textContent="⏳ Organizando..."; }
+  guardar();
+  try{ const r=await callAnthropicAPI([{role:"user",content:`DIARIO_FACIL. Você organiza o relato falado de um engenheiro em um diário de obra de saneamento e construção civil (Brasil).\n${contexto()}\n\nRELATO DO ENGENHEIRO:\n"""${txt}"""\n\n${ESQUEMA}`}],1600);
+    const j=lerJSON(r);
+    mgiDfFechar(); window._dfTxt=""; aplicar(j,"Diário preenchido pela IA");
+    try{ mgiLog&&mgiLog("Preencheu diário com IA (relato)",D().data); }catch(e){}
+  }catch(e){ if(b){ b.disabled=false; b.textContent="✨ Preencher o diário"; } alert(e.message||"Não foi possível organizar agora. Tente novamente."); }
+};
+
+// ─────────── 2. Repetir o último dia ───────────
+window.mgiDfRepetir=function(){
+  if(ro()) return; const u=ultimoDiario(D().id,D().data)||ultimoDiario(D().id);
+  if(!u){ alert("Ainda não há diário anterior nesta obra para copiar."); return; }
+  modalDf(`<h3>📋 Repetir do dia ${$e(u.data)}</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Marque o que deseja trazer. Depois é só ajustar o que mudou.</p>
+   <div class="df-ck">
+    <label><input type="checkbox" id="dfr-mo" checked> <span><b>Equipe</b><br><small>${$e((u.mo||[]).map(m=>(m.qtd?m.qtd+" ":"")+m.funcao).join(", ")||"vazia")}</small></span></label>
+    <label><input type="checkbox" id="dfr-eq" checked> <span><b>Equipamentos</b><br><small>${$e((u.eq||[]).map(e=>e.nome).join(", ")||"nenhum")}</small></span></label>
+    <label><input type="checkbox" id="dfr-tu" checked> <span><b>Turnos, responsável, encarregado e nomes das assinaturas</b></span></label>
+    <label><input type="checkbox" id="dfr-at"> <span><b>Atividades em andamento</b> (sem as quantidades)<br><small>${$e((u.atividades||[]).map(a=>a.desc).filter(Boolean).slice(0,4).join("; ")||"nenhuma")}</small></span></label>
+   </div>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDfFechar()">Cancelar</button><button class="ac5-save" onclick="mgiDfRepetirOk('${u.id}')">Copiar</button></div>`);
+};
+window.mgiDfRepetirOk=function(id){
+  const u=vivos(state.diarios).find(x=>x.id===id); if(!u) return; const ck=k=>(document.getElementById("dfr-"+k)||{}).checked; guardar(); const d=D(); const j={};
+  if(ck("mo")) j.mo=(u.mo||[]).map(m=>({funcao:m.funcao,qtd:m.qtd,horas:m.horas}));
+  if(ck("eq")) j.eq=(u.eq||[]).map(e=>({nome:e.nome,ht:e.ht||e.horas_trab||"",hp:e.hp||e.horas_parada||""}));
+  if(ck("at")) j.atividades=(u.atividades||[]).filter(a=>a.desc).map(a=>({desc:a.desc,local:a.local||"",quant:""}));
+  if(ck("tu")){ ["manha","tarde","noite"].forEach(k=>d[k]=!!u[k]); ["resp","mestre","signRT","signFiscal"].forEach(k=>{ if(!d[k]&&u[k]) d[k]=u[k]; }); if(!d.obra) d.obra=u.obra||""; }
+  mgiDfFechar(); aplicar(j,"Copiado do dia "+u.data);
+};
+
+// ─────────── 3. Clima automático (Open-Meteo, sem cadastro) ───────────
+function posicao(){ return new Promise(res=>{
+  const tr=vivos(state.trechos).find(t=>(t.obraId||null)===obraId()&&(t.ini||t.fim)); const p=tr&&(tr.ini||tr.fim);
+  const reserva=()=>res(p&&p.lat?{lat:p.lat,lng:p.lng,origem:"trecho da obra"}:null);
+  if(!navigator.geolocation) return reserva();
+  navigator.geolocation.getCurrentPosition(g=>res({lat:g.coords.latitude,lng:g.coords.longitude,origem:"sua localização"}),reserva,{timeout:8000,maximumAge:6e5,enableHighAccuracy:false}); }); }
+function tempoPorCodigo(c){ if(c>=95) return TEMPOS[4]; if((c>=51&&c<=67)||(c>=80&&c<=82)) return TEMPOS[3]; if(c===3||c===45||c===48) return TEMPOS[2]; if(c===2) return TEMPOS[1]; return TEMPOS[0]; }
+window.mgiDfClima=async function(btn){
+  if(ro()) return; sincronizarCampos(); const d=D(); const dia=d.data||new Date().toISOString().slice(0,10);
+  if(btn){ btn.disabled=true; btn.querySelector("b").textContent="Buscando..."; }
+  try{
+    const p=await posicao(); if(!p) throw new Error("Não consegui sua localização. Libere a localização do navegador ou cadastre o trecho com coordenadas no Mapa da obra.");
+    const hoje=new Date().toISOString().slice(0,10); const dias=Math.round((new Date(hoje)-new Date(dia))/864e5);
+    const base=dias>80?"https://archive-api.open-meteo.com/v1/archive":"https://api.open-meteo.com/v1/forecast";
+    const url=`${base}?latitude=${p.lat.toFixed(4)}&longitude=${p.lng.toFixed(4)}&hourly=temperature_2m,precipitation,weathercode&timezone=America%2FSao_Paulo&start_date=${dia}&end_date=${dia}`;
+    const r=await fetch(url); if(!r.ok) throw new Error("Serviço de clima indisponível agora.");
+    const j=await r.json(); const H=j.hourly||{}; const hora=h=>(H.time||[]).findIndex(t=>t.endsWith("T"+String(h).padStart(2,"0")+":00"));
+    const iM=hora(9), iT=hora(15); if(iM<0) throw new Error("Sem dados de clima para essa data.");
+    let pior=0; const chuva=[]; for(let h=7;h<=17;h++){ const i=hora(h); if(i<0) continue; const c=H.weathercode[i]||0; const sev=c>=95?5:((c>=51&&c<=67)||(c>=80&&c<=82))?4:(c===3||c===45||c===48)?3:c===2?2:1; if(sev>pior) pior=sev; if((H.precipitation[i]||0)>=0.3) chuva.push(h); }
+    const cod=[0,0,2,3,61,95][pior]; guardar();
+    d.tempo=tempoPorCodigo(cod); d.tempM=String(Math.round(H.temperature_2m[iM])); if(iT>=0) d.tempT=String(Math.round(H.temperature_2m[iT]));
+    if(chuva.length){ const faixas=[]; let a=chuva[0],b=chuva[0]; chuva.slice(1).forEach(h=>{ if(h===b+1) b=h; else { faixas.push([a,b]); a=b=h; } }); faixas.push([a,b]); d.chuvaH=chuva.length+"h ("+faixas.map(f=>f[0]+"h às "+(f[1]+1)+"h").join(", ")+")"; }
+    else if(!d.chuvaH) d.chuvaH="Sem chuva";
+    renderDiarioForm(); aviso(`🌤️ Clima preenchido (${p.origem}): ${d.tempo}, ${d.tempM}°C / ${d.tempT}°C${chuva.length?", chuva "+d.chuvaH:""}.`,true);
+  }catch(e){ alert(e.message||"Não foi possível buscar o clima."); }
+  finally{ if(btn){ btn.disabled=false; btn.querySelector("b").textContent="Clima automático"; } }
+};
+
+// ─────────── 4. Puxar o que já foi registrado no app neste dia ───────────
+const diaLocal=v=>{ v=String(v||""); if(!v.includes("T")) return v.slice(0,10); const d=new Date(v); return isNaN(d)?v.slice(0,10):new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+function doDia(l,campos){ const dia=D().data; return vivos(l).filter(x=>(x.obraId||null)===obraId()&&campos.some(c=>diaLocal(c(x))===dia)); }
+window.mgiDfPuxar=function(){
+  if(ro()) return; const j={atividades:[],ocorrencias:[]};
+  doDia(state.fvsSalvas,[x=>(x.info||{}).data,x=>x.savedAt]).forEach(f=>{ const nc=Object.values(f.respostas||{}).filter(v=>v==="NC"||v==="nc"||v===false).length;
+    j.atividades.push({desc:"Inspeção de qualidade (FVS): "+(f.serviceName||"serviço"),local:(f.info||{}).trecho||"",quant:""});
+    if(nc) j.ocorrencias.push({tipo:"Qualidade",desc:`FVS de ${f.serviceName}${(f.info||{}).trecho?" em "+f.info.trecho:""} com ${nc} item(ns) não conforme(s). Tratar pela ação corretiva.`}); });
+  doDia(state.liberacoes,[x=>x.dataPrev,x=>x.atualizadoEm]).forEach(l=>j.ocorrencias.push({tipo:"Liberação de frente",desc:`${l.frente}${l.servico?" ("+l.servico+")":""}: ${l.situacao||"em preenchimento"}.`}));
+  doDia(state.materiais,[x=>x.data]).forEach(m=>j.ocorrencias.push({tipo:"Recebimento",desc:`${m.material}${m.qtd?", "+m.qtd+" "+(m.unidade||""):""}${m.lote?", lote "+m.lote:""}${m.nf?", NF "+m.nf:""}${m.inspecao?". Inspeção: "+m.inspecao:""}.`}));
+  doDia(state.dds,[x=>x.data]).forEach(x=>j.ocorrencias.push({tipo:"DDS",desc:`DDS realizado: ${x.tema||"tema não informado"}${(x.participantes||[]).length?", "+x.participantes.length+" participante(s)":""}.`}));
+  const n=j.atividades.length+j.ocorrencias.length;
+  if(!n){ alert("Não há FVS, liberações, recebimentos de material ou DDS registrados em "+D().data+" nesta obra."); return; }
+  guardar(); aplicar(j,"Trazido do que foi registrado no app");
+};
+
+// ─────────── 5. IA pelas fotos do dia ───────────
+async function paraBase64(src){
+  let blob; if(String(src).startsWith("data:")){ blob=await (await fetch(src)).blob(); } else { const r=await fetch(src); if(!r.ok) throw 0; blob=await r.blob(); }
+  const bmp=await createImageBitmap(blob); const s=Math.min(1,1024/Math.max(bmp.width,bmp.height)); const c=document.createElement("canvas"); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s); c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",.78).split(",")[1];
+}
+window.mgiDfFotos=async function(btn){
+  if(ro()) return; const fotos=(D().fotos||[]).slice(-4);
+  if(!fotos.length){ alert("Adicione as fotos do dia primeiro (card Registro fotográfico, mais abaixo). Depois toque aqui que a IA descreve as atividades."); try{ document.getElementById("d-fotos-grid").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} return; }
+  if(btn){ btn.disabled=true; btn.querySelector("b").textContent="Analisando..."; }
+  try{ const imgs=[]; for(const f of fotos){ try{ imgs.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:await paraBase64(f)}}); }catch(e){} }
+    if(!imgs.length) throw new Error("Não consegui ler as fotos. Tente tirar de novo pelo app.");
+    guardar(); const r=await callAnthropicAPI([{role:"user",content:[...imgs,{type:"text",text:`DIARIO_FACIL_FOTOS. Fotos de um dia de obra de saneamento/construção civil.\n${contexto()}\nDescreva as atividades executadas que aparecem nas fotos, os equipamentos visíveis e as ocorrências relevantes de segurança, meio ambiente ou qualidade (ex.: vala sem escoramento, falta de sinalização, trabalhador sem EPI, material exposto, água acumulada). Não invente quantidades nem locais.\n${ESQUEMA}`}]}],1200);
+    aplicar(lerJSON(r),"IA analisou "+imgs.length+" foto(s)");
+  }catch(e){ alert(e.message||"Não foi possível analisar as fotos agora."); }
+  finally{ if(btn){ btn.disabled=false; btn.querySelector("b").textContent="IA pelas fotos"; } }
+};
+
+// ─────────── 6. Redigir as observações do dia ───────────
+window.mgiDfRedigir=async function(btn){
+  if(ro()) return; sincronizarCampos(); const d=D();
+  if(!d.atividades.some(a=>a.desc)&&!d.ocorrencias.length){ alert("Preencha pelo menos uma atividade ou ocorrência para a IA redigir o resumo do dia."); return; }
+  if(btn){ btn.disabled=true; btn.querySelector("b").textContent="Redigindo..."; }
+  try{ const dados={data:d.data,clima:d.tempo,temperaturas:[d.tempM,d.tempT],chuva:d.chuvaH,paralisacao:d.parou,turnos:{manha:d.manha,tarde:d.tarde,noite:d.noite},equipe:d.mo,equipamentos:d.eq,atividades:d.atividades,ocorrencias:d.ocorrencias};
+    const r=await callAnthropicAPI([{role:"user",content:`DIARIO_FACIL_TEXTO. Redija o parágrafo de observações gerais de um diário de obra (Brasil), em português técnico, terceira pessoa, 3 a 6 frases, sem markdown, sem inventar nada além dos dados. Destaque efetivo total, produção do dia, impactos de clima ou paralisação e pendências para o dia seguinte quando houver. Dados: ${JSON.stringify(dados)}`}],600);
+    const t=(r.content||[]).map(c=>c.text||"").join(" ").replace(/\*\*/g,"").trim(); if(!t) throw new Error();
+    guardar(); d.obs=d.obs&&d.obs.trim()?d.obs.trim()+"\n\n"+t:t; renderDiarioForm(); aviso("📝 Observações redigidas. Confira o texto.",true);
+    try{ document.getElementById("d-obs").scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){}
+  }catch(e){ alert(e.message||"Não foi possível redigir agora."); }
+  finally{ if(btn){ btn.disabled=false; btn.querySelector("b").textContent="Redigir observações"; } }
+};
+
+// ─────────── Modal simples ───────────
+function modalDf(h){ let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m);} m.onclick=e=>{ if(e.target===m){ mgiDfParar(); m.remove(); } }; m.innerHTML=`<div class="fm-box rg-box df-modal">${h}</div>`; }
+window.mgiDfFechar=function(){ const m=document.getElementById("ficha-modal"); if(m) m.remove(); };
+
+// ─────────── Progresso e cartão de preenchimento rápido ───────────
+function progresso(){ const d=D(); const s=[!!(d.data&&d.obra),!!d.tempo,(d.mo||[]).some(m=>m.funcao&&m.qtd),(d.atividades||[]).some(a=>a.desc),!!((d.fotos||[]).length),!!(d.signRTImg)]; return {f:s.filter(Boolean).length,t:s.length}; }
+function cartao(){
+  const pg=document.getElementById("diario-page0"); if(!pg) return; let c=document.getElementById("dfc");
+  if(!c){ c=document.createElement("div"); c.id="dfc"; pg.insertBefore(c,pg.firstChild); }
+  if(ro()){ c.style.display="none"; return; } c.style.display="";
+  const p=progresso(); const u=ultimoDiario(D().id);
+  c.innerHTML=`<div class="df-top"><h4>⚡ Diário em 1 minuto</h4><span class="df-prog">${p.f} de ${p.t} etapas</span></div>
+   <p class="df-sub">Fale como foi o dia e a IA preenche equipe, máquinas, atividades e ocorrências. Você só confere e assina.</p>
+   <div class="df-bar"><i style="width:${Math.round(p.f/p.t*100)}%"></i></div>
+   <button class="df-main" onclick="mgiDfContar()">🎤 <span>Contar como foi o dia<small>por voz ou texto, a IA organiza</small></span></button>
+   <div class="df-g">
+    <button class="df-b" onclick="mgiDfRepetir()"${u?"":" disabled"}><span>📋</span><div><b>Repetir último dia</b><small>${u?"equipe e máquinas de "+$e(u.data):"sem diário anterior"}</small></div></button>
+    <button class="df-b" onclick="mgiDfClima(this)"><span>🌤️</span><div><b>Clima automático</b><small>tempo, temperatura e chuva</small></div></button>
+    <button class="df-b" onclick="mgiDfPuxar()"><span>🔗</span><div><b>Puxar do app</b><small>FVS, liberações, materiais e DDS do dia</small></div></button>
+    <button class="df-b" onclick="mgiDfFotos(this)"><span>📷</span><div><b>IA pelas fotos</b><small>descreve o que foi feito</small></div></button>
+   </div>
+   <div class="df-g" style="grid-template-columns:1fr"><button class="df-b" onclick="mgiDfRedigir(this)"><span>📝</span><div><b>Redigir observações</b><small>a IA escreve o resumo técnico do dia com o que foi preenchido</small></div></button></div>
+   <div class="df-auto">💾 Rascunho salvo automaticamente neste aparelho enquanto você preenche.</div>`;
+}
+
+// ─────────── Sugestões de preenchimento (listas com o histórico) ───────────
+function listas(){
+  const mk=(id,vals)=>{ let dl=document.getElementById(id); if(!dl){ dl=document.createElement("datalist"); dl.id=id; document.body.appendChild(dl); } dl.innerHTML=[...new Set(vals.filter(Boolean).map(v=>String(v).trim()))].slice(0,150).map(v=>`<option value="${$e(v)}">`).join(""); };
+  const L=diariosObra().concat(vivos(state.diarios)).slice(0,300);
+  mk("df-dl-mo",["Engenheiro","Encarregado","Mestre de obras","Pedreiro","Servente","Armador","Carpinteiro","Eletricista","Encanador","Soldador PEAD","Operador de retroescavadeira","Operador de escavadeira","Motorista","Sinaleiro","Topógrafo","Auxiliar de topografia","Técnico de segurança","Técnico de qualidade"].concat(...L.map(d=>(d.mo||[]).map(m=>m.funcao))));
+  mk("df-dl-eq",["Retroescavadeira","Escavadeira hidráulica","Caminhão basculante","Caminhão munck","Placa vibratória","Compactador de percussão (sapo)","Rolo compactador","Bomba submersível","Gerador","Máquina de solda PEAD","Betoneira","Vibrador de imersão","Máquina HDD","Cortadora de piso"].concat(...L.map(d=>(d.eq||[]).map(e=>e.nome))));
+  mk("df-dl-at",[].concat(...L.map(d=>(d.atividades||[]).map(a=>a.desc))));
+  mk("df-dl-lo",vivos(state.trechos).filter(t=>(t.obraId||null)===obraId()).map(t=>t.nome).concat(...L.map(d=>(d.atividades||[]).map(a=>a.local))));
+  const set=(sel,id,idx)=>document.querySelectorAll(sel).forEach(r=>{ const i=r.querySelectorAll("input")[idx]; if(i) i.setAttribute("list",id); });
+  set("#mo-list .row-mo","df-dl-mo",0); set("#eq-list .row-eq","df-dl-eq",0);
+  document.querySelectorAll("#at-list .row-item").forEach(r=>{ const ins=r.querySelectorAll("input"); if(ins[0]) ins[0].setAttribute("list","df-dl-at"); if(ins[1]) ins[1].setAttribute("list","df-dl-lo"); });
+}
+["renderMOList","renderEQList","renderATList"].forEach(fn=>{ const o=window[fn]; if(typeof o!=="function") return; window[fn]=function(){ const r=o.apply(this,arguments); try{ listas(); }catch(e){} return r; }; });
+
+// ─────────── Preenchimento automático ao abrir + rascunho ───────────
+function autoPreencher(){
+  const d=D(); if(d._auto) return; d._auto=1; if(ro()) return;
+  if(!d.obra&&obraNome()) d.obra=obraNome();
+  const u=ultimoDiario(d.id);
+  if(u){ ["resp","mestre","signRT","signFiscal"].forEach(k=>{ if(!d[k]&&u[k]) d[k]=u[k]; }); }
+  else { const c=state.empresaCfg||{}; if(!d.resp&&c.responsavel) d.resp=c.responsavel; }
+  if(!d.manha&&!d.tarde&&!d.noite&&!state.diarios.some(x=>x.id===d.id)){ const w=new Date(d.data+"T12:00:00").getDay(); if(w>=1&&w<=5){ d.manha=true; d.tarde=true; } }
+}
+function lerRascunho(){ try{ const r=JSON.parse(localStorage.getItem(RASC)||"null"); if(r&&r.d&&(r.obraId||null)===obraId()&&Date.now()-r.em<3*864e5) return r.d; }catch(e){} return null; }
+function gravarRascunho(){ try{ const d=state.diarioAtual; if(!d||ro()) return; const vazio=!(d.mo||[]).length&&!(d.eq||[]).length&&!(d.atividades||[]).length&&!(d.ocorrencias||[]).length&&!d.obs&&!d.tempo; if(vazio){ return; }
+  const c=JSON.parse(JSON.stringify(d)); c.fotos=(c.fotos||[]).filter(f=>!String(f).startsWith("data:")); localStorage.setItem(RASC,JSON.stringify({em:Date.now(),obraId:obraId(),d:c})); }catch(e){} }
+function limparRascunho(){ try{ localStorage.removeItem(RASC); }catch(e){} }
+
+const _render=window.renderDiarioForm;
+window.renderDiarioForm=renderDiarioForm=function(){
+  if(!state.diarioAtual){ const r=lerRascunho(); if(r){ state.diarioAtual=r; setTimeout(()=>aviso("📝 Continuando o rascunho do dia "+r.data+".",false),300); } }
+  autoPreencher();
+  const r=_render.apply(this,arguments); try{ cartao(); listas(); }catch(e){} return r;
+};
+const _save=window.saveDiario;
+window.saveDiario=saveDiario=function(){ const r=_save.apply(this,arguments); try{ cartao(); }catch(e){} return r; };
+const _salvar=window.salvarDiario;
+window.salvarDiario=salvarDiario=function(){ const antes=(state.diarios||[]).length, id=(state.diarioAtual||{}).id; const r=_salvar.apply(this,arguments);
+  if((state.diarios||[]).some(x=>x.id===id)||(state.diarios||[]).length>antes){ limparRascunho(); try{ mgiLog&&mgiLog("Salvou diário de obra",id); }catch(e){} }
+  return r; };
+const _novo=window.novoDiario;
+window.novoDiario=novoDiario=function(){ const r=_novo.apply(this,arguments); if(state.diarioAtual&&!(state.diarioAtual.mo||[]).length) limparRascunho(); return r; };
+const _edit=window.editarDiario;
+window.editarDiario=editarDiario=function(id){ gravarRascunho(); const r=_edit.apply(this,arguments); if(state.diarioAtual) state.diarioAtual._auto=1; return r; };
+setInterval(()=>{ const m=document.getElementById("module-diario"); if(m&&!m.classList.contains("hidden")) gravarRascunho(); },5000);
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) gravarRascunho(); });
+})();
+</script>
+
+<style>
+.vz-bar{display:flex;gap:8px;margin:10px 0 4px}
+.vz-main{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;border-radius:12px;padding:12px;background:var(--grad,linear-gradient(90deg,#107DE0,#0A9E6C));color:#fff;font:800 .9rem Barlow,sans-serif;cursor:pointer;box-shadow:0 6px 18px rgba(16,125,224,.22)}
+.vz-main small{font-weight:600;font-size:.66rem;opacity:.9}
+.vz-sec{width:86px;border:1px solid var(--green);background:rgba(20,206,141,.1);color:var(--green);border-radius:12px;font:800 .74rem Barlow,sans-serif;cursor:pointer;line-height:1.2}
+#vz-fvs{background:linear-gradient(135deg,rgba(16,125,224,.12),rgba(10,158,108,.12));border:1px solid rgba(20,206,141,.35);border-radius:14px;padding:12px;margin:10px 0}
+#vz-fvs p{margin:0 0 6px;font-size:.72rem;color:var(--muted)}
+</style>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// MGI PRO · v44: FVS e liberação de frente por voz
+// O inspetor fala o que viu, a IA marca C / NC / NA, escreve as observações,
+// e as não conformidades já saem com ação corretiva (5W2H).
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+const $e=v=>(typeof acEsc==="function"?acEsc(v):String(v==null?"":v));
+const ro=()=>!!(window.MGI_USER&&window.MGI_USER.role==="fiscal");
+const obraNome=()=>((state.obras||[]).find(o=>o.id===state.obraAtual)||{}).nome||"";
+const STATUS={c:"C",conforme:"C",ok:"C",nc:"NC","não conforme":"NC","nao conforme":"NC",na:"NA","n/a":"NA","não se aplica":"NA","nao se aplica":"NA"};
+const st=v=>STATUS[String(v||"").toLowerCase().trim()]||"";
+function lerJSON(r){ const t=(r.content||[]).map(c=>c.text||"").join("").replace(/```json|```/g,"").trim(); return JSON.parse(t.slice(t.indexOf("{"),t.lastIndexOf("}")+1)); }
+function aviso(txt,desfazer){ let t=document.getElementById("df-desfazer"); if(t) t.remove(); t=document.createElement("div"); t.id="df-desfazer";
+  t.innerHTML=`<span>${txt}</span>${desfazer?`<button onclick="mgiVzDesfazer()">Desfazer</button>`:""}<button onclick="this.parentNode.remove()">OK</button>`; document.body.appendChild(t); clearTimeout(aviso._t); aviso._t=setTimeout(()=>t.remove(),10000); }
+let DESFAZER=null; window.mgiVzDesfazer=function(){ if(DESFAZER){ DESFAZER(); DESFAZER=null; } const t=document.getElementById("df-desfazer"); if(t) t.remove(); };
+
+// ─────────── Janela de voz reutilizável ───────────
+let REC=null, CFG=null;
+function parar(){ if(REC){ try{ REC.stop(); }catch(e){} REC=null; } }
+window.mgiVozAbrir=function(cfg){
+  CFG=cfg; const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); }
+  m.onclick=e=>{ if(e.target===m) mgiVozCancelar(); };
+  m.innerHTML=`<div class="fm-box rg-box df-modal"><h3>${cfg.titulo}</h3><div class="df-ex">${cfg.exemplo}</div>
+   ${SR?`<button class="df-rec" id="vz-rec" onclick="mgiVozGravar()">🎤 Toque para falar</button>`:`<p class="df-ex">Seu navegador não tem ditado por voz. Use o microfone do teclado do celular para ditar no campo abaixo.</p>`}
+   <textarea id="vz-txt" placeholder="Ou escreva aqui, do seu jeito...">${$e(cfg.texto||"")}</textarea>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiVozCancelar()">Cancelar</button><button class="ac5-save" id="vz-ir" onclick="mgiVozOk()">✨ ${cfg.botao||"Preencher"}</button></div></div>`;
+  if(SR) setTimeout(()=>mgiVozGravar(),250);
+};
+window.mgiVozGravar=function(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; const b=document.getElementById("vz-rec"); if(!SR||!b) return; if(REC){ parar(); return; }
+  try{ REC=new SR(); REC.lang="pt-BR"; REC.continuous=true; REC.interimResults=true; }catch(e){ return; }
+  const ta=document.getElementById("vz-txt"); const base=ta.value?ta.value.trim()+" ":""; let fin="";
+  REC.onresult=ev=>{ let it=""; for(let i=ev.resultIndex;i<ev.results.length;i++){ const t=ev.results[i][0].transcript; if(ev.results[i].isFinal) fin+=t.trim()+" "; else it+=t; } ta.value=base+fin+it; };
+  REC.onend=()=>{ REC=null; const bb=document.getElementById("vz-rec"); if(bb){ bb.textContent="🎤 Continuar falando"; bb.classList.remove("on"); } }; REC.onerror=()=>{};
+  b.textContent="⏹ Ouvindo... toque para parar"; b.classList.add("on"); try{ REC.start(); }catch(e){ REC=null; } };
+window.mgiVozCancelar=function(){ parar(); const m=document.getElementById("ficha-modal"); if(m) m.remove(); if(CFG&&CFG.aoFechar) CFG.aoFechar(); };
+window.mgiVozOk=async function(){ parar(); const txt=((document.getElementById("vz-txt")||{}).value||"").trim();
+  if(txt.length<8){ alert("Fale ou escreva um pouco mais sobre o que foi verificado."); return; }
+  const b=document.getElementById("vz-ir"); if(b){ b.disabled=true; b.textContent="⏳ Organizando..."; } CFG.texto=txt;
+  try{ await CFG.processar(txt); CFG.texto=""; }
+  catch(e){ if(b){ b.disabled=false; b.textContent="✨ "+(CFG.botao||"Preencher"); } alert(e.message||"Não foi possível organizar agora. Tente novamente."); } };
+
+// ═════════════════════════ FVS ═════════════════════════
+const chaveFVS=i=>state.currentService.id+"_"+i;
+function fotoFVS(){ const s=state.currentService; return {resp:Object.fromEntries(s.itens.map((_,i)=>[i,state.fvsRespostas[chaveFVS(i)]])),obs:Object.fromEntries(s.itens.map((_,i)=>[i,state.fvsObservacoes[chaveFVS(i)]])),trecho:state.fvsInfo.trecho,sid:s.id}; }
+function voltarFVS(f){ if(!state.currentService||state.currentService.id!==f.sid) return; Object.keys(f.resp).forEach(i=>{ const k=chaveFVS(i); if(f.resp[i]) state.fvsRespostas[k]=f.resp[i]; else delete state.fvsRespostas[k]; if(f.obs[i]) state.fvsObservacoes[k]=f.obs[i]; else delete state.fvsObservacoes[k]; delete state.fvsAcoes[k]; });
+  state.fvsInfo.trecho=f.trecho||""; const el=document.getElementById("fvs-trecho"); if(el) el.value=state.fvsInfo.trecho; renderFVSService(); }
+
+window.mgiFvsVoz=function(){
+  const s=state.currentService; if(!s||ro()) return;
+  mgiVozAbrir({titulo:"🎤 Fale o que você inspecionou",botao:"Preencher a FVS",
+   exemplo:`Serviço: <b>${$e(s.nome)}</b>. Fale só o que importa, a IA marca os ${s.itens.length} itens. Exemplo: <i>"Trecho PV-08 ao PV-09. Locação ok, escoramento ok. Fundo da vala com água acumulada, não conforme, precisa esgotar antes do berço. Sinalização faltando cavalete no lado da calçada. Ensaio de estanqueidade não se aplica hoje. O resto tudo conforme."</i>`,
+   processar:async txt=>{
+     const lista=s.itens.map((it,i)=>{ const cr=typeof critEfetivo==="function"?critEfetivo(s.id,i,it):it; return `${i+1}. ${it.t}${cr&&cr.tol?" (critério: "+cr.tol+")":""}`; }).join("\n");
+     const r=await callAnthropicAPI([{role:"user",content:`FVS_VOZ. Você converte o relato falado de um inspetor de qualidade em respostas de uma Ficha de Verificação de Serviço (FVS) de obra (Brasil).
+Serviço: ${s.nome}. Obra: ${obraNome()||state.fvsInfo.obra||"-"}.
+ITENS DA FICHA:
+${lista}
+
+RELATO DO INSPETOR:
+"""${txt}"""
+
+Responda SOMENTE com JSON: {"trecho":"local/trecho/estaca citado ou vazio","itens":[{"n":1,"status":"C|NC|NA","obs":"observação técnica curta"}]}
+Regras: associe cada trecho do relato ao item mais próximo pelo sentido. Só inclua itens citados, exceto quando o inspetor disser "o resto/demais conforme" (aí marque C todos os não citados, com obs vazia).
+Para NC, a obs deve descrever objetivamente o desvio, onde e, se dito, a medição (mínimo 15 caracteres). Para C, a obs só se houver medição ou evidência citada. Não invente medições.`}],1500);
+     const j=lerJSON(r); const antes=fotoFVS(); let n={C:0,NC:0,NA:0}; const ncs=[];
+     (j.itens||[]).forEach(x=>{ const i=parseInt(x.n,10)-1; const v=st(x.status)||(["C","NC","NA"].includes(x.status)?x.status:""); if(!(i>=0&&i<s.itens.length)||!v) return;
+       const k=chaveFVS(i); state.fvsRespostas[k]=v; n[v]++;
+       if(x.obs&&String(x.obs).trim()){ const o=String(x.obs).trim(), at=state.fvsObservacoes[k]||""; state.fvsObservacoes[k]=at&&!at.includes(o)?at.trim()+" | "+o:o; }
+       if(v==="NC"&&!state.fvsAcoes[k]) ncs.push(i); if(v!=="NC") delete state.fvsAcoes[k]; });
+     if(j.trecho&&!state.fvsInfo.trecho){ state.fvsInfo.trecho=j.trecho; const el=document.getElementById("fvs-trecho"); if(el) el.value=j.trecho; }
+     const m=document.getElementById("ficha-modal"); if(m) m.remove();
+     DESFAZER=()=>voltarFVS(antes); renderFVSService();
+     const falta=s.itens.filter((_,i)=>!state.fvsRespostas[chaveFVS(i)]).length;
+     aviso(`✅ ${n.C} conforme(s), ${n.NC} não conforme(s), ${n.NA} N/A.${falta?" Faltam "+falta+" item(ns).":" Todos os itens respondidos."}${ncs.length?" Gerando ações corretivas...":""}`,true);
+     try{ mgiLog&&mgiLog("Preencheu FVS por voz",s.nome); }catch(e){}
+     for(const i of ncs){ if((state.fvsObservacoes[chaveFVS(i)]||"").trim().length>=10){ try{ await gerarACFVS(i); }catch(e){} } }
+   }});
+};
+window.mgiFvsPendC=function(){
+  const s=state.currentService; if(!s||ro()) return; const p=s.itens.map((_,i)=>i).filter(i=>!state.fvsRespostas[chaveFVS(i)]);
+  if(!p.length){ alert("Todos os itens já estão respondidos."); return; }
+  if(!confirm(`Marcar os ${p.length} item(ns) sem resposta como CONFORME?\n\nUse só depois de verificar esses itens em campo.`)) return;
+  const antes=fotoFVS(); p.forEach(i=>state.fvsRespostas[chaveFVS(i)]="C"); DESFAZER=()=>voltarFVS(antes); renderFVSService(); aviso(`✓ ${p.length} item(ns) marcado(s) como conforme.`,true);
+};
+function cartaoFVS(){
+  const h=document.getElementById("fvs-service-header"); if(!h||!state.currentService||ro()) return;
+  let c=document.getElementById("vz-fvs"); if(c) c.remove(); c=document.createElement("div"); c.id="vz-fvs";
+  c.innerHTML=`<p>⚡ <b>Inspeção por voz:</b> fale o que viu e a IA marca os itens, escreve as observações e já gera a ação corretiva das não conformidades.</p>
+   <div class="vz-bar" style="margin:0"><button class="vz-main" onclick="mgiFvsVoz()">🎤 Falar a inspeção<small>C, NC e NA preenchidos pela IA</small></button><button class="vz-sec" onclick="mgiFvsPendC()">✓ Pendentes<br>= C</button></div>`;
+  h.appendChild(c);
+}
+let ULT_SERV=null;
+function autoFVS(){ const s=state.currentService; if(!s||ro()||ULT_SERV===s.id) return; ULT_SERV=s.id; const I=state.fvsInfo;
+  const ult=(state.fvsSalvas||[]).filter(f=>(f.obraId||null)===(state.obraAtual||null)&&!(state.removidos||{})[f.id]).sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)))[0];
+  if(!I.obra) I.obra=obraNome()||(ult&&ult.info&&ult.info.obra)||""; if(!I.resp&&ult&&ult.info) I.resp=ult.info.resp||"";
+  ["obra","resp","data","trecho"].forEach(k=>{ const el=document.getElementById("fvs-"+k); if(el&&!el.value&&I[k]) el.value=I[k]; }); }
+if(typeof renderFVSService==="function"){ const _r=window.renderFVSService; window.renderFVSService=renderFVSService=function(){ const x=_r.apply(this,arguments); try{ autoFVS(); cartaoFVS(); }catch(e){} return x; }; }
+if(typeof novaFVS==="function"){ const _n=window.novaFVS; window.novaFVS=novaFVS=function(){ ULT_SERV=null; return _n.apply(this,arguments); }; }
+
+// ═════════════════════════ LIBERAÇÃO DE FRENTE ═════════════════════════
+function libChaves(){ const L=[]; mgiLibAPI.grupos.forEach(([g,its],gi)=>its.forEach((t,ii)=>L.push({k:gi+"_"+ii,g,t}))); return L; }
+window.mgiLibVoz=function(){
+  if(!window.mgiLibAPI||ro()) return; mgiLibAPI.ler(); const LIB=mgiLibAPI.get();
+  mgiVozAbrir({titulo:"🎤 Fale a vistoria da frente",botao:"Preencher a liberação",aoFechar:()=>mgiLibAPI.render(),
+   exemplo:`Fale o que conferiu na frente. Exemplo: <i>"Frente da Rua Jayme Fontes, do PV-08 ao PV-12, rede coletora por vala a céu aberto. Projeto e ART ok, licença ok. Falta a autorização de trânsito da prefeitura, sai na quinta. APR feita, equipe treinada, sinalização instalada. Kit ambiental não está na frente. Moradores avisados ontem. O resto tudo ok."</i>`,
+   processar:async txt=>{
+     const L=libChaves();
+     const r=await callAnthropicAPI([{role:"user",content:`LIB_VOZ. Converta o relato falado de uma vistoria de liberação de frente de obra (saneamento, Brasil) no checklist abaixo.
+Obra: ${obraNome()||"-"}. Frente atual: ${LIB.frente||"-"}.
+CHECKLIST (chave: item):
+${L.map(x=>`${x.k}: [${x.g}] ${x.t}`).join("\n")}
+
+RELATO:
+"""${txt}"""
+
+Responda SOMENTE com JSON: {"frente":"","endereco":"","servico":"","parecer":"","itens":[{"k":"0_1","status":"C|NC|NA","obs":""}]}
+Regras: só inclua itens citados, exceto se disser "o resto/demais ok/conforme" (aí marque C os não citados). Para NC, obs = pendência e prazo se citado. "parecer": 1 a 2 frases técnicas com a conclusão (liberada, liberada com ressalvas ou não liberada) e as condições. Não invente informações; campos não citados ficam vazios.`}],1600);
+     const j=lerJSON(r); const antes=JSON.parse(JSON.stringify(LIB)); const ok=new Set(L.map(x=>x.k)); let n={C:0,NC:0,NA:0};
+     ["frente","endereco","servico"].forEach(k=>{ if(j[k]&&!LIB[k]) LIB[k]=j[k]; }); if(j.parecer) LIB.parecer=LIB.parecer?LIB.parecer.trim()+"\n"+j.parecer:j.parecer;
+     LIB.obs=LIB.obs||{}; (j.itens||[]).forEach(x=>{ const v=st(x.status)||(["C","NC","NA"].includes(x.status)?x.status:""); if(!ok.has(x.k)||!v) return; LIB.resp[x.k]=v; n[v]++; if(x.obs) LIB.obs[x.k]=x.obs; });
+     const m=document.getElementById("ficha-modal"); if(m) m.remove(); CFG.aoFechar=null;
+     DESFAZER=()=>{ mgiLibAPI.set(antes); mgiLibAPI.render(); }; mgiLibAPI.render();
+     aviso(`✅ Checklist: ${n.C} conforme(s), ${n.NC} pendência(s), ${n.NA} N/A. Confira e colha as assinaturas.`,true);
+     try{ mgiLog&&mgiLog("Preencheu liberação por voz",LIB.frente||""); }catch(e){}
+   }});
+};
+window.mgiLibPendC=function(){ if(!window.mgiLibAPI||ro()) return; mgiLibAPI.ler(); const LIB=mgiLibAPI.get(); const p=libChaves().filter(x=>!LIB.resp[x.k]);
+  if(!p.length){ alert("Todos os itens já estão respondidos."); return; }
+  if(!confirm(`Marcar os ${p.length} item(ns) sem resposta como CONFORME?\n\nUse só depois de conferir esses itens na frente.`)) return;
+  const antes=JSON.parse(JSON.stringify(LIB)); p.forEach(x=>LIB.resp[x.k]="C"); DESFAZER=()=>{ mgiLibAPI.set(antes); mgiLibAPI.render(); }; mgiLibAPI.render(); aviso(`✓ ${p.length} item(ns) marcado(s) como conforme.`,true); };
+})();
+</script>
+
+<style>
+#vz-iso{background:linear-gradient(135deg,rgba(16,125,224,.12),rgba(10,158,108,.12));border:1px solid rgba(20,206,141,.35);border-radius:14px;padding:12px;margin:0 0 10px}
+#vz-iso p{margin:0 0 6px;font-size:.72rem;color:var(--muted)}
+.vz-esc input{width:auto!important;margin:2px 0 0!important;flex:none}
+.vz-esc label{display:flex!important;flex-direction:row!important;gap:8px;align-items:flex-start;background:rgba(148,163,184,.08);border-radius:8px;padding:8px;margin:6px 0;font-size:.8rem;cursor:pointer}
+.vz-esc small{color:var(--muted)}
+</style>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// MGI PRO · v44: voz e IA nas auditorias, no DDS e no recebimento de material
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+const $e=v=>(typeof acEsc==="function"?acEsc(v):String(v==null?"":v));
+const ro=()=>!!(window.MGI_USER&&window.MGI_USER.role==="fiscal");
+const obraNome=()=>((state.obras||[]).find(o=>o.id===state.obraAtual)||{}).nome||"";
+const norm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const ST=v=>({c:"C",conforme:"C",nc:"NC",na:"NA","n/a":"NA"})[norm(v)]||"";
+function lerJSON(r){ const t=(r.content||[]).map(c=>c.text||"").join("").replace(/```json|```/g,"").trim(); return JSON.parse(t.slice(t.indexOf("{"),t.lastIndexOf("}")+1)); }
+function salvar(){ try{ if(typeof mgiSalvarLocal==="function") mgiSalvarLocal(); }catch(e){} if(!ro()&&typeof syncNuvem==="function") syncNuvem(); }
+function aviso(txt,desfazer){ let t=document.getElementById("df-desfazer"); if(t) t.remove(); t=document.createElement("div"); t.id="df-desfazer";
+  t.innerHTML=`<span>${txt}</span>${desfazer?`<button onclick="mgiVzDesfazer2()">Desfazer</button>`:""}<button onclick="this.parentNode.remove()">OK</button>`; document.body.appendChild(t); clearTimeout(aviso._t); aviso._t=setTimeout(()=>t.remove(),10000); }
+let DESF=null; window.mgiVzDesfazer2=function(){ if(DESF){ DESF(); DESF=null; } const t=document.getElementById("df-desfazer"); if(t) t.remove(); };
+function fecharModal(){ const m=document.getElementById("ficha-modal"); if(m) m.remove(); }
+function aguarde(txt){ let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=null; m.innerHTML=`<div class="fm-box rg-box"><h3>⏳ ${txt}</h3><div class="loading-bars">${[...Array(7)].map((_,i)=>`<div class="lbar" style="animation-delay:${i*.1}s"></div>`).join("")}</div></div>`; }
+
+// Foto da câmera ou galeria, já reduzida para enviar à IA
+function escolherFoto(){ return new Promise(res=>{ const i=document.createElement("input"); i.type="file"; i.accept="image/*"; i.setAttribute("capture","environment"); i.style.display="none"; document.body.appendChild(i);
+  i.onchange=async()=>{ const f=i.files&&i.files[0]; i.remove(); if(!f) return res(null); try{ const bmp=await createImageBitmap(f); const s=Math.min(1,1400/Math.max(bmp.width,bmp.height)); const c=document.createElement("canvas"); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s); c.getContext("2d").drawImage(bmp,0,0,c.width,c.height); res(c.toDataURL("image/jpeg",.82).split(",")[1]); }catch(e){ res(null); } };
+  i.click(); }); }
+const img64=b=>({type:"image",source:{type:"base64",media_type:"image/jpeg",data:b}});
+
+// ═════════════════════════ AUDITORIAS (ISO 9001, 14001, 45001, PBQP-H) ═════════════════════════
+function fotoISO(){ return {r:JSON.parse(JSON.stringify(state.respostas||{})),o:JSON.parse(JSON.stringify(state.observacoes||{})),a:JSON.parse(JSON.stringify(state.acoes||{}))}; }
+function voltarISO(f){ state.respostas=f.r; state.observacoes=f.o; state.acoes=f.a; try{ renderChecklistISO(); }catch(e){ renderItemsISO(); } }
+window.mgiIsoVoz=function(){
+  if(ro()) return; const cur=CLAUSULAS.find(c=>c.id===state.activeClausula); if(!cur) return;
+  mgiVozAbrir({titulo:"🎤 Fale as evidências da auditoria",botao:"Preencher a auditoria",
+   exemplo:`Cláusula aberta: <b>${$e(cur.titulo)}</b>. Pode falar de qualquer requisito da auditoria. Exemplo: <i>"Política da qualidade divulgada no quadro do canteiro e na integração, conforme. Objetivos sem acompanhamento desde agosto, não conforme. Calibração da trena e do nível em dia, certificados de 2026. Análise crítica não se aplica nesta etapa. O resto desta cláusula conforme."</i>`,
+   processar:async txt=>{
+     const itens=CLAUSULAS.flatMap(c=>c.itens.map(i=>`${i.id} [${normaRot(i.norma)}]: ${i.txt}`));
+     const r=await callAnthropicAPI([{role:"user",content:`AUD_VOZ. Você converte o relato falado de um auditor líder em respostas de um checklist de auditoria interna (Brasil, obras de saneamento e construção civil).
+Obra/empresa: ${obraNome()||"-"}. Cláusula aberta na tela: ${cur.id} ${cur.titulo}.
+REQUISITOS (id: texto):
+${itens.join("\n")}
+
+RELATO DO AUDITOR:
+"""${txt}"""
+
+Responda SOMENTE com JSON: {"itens":[{"id":"5.2","status":"C|NC|NA","obs":"evidência objetiva"}]}
+Regras: associe cada evidência ao requisito mais próximo pelo sentido, priorizando a cláusula aberta. Só inclua requisitos citados, exceto se o auditor disser "o resto/demais desta cláusula conforme" (aí marque C os não citados da cláusula aberta, obs vazia).
+A obs deve ser evidência objetiva de auditoria: o que foi visto, documento, registro, data ou local, sem inventar. Para NC, descreva a constatação e o requisito não atendido (mínimo 20 caracteres).`}],2000);
+     const j=lerJSON(r); const ids=new Set(CLAUSULAS.flatMap(c=>c.itens.map(i=>i.id))); const antes=fotoISO(); const n={C:0,NC:0,NA:0}; const ncs=[]; const outras=new Set();
+     (j.itens||[]).forEach(x=>{ const v=ST(x.status)||(["C","NC","NA"].includes(x.status)?x.status:""); if(!ids.has(String(x.id))||!v) return; const id=String(x.id);
+       state.respostas[id]=v; n[v]++; if(x.obs&&String(x.obs).trim()){ const o=String(x.obs).trim(), at=state.observacoes[id]||""; state.observacoes[id]=at&&!at.includes(o)?at.trim()+" | "+o:o; }
+       if(v==="NC"&&!state.acoes[id]) ncs.push(id); if(v!=="NC") delete state.acoes[id]; if(!cur.itens.some(i=>i.id===id)) outras.add(CLAUSULAS.find(c=>c.itens.some(i=>i.id===id)).id); });
+     fecharModal(); DESF=()=>voltarISO(antes); try{ renderChecklistISO(); }catch(e){ renderItemsISO(); }
+     aviso(`✅ ${n.C} conforme(s), ${n.NC} não conforme(s), ${n.NA} N/A.${outras.size?" Também preenchido nas cláusulas "+[...outras].join(", ")+".":""}${ncs.length?" Gerando ações corretivas...":""}`,true);
+     try{ mgiLog&&mgiLog("Preencheu auditoria por voz",cur.titulo); }catch(e){}
+     for(const id of ncs){ if((state.observacoes[id]||"").trim().length>=10){ try{ await gerarACISO(id); }catch(e){} } }
+   }});
+};
+window.mgiIsoPendC=function(){ if(ro()) return; const cur=CLAUSULAS.find(c=>c.id===state.activeClausula); if(!cur) return; const p=cur.itens.filter(i=>!state.respostas[i.id]);
+  if(!p.length){ alert("Todos os requisitos desta cláusula já estão respondidos."); return; }
+  if(!confirm(`Marcar os ${p.length} requisito(s) sem resposta da cláusula ${cur.id} como CONFORME?\n\nUse só depois de verificar as evidências.`)) return;
+  const antes=fotoISO(); p.forEach(i=>state.respostas[i.id]="C"); DESF=()=>voltarISO(antes); try{ renderChecklistISO(); }catch(e){ renderItemsISO(); } aviso(`✓ ${p.length} requisito(s) marcado(s) como conforme.`,true); };
+if(typeof renderItemsISO==="function"){ const _r=window.renderItemsISO; window.renderItemsISO=renderItemsISO=function(){ const x=_r.apply(this,arguments);
+  try{ const box=document.getElementById("iso-items-container"); let c=document.getElementById("vz-iso"); if(ro()){ if(c) c.remove(); return x; }
+    if(!c){ c=document.createElement("div"); c.id="vz-iso"; c.innerHTML=`<p>⚡ <b>Auditoria por voz:</b> fale as evidências e a IA marca os requisitos, escreve as constatações e gera a ação corretiva das não conformidades.</p><div class="vz-bar" style="margin:0"><button class="vz-main" onclick="mgiIsoVoz()">🎤 Falar as evidências<small>vale para qualquer cláusula da auditoria</small></button><button class="vz-sec" onclick="mgiIsoPendC()">✓ Pendentes<br>= C</button></div>`; }
+    box.parentNode.insertBefore(c,box); }catch(e){} return x; }; }
+
+// ═════════════════════════ DDS ═════════════════════════
+function addParticipantes(lista,origem){ const DD=mgiDDAPI.get(); const tem=new Set(DD.participantes.map(p=>norm(p.nome))); let n=0;
+  DD.participantes=DD.participantes.filter(p=>p.nome&&p.nome.trim()||p.assin);
+  (lista||[]).forEach(p=>{ const nome=String(p.nome||"").trim(); if(!nome||tem.has(norm(nome))) return; tem.add(norm(nome)); DD.participantes.push({nome,funcao:String(p.funcao||"").trim(),assin:null}); n++; });
+  mgiDDAPI.passo(99); aviso(`👥 ${n} participante(s) ${origem}. Agora cada um assina no aparelho.`,false); }
+window.mgiDDVoz=function(){ if(ro()) return; mgiDDAPI.ler();
+  mgiVozAbrir({titulo:"🎤 Dite os participantes",botao:"Montar a lista",aoFechar:()=>mgiDDAPI.passo(99),
+   exemplo:`Fale nome e função, um depois do outro. Exemplo: <i>"João da Silva, pedreiro. Carlos Souza, servente. Marcos Oliveira, operador da retro. Ana Paula, técnica de segurança."</i>`,
+   processar:async txt=>{ const r=await callAnthropicAPI([{role:"user",content:`DDS_PART. Extraia a lista de participantes de um DDS ditado por voz. Corrija a grafia de nomes próprios brasileiros e escreva funções com inicial maiúscula (Pedreiro, Servente, Operador de retroescavadeira).\nTEXTO: """${txt}"""\nResponda SOMENTE com JSON: {"participantes":[{"nome":"","funcao":""}]}`}],900);
+     CFG_FECHAR(); addParticipantes(lerJSON(r).participantes,"incluído(s) pela voz"); }});
+};
+function CFG_FECHAR(){ fecharModal(); }
+window.mgiDDFoto=async function(){ if(ro()) return; mgiDDAPI.ler(); const b=await escolherFoto(); if(!b) return; aguarde("Lendo a lista de presença...");
+  try{ const r=await callAnthropicAPI([{role:"user",content:[img64(b),{type:"text",text:`DDS_FOTO. Foto de uma lista de presença em papel (DDS ou treinamento de obra, Brasil). Leia os nomes e as funções escritos à mão ou impressos. Ignore cabeçalhos, assinaturas e campos vazios. Se não conseguir ler um nome, não invente.\nResponda SOMENTE com JSON: {"participantes":[{"nome":"","funcao":""}]}`}]}],1200);
+    addParticipantes(lerJSON(r).participantes,"lido(s) da foto"); }
+  catch(e){ mgiDDAPI.passo(99); alert("Não foi possível ler a foto. Tente com mais luz e a folha inteira enquadrada."); } };
+window.mgiDDRepetir=function(){ if(ro()) return; mgiDDAPI.ler(); const DD=mgiDDAPI.get();
+  const ult=(state.dds||[]).filter(d=>d.id!==DD.id&&(d.obraId||null)===(state.obraAtual||null)&&!(state.removidos||{})[d.id]&&(d.participantes||[]).length).sort((a,b)=>String(b.data).localeCompare(String(a.data)))[0];
+  if(!ult){ alert("Ainda não há DDS anterior com participantes nesta obra."); return; }
+  addParticipantes(ult.participantes.map(p=>typeof p==="string"?{nome:p,funcao:""}:{nome:p.nome,funcao:p.funcao}),"copiado(s) do DDS de "+String(ult.data).split("-").reverse().join("/")); };
+window.mgiDDNovoVoz=function(tipo){ if(ro()) return; const g=i=>(document.getElementById(i)||{}).value||""; const atual={dt:g("dd-dt"),n:g("dd-n"),min:g("dd-min")};
+  mgiVozAbrir({titulo:"🎤 Sobre o que é o DDS de hoje?",botao:"Preencher",aoFechar:()=>mgiDDSNovo("tema",tipo),
+   exemplo:`Exemplo: <i>"DDS de segurança sobre escavação de vala com mais de 1,25 metro e escoramento, frente do PV-08 ao PV-12, serviço de rede coletora."</i>`,
+   processar:async txt=>{ const r=await callAnthropicAPI([{role:"user",content:`DDS_TEMA. Extraia de um pedido falado os dados de um DDS de obra.\nTEXTO: """${txt}"""\nResponda SOMENTE com JSON: {"tipo":"qualidade|sst|ambiental|integrado","tema":"tema objetivo em uma frase","frente":"","servico":"nome do serviço citado ou vazio"}`}],400);
+     const j=lerJSON(r); const t=["qualidade","sst","ambiental","integrado"].includes(j.tipo)?j.tipo:tipo; fecharModal(); mgiDDSNovo("tema",t);
+     const set=(i,v)=>{ const el=document.getElementById(i); if(el&&v!=null&&v!=="") el.value=v; };
+     set("dd-tema",j.tema); set("dd-fr",j.frente); set("dd-dt",atual.dt); set("dd-n",atual.n); set("dd-min",atual.min);
+     if(j.servico){ const w=norm(j.servico).split(" ").filter(x=>x.length>2); let melhor=null,pt=0,rz=0; SERVICOS.forEach(s=>{ const nn=norm(s.nome); const p=w.filter(x=>nn.includes(x)).length; const z=p/Math.max(1,nn.split(" ").filter(x=>x.length>2).length); if(p>pt||(p===pt&&p>0&&z>rz)){ pt=p; rz=z; melhor=s; } }); if(melhor&&pt>=Math.min(2,w.length)) set("dd-sv",melhor.id); }
+     aviso("✅ DDS preenchido. Confira e toque em Gerar com IA.",false); }});
+};
+
+// ═════════════════════════ RECEBIMENTO DE MATERIAL ═════════════════════════
+const UN=u=>{ const n=norm(u).replace(/[^a-z0-9³]/g,""); if(/^(m3|m³|metrocubico)/.test(n)) return "m³"; if(/^(m|mt|mts|metro|metros|ml)$/.test(n)) return "m"; if(/^(br|barra|barras)$/.test(n)) return "barra"; if(/^(kg|quilo)/.test(n)) return "kg"; if(/^(t|ton|tonelada)/.test(n)) return "t"; if(/^(sc|saco)/.test(n)) return "saco"; return "un"; };
+const CAMPOS=`{"fornecedor":"","nf":"número da nota","data":"AAAA-MM-DD","certificado":"","inspecao":"Aprovado|Aprovado com ressalva|Reprovado ou vazio","obs":"","itens":[{"material":"descrição técnica do material","fabricante":"","lote":"","qtd":"número","unidade":"un|m|barra|kg|t|m³|saco"}]}`;
+function preencherMT(j,it){ const MT=mgiMTAPI.get(); const s=(k,v)=>{ if(v!=null&&String(v).trim()!=="") MT[k]=String(v).trim(); };
+  s("fornecedor",j.fornecedor); s("nf",j.nf); if(/^\d{4}-\d{2}-\d{2}$/.test(j.data||"")) MT.data=j.data; s("certificado",j.certificado); if(["Aprovado","Aprovado com ressalva","Reprovado"].includes(j.inspecao)) MT.inspecao=j.inspecao;
+  if(j.obs) MT.obs=MT.obs?MT.obs+"\n"+j.obs:j.obs; if(it){ s("material",it.material); s("fabricante",it.fabricante); s("lote",it.lote); s("qtd",String(it.qtd||"").replace(".",",")); if(it.unidade) MT.unidade=UN(it.unidade); } }
+let NF=null;
+function aplicarNF(j,origem){ const itens=(j.itens||[]).filter(i=>i&&i.material); const antes=JSON.parse(JSON.stringify(mgiMTAPI.get()));
+  if(itens.length<=1){ preencherMT(j,itens[0]); DESF=()=>{ mgiMTAPI.set(antes); mgiMTAPI.render(); }; mgiMTAPI.render(); aviso(`✅ ${origem}. Confira, faça a inspeção e salve.`,true); return; }
+  NF={j,itens,antes}; let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=null;
+  m.innerHTML=`<div class="fm-box rg-box"><h3>📄 NF ${$e(j.nf||"")} com ${itens.length} itens</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Marque os itens que entram no controle de materiais. O primeiro abre para você conferir; os outros são registrados com os mesmos dados da nota, aguardando inspeção.</p>
+   <div class="vz-esc">${itens.map((it,i)=>`<label><input type="checkbox" class="vz-it" value="${i}" checked> <span><b>${$e(it.material)}</b><br><small>${$e(it.qtd||"")} ${$e(UN(it.unidade))}${it.lote?" · lote "+$e(it.lote):""}${it.fabricante?" · "+$e(it.fabricante):""}</small></span></label>`).join("")}</div>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiMTAPI.render()">Cancelar</button><button class="ac5-save" onclick="mgiMatNFOk()">Registrar</button></div></div>`; }
+window.mgiMatNFOk=function(){ if(!NF) return; const sel=[...document.querySelectorAll(".vz-it:checked")].map(x=>NF.itens[+x.value]); if(!sel.length){ mgiMTAPI.render(); return; }
+  const base=mgiMTAPI.get(); const extras=[];
+  sel.slice(1).forEach((it,k)=>{ const r={...JSON.parse(JSON.stringify(base)),id:"mt_"+(Date.now()+k+1),trechos:[],inspecao:"",obs:""}; mgiMTAPI.set(r); preencherMT({...NF.j,inspecao:"",obs:""},it); r.atualizadoEm=new Date().toISOString(); state.materiais.push(r); extras.push(r.id); });
+  mgiMTAPI.set(base); preencherMT(NF.j,sel[0]); if(extras.length) salvar();
+  const antes=NF.antes; DESF=()=>{ state.materiais=state.materiais.filter(x=>!extras.includes(x.id)); extras.forEach(id=>{ try{ mgiLapide&&mgiLapide(id); }catch(e){} }); salvar(); mgiMTAPI.set(antes); mgiMTAPI.render(); };
+  NF=null; mgiMTAPI.render(); aviso(`✅ Nota lida.${extras.length?" "+extras.length+" outro(s) item(ns) já registrado(s) aguardando inspeção.":""} Confira este item e salve.`,true); };
+window.mgiMatNF=async function(){ if(ro()) return; mgiMTAPI.ler(); const b=await escolherFoto(); if(!b) return; aguarde("Lendo a nota fiscal...");
+  try{ const r=await callAnthropicAPI([{role:"user",content:[img64(b),{type:"text",text:`MAT_NF. Foto de nota fiscal ou DANFE de material de obra (Brasil). Extraia os dados para o controle de recebimento de materiais. Data de emissão no formato AAAA-MM-DD. Para cada item: descrição técnica clara (ex.: Tubo PVC ocre DN 200 JEI), fabricante se aparecer, lote se aparecer (campo lote, rastro ou informações adicionais), quantidade e unidade. Fornecedor = emitente. Não invente; deixe vazio o que não aparecer.\nResponda SOMENTE com JSON: ${CAMPOS}`}]}],1500);
+    aplicarNF(lerJSON(r),"Dados lidos da nota fiscal"); try{ mgiLog&&mgiLog("Leu nota fiscal com IA",mgiMTAPI.get().nf||""); }catch(e){} }
+  catch(e){ mgiMTAPI.render(); alert("Não foi possível ler a nota. Tire a foto com a nota inteira, reta e com boa luz."); } };
+window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
+  mgiVozAbrir({titulo:"🎤 Fale o recebimento",botao:"Preencher",aoFechar:()=>mgiMTAPI.render(),
+   exemplo:`Exemplo: <i>"Chegaram 30 barras de tubo PVC ocre 200 da Tigre, nota 45872 da Hidrotubos, lote 2611A, certificado de qualidade junto. Conferi bitola e anel, tudo ok, aprovado."</i>`,
+   processar:async txt=>{ const r=await callAnthropicAPI([{role:"user",content:`MAT_VOZ. Converta o relato falado de um recebimento de material de obra (Brasil) nos campos do controle. Data de hoje: ${(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))(new Date())}. Não invente; o que não for dito fica vazio. Em "obs" registre o que foi conferido na inspeção.\nRELATO: """${txt}"""\nResponda SOMENTE com JSON: ${CAMPOS}`}],900);
+     fecharModal(); aplicarNF(lerJSON(r),"Recebimento preenchido pela voz"); }});
+};
+})();
+</script>
+
+<style>
+#mgi-ajuda{position:fixed;inset:0;z-index:9000;background:var(--bg,#0b1220);display:flex;flex-direction:column}
+#mgi-ajuda .aj-top{display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:linear-gradient(90deg,#0b3d91,#0a9e6c);color:#fff;font:800 .95rem Barlow,sans-serif}
+#mgi-ajuda .aj-top button{margin-left:auto;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.6);color:#fff;border-radius:8px;padding:6px 12px;font:700 .8rem Barlow,sans-serif;cursor:pointer}
+#mgi-ajuda iframe{flex:1;border:0;width:100%;background:#fff}
+.aj-q{float:right;margin-left:8px;background:transparent;border:1px solid var(--border,#64748b);color:var(--muted,#94a3b8);border-radius:999px;padding:3px 9px;font:700 .68rem Barlow,sans-serif;cursor:pointer;vertical-align:middle}
+</style>
+<script>
+// ═════════════════════════════════════════════════════════════════════════════
+// MGI PRO · v45: Manual do usuário dentro do app (botão ❓ em cada ferramenta)
+// ═════════════════════════════════════════════════════════════════════════════
+(function(){
+window.mgiAjuda=function(sec){
+  let o=document.getElementById("mgi-ajuda"); if(o) o.remove();
+  o=document.createElement("div"); o.id="mgi-ajuda";
+  o.innerHTML=`<div class="aj-top">📘 Manual do usuário<button onclick="document.getElementById('mgi-ajuda').remove()">✕ Fechar</button></div><iframe src="manual.html${sec?"#"+sec:""}" title="Manual do usuário"></iframe>`;
+  document.body.appendChild(o);
+  try{ mgiLog&&mgiLog("Abriu o manual",sec||""); }catch(e){}
+};
+const MOD={inicio:"inicio",iso:"auditorias",fvs:"fvs",diario:"diario"};
+window.mgiAjudaAtual=function(){ const m=Object.keys(MOD).find(k=>{ const e=document.getElementById("module-"+k); return e&&!e.classList.contains("hidden"); }); mgiAjuda(MOD[m]||""); };
+// botão ❓ no cabeçalho, ao lado do tema
+function botaoTopo(){ const t=document.getElementById("btn-tema"); if(!t||document.getElementById("btn-ajuda")) return;
+  const b=t.cloneNode(false); b.id="btn-ajuda"; b.removeAttribute("onclick"); b.onclick=()=>mgiAjudaAtual(); b.title="Como usar"; b.setAttribute("aria-label","Como usar"); b.textContent="❓"; t.parentNode.insertBefore(b,t); }
+// botão "❓ Como usar" no título das janelas
+const MAPA=[[/Liberação de frente/,"liberacao"],[/Recebimento de material|Rastreabilidade de materiais|NF .* itens/,"materiais"],[/DDS|Lista de presença/,"dds"],
+ [/Mapa da obra|Mapa do prédio|Tipo de obra|trechos|Torre ou bloco/,"mapa"],[/Relatórios|Relatório mensal|Relatório fotográfico|Registros/,"relatorios"],
+ [/Ferramentas|Pergunte ao MGI|Documentos e treinamentos|Resumo da semana|Causa raiz/,"ferramentas"],[/Dados da empresa/,"empresa"],[/Equipe da empresa/,"equipe"],[/Nova Obra/i,"comecar"]];
+function marcar(){ document.querySelectorAll("#ficha-modal h3, .modal-obra h3, #modal-obra h3").forEach(h=>{ if(h.querySelector(".aj-q")||h.closest(".df-modal")) return;
+  const txt=h.textContent; const m=MAPA.find(([re])=>re.test(txt)); if(!m) return;
+  const b=document.createElement("button"); b.type="button"; b.className="aj-q"; b.textContent="❓ Como usar"; b.onclick=e=>{ e.stopPropagation(); mgiAjuda(m[1]); }; h.appendChild(b); }); }
+new MutationObserver(()=>{ try{ marcar(); }catch(e){} }).observe(document.body,{childList:true,subtree:true});
+botaoTopo(); document.addEventListener("DOMContentLoaded",botaoTopo); setTimeout(botaoTopo,1500);
+})();
+</script>
+
 </body>
 </html>

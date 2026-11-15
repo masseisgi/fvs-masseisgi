@@ -3,10 +3,11 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v43';
+const CACHE_NAME = 'mgi-pro-v45';
 
 const ASSETS = [
   './manifest.json',
+  './manual.html',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
 ];
@@ -39,7 +40,8 @@ self.addEventListener('fetch', event => {
       req.url.includes('googleapis.com') ||
       req.url.includes('gstatic.com') ||
       req.url.includes('firebaseio.com') ||
-      req.url.includes('cloudfunctions.net')) {
+      req.url.includes('cloudfunctions.net') ||
+      req.url.includes('open-meteo.com')) {
     return;
   }
 
@@ -49,7 +51,13 @@ self.addEventListener('fetch', event => {
       req.url.endsWith('.html') ||
       req.url.endsWith('/')) {
     event.respondWith(
-      fetch(req).catch(() => caches.match(req).then(c => c || caches.match('./app.html')))
+      fetch(req).then(res => {
+        // guarda a última versão para abrir sem internet (manual e app)
+        if (res.ok && req.method === 'GET' && new URL(req.url).origin === location.origin) {
+          const copy = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, copy));
+        }
+        return res;
+      }).catch(() => caches.match(req, {ignoreSearch:true}).then(c => c || caches.match('./app.html')))
     );
     return;
   }
