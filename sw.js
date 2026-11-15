@@ -3,7 +3,7 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v48';
+const CACHE_NAME = 'mgi-pro-v49';
 
 const ASSETS = [
   './manifest.json',
@@ -50,8 +50,10 @@ self.addEventListener('fetch', event => {
       req.destination === 'document' ||
       req.url.endsWith('.html') ||
       req.url.endsWith('/')) {
+    // sempre confere com o servidor (ignora o cache do navegador de até 10 min)
+    const fresca = req.method === 'GET' ? new Request(req.url, {cache:'no-cache', credentials:'same-origin'}) : req;
     event.respondWith(
-      fetch(req).then(res => {
+      fetch(fresca).then(res => {
         // guarda a última versão para abrir sem internet (manual e app)
         if (res.ok && req.method === 'GET' && new URL(req.url).origin === location.origin) {
           const copy = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, copy));
