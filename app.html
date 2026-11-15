@@ -5368,7 +5368,14 @@ body.mod-inicio .prog-wrap{display:none}
   window.MGI_DB = db; // exposto para a sincronização na nuvem
   const LOGIN_URL = "login.html";
 
-  window.mgiLogout = function(){
+  // Dados de uma empresa nunca ficam no aparelho para a próxima conta
+  var MANTER=["mgi_tema","mgi_play","mgi_tutorial_ok"];
+  window.mgiLimparLocal = function(){
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf("mgi_")===0 && MANTER.indexOf(k)<0) localStorage.removeItem(k); }); }catch(e){}
+  };
+  window.mgiLogout = async function(){
+    try{ if(typeof enviarNuvem==="function" && window.MGI_USER && !(typeof souFiscal==="function"&&souFiscal())) await Promise.race([enviarNuvem(), new Promise(function(r){ setTimeout(r,4000); })]); }catch(e){}
+    mgiLimparLocal();
     auth.signOut().then(function(){ window.location.href = LOGIN_URL; });
   };
 
@@ -5456,6 +5463,19 @@ body.mod-inicio .prog-wrap{display:none}
         const hdr = document.getElementById("header");
         if(hdr){ hdr.style.top = h + "px"; }
       }
+      // Isolamento por empresa: se o aparelho tem dados de outra empresa, limpa antes de abrir
+      try{
+        const _ant = localStorage.getItem("mgi_tenant");
+        if(_ant !== tenantId){
+          let _limpar = !!_ant;
+          if(!_ant){
+            const _temLocal = ["mgi_obras","mgi_fvs","mgi_diarios","mgi_auditorias","mgi_liberacoes","mgi_materiais","mgi_dds"].some(function(k){ try{ const v=JSON.parse(localStorage.getItem(k)||"[]"); return Array.isArray(v)&&v.length>0; }catch(e){ return false; } });
+            if(_temLocal){ const _dd = await db.collection("dados").doc(tenantId).get(); _limpar = !_dd.exists; }
+          }
+          if(_limpar){ mgiLimparLocal(); localStorage.setItem("mgi_tenant", tenantId); location.reload(); return; }
+          localStorage.setItem("mgi_tenant", tenantId);
+        }
+      }catch(e){ console.warn("isolamento local:", e); }
       // guarda dados globais para uso futuro (cota IA etc.)
       window.MGI_USER = { uid:user.uid, email:user.email, tenantId:tenantId, role:udata.role||"user", nome:udata.nome||"", aceite:udata.aceite||null };
       window.MGI_EMPRESA = empresa;
@@ -6669,6 +6689,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v45: Manual do usuário dentro do app (botão ❓ em cada ferramenta)
 // MGI PRO · v46: cota de IA por plano (300/1.000/3.000) e pacotes avulsos
 // MGI PRO · v47: medição automática do tempo de preenchimento (painel admin › Resultados)
+// MGI PRO · v48: dados isolados por empresa no aparelho (troca de conta limpa o celular)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
