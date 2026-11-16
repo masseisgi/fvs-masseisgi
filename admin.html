@@ -78,7 +78,13 @@ svg text{fill:var(--mu);font-size:10px}
 <body>
 <div class="barra"></div>
 <div id="guard" class="guard"><div><div class="spin"></div>Verificando acesso…</div></div>
-<div id="bloq" class="guard" style="display:none"><div><h2>Acesso restrito</h2><p>Este painel é exclusivo do administrador do MGI PRO.</p><button class="btn" onclick="location.href='app.html'">Ir para o app</button></div></div>
+<div id="bloq" class="guard" style="display:none"><div><h2>Acesso restrito</h2><p>Este painel é exclusivo do administrador do MGI PRO.<br><small id="bloq-email"></small></p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="trocarConta()">Entrar com outra conta</button><button class="btn g" onclick="location.href='app.html'">Ir para o app</button></div></div></div>
+<div id="adm-login" class="guard" style="display:none"><div style="width:min(92vw,360px);display:flex;flex-direction:column;gap:10px;text-align:left">
+  <h2 style="margin:0;text-align:center;color:var(--tx)">Painel MGI PRO</h2><p style="margin:0 0 4px;text-align:center">Login do administrador. É separado do login do app: você pode usar o app com outra empresa no mesmo celular.</p>
+  <button class="btn g" onclick="entrarGoogle()">Entrar com Google</button>
+  <input id="al-email" type="email" placeholder="E-mail" autocomplete="username" style="padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--s2);color:var(--tx)">
+  <input id="al-senha" type="password" placeholder="Senha" autocomplete="current-password" style="padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--s2);color:var(--tx)">
+  <button class="btn" onclick="entrarEmail()">Entrar</button><small id="al-erro" style="color:var(--rd);text-align:center"></small></div></div>
 <div id="app" style="display:none">
 <header><img src="icons/icon-192x192.png" alt=""><div class="t"><b>Painel MGI PRO</b><small id="hdr-sub">Administração</small></div><button class="ib" onclick="carregar(true)" title="Atualizar">↻</button><button class="ib" onclick="sair()">Sair</button></header>
 <nav id="tabs"></nav>
@@ -93,7 +99,7 @@ svg text{fill:var(--mu);font-size:10px}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 firebase.initializeApp({apiKey:"AIzaSyCCmp1pH56xwRvqceZ_pG73J30_kTLUtCU",authDomain:"mgi-pro.firebaseapp.com",projectId:"mgi-pro",storageBucket:"mgi-pro.firebasestorage.app",messagingSenderId:"157049569327",appId:"1:157049569327:web:d1779979320f49e1c2c6da",measurementId:"G-KF5E64P9ZT"});
-const auth=firebase.auth(), db=firebase.firestore(), TS=firebase.firestore.Timestamp;
+const _adm=firebase.initializeApp(firebase.app().options,"painel-admin"); const auth=_adm.auth(), db=_adm.firestore(), TS=firebase.firestore.Timestamp;
 const SUPER="thiago@masseisgi.com", DIA=864e5;
 const PRECO={"Essencial":497,"Profissional":997,"Contrato":2197,"Corporativo":0,"Básico":297,"Pro":597,"Enterprise":1297};
 const NOVOS=["Essencial","Profissional","Contrato","Corporativo"];
@@ -113,12 +119,18 @@ const rel=d=>{ if(!d) return "sem registro"; const n=Math.round((Date.now()-d)/D
 const brl=n=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
 
 auth.onAuthStateChanged(u=>{
-  if(!u){ location.href="login.html"; return; }
   document.getElementById("guard").style.display="none";
-  if((u.email||"").toLowerCase()!==SUPER){ document.getElementById("bloq").style.display="grid"; return; }
+  ["bloq","adm-login","app"].forEach(id=>document.getElementById(id).style.display="none");
+  if(!u){ document.getElementById("adm-login").style.display="grid"; return; }
+  if((u.email||"").toLowerCase()!==SUPER){ document.getElementById("bloq-email").textContent="Conectado como "+u.email; document.getElementById("bloq").style.display="grid"; return; }
   document.getElementById("app").style.display="block"; document.getElementById("hdr-sub").textContent=u.email; carregar();
 });
-function sair(){ auth.signOut().then(()=>location.href="login.html"); }
+function sair(){ auth.signOut(); }
+function trocarConta(){ auth.signOut(); }
+async function entrarGoogle(){ const p=new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account",login_hint:SUPER});
+  try{ await auth.signInWithPopup(p); }catch(e){ if(/popup/i.test(e.code||"")) auth.signInWithRedirect(p); else document.getElementById("al-erro").textContent=e.message; } }
+async function entrarEmail(){ const er=document.getElementById("al-erro"); er.textContent="";
+  try{ await auth.signInWithEmailAndPassword(document.getElementById("al-email").value.trim(),document.getElementById("al-senha").value); }catch(e){ er.textContent="E-mail ou senha incorretos."; } }
 
 async function carregar(manual){
   try{
