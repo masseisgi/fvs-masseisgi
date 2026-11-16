@@ -6816,6 +6816,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v52: aviso de alterações não enviadas, Enviar agora e diagnóstico de sincronização
 // MGI PRO · v53: envio à nuvem ignora campos sem valor (frente não subia)
 // MGI PRO · v54: obra atual sempre definida (Mapa vazio no computador)
+// MGI PRO · v55: frentes cadastradas para tocar e escolher em FVS, Diário, Liberação e DDS
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7091,7 +7092,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   function mostrar(){
     var b=document.getElementById("sync-pend");
     if(!b){ b=document.createElement("div"); b.id="sync-pend"; document.body.appendChild(b); }
-    if(pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
+    if(typeof firebase!=="undefined"&&window.MGI_DB&&pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
       b.innerHTML='<span>⏳ Alterações ainda não enviadas para a nuvem'+(navigator.onLine?"":" (sem internet)")+'</span><button onclick="mgiEnviarAgora()">Enviar agora</button>';
       b.style.display="flex";
     } else b.style.display="none";
@@ -7148,6 +7149,57 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   window.mgiGarantirObra=garantir;
   if(typeof renderObras==="function"){ var _r=renderObras; window.renderObras=renderObras=function(){ var x=_r.apply(this,arguments); setTimeout(garantir,0); return x; }; }
   setTimeout(garantir,1500); setInterval(garantir,10000);
+})();
+</script>
+<!-- ===== FRENTES CADASTRADAS VISÍVEIS EM FVS, DIÁRIO, LIBERAÇÃO E DDS (v55) ===== -->
+<style>
+.fr-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;margin-top:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.fr-chips::-webkit-scrollbar{display:none}
+.fr-chips button{flex:0 0 auto;border:1px solid var(--border2,var(--border));background:var(--surf2,rgba(255,255,255,.05));color:var(--text);border-radius:999px;padding:6px 11px;font:600 .78rem Barlow,sans-serif;cursor:pointer;white-space:nowrap}
+.fr-chips button.on{background:rgba(20,206,141,.16);border-color:#14CE8D;color:#14CE8D}
+.fr-chips .fr-add{border-style:dashed;color:var(--muted)}
+.fr-chips .fr-lbl{flex:0 0 auto;align-self:center;font:700 .72rem Barlow,sans-serif;color:var(--muted)}
+</style>
+<script>
+(function(){
+  function frentes(){
+    var r=state.removidos||{}, ob=state.obraAtual||null, nomes=[];
+    (state.trechos||[]).forEach(function(t){ if(t&&t.id&&!r[t.id]&&(t.obraId||null)===ob&&t.nome) nomes.push(t.nome); });
+    (state.locais||[]).forEach(function(l){ if(l&&l.id&&!r[l.id]&&(l.obraId||null)===ob&&l.nome) nomes.push(l.nome); });
+    return nomes.filter(function(n,i){ return nomes.indexOf(n)===i; });
+  }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function alvos(){
+    var L=[];
+    ["fvs-trecho","lib-frente","dd-fr"].forEach(function(id){ var e=document.getElementById(id); if(e) L.push(e); });
+    document.querySelectorAll("#at-list .row-item").forEach(function(row){ var ins=row.querySelectorAll("input"); if(ins[1]) L.push(ins[1]); });
+    return L;
+  }
+  function preencher(inp,nome){
+    inp.value=nome; inp.dispatchEvent(new Event("input",{bubbles:true})); inp.dispatchEvent(new Event("change",{bubbles:true}));
+    var box=inp.__frBox; if(box) box.querySelectorAll("button[data-n]").forEach(function(b){ b.classList.toggle("on",b.getAttribute("data-n")===nome); });
+  }
+  function decorar(){
+    var F=frentes(), sig=F.join("|")+"#"+(state.obraAtual||"");
+    alvos().forEach(function(inp){
+      if(inp.disabled||inp.readOnly) return;
+      var box=inp.__frBox;
+      if(box&&document.body.contains(box)&&box.__sig===sig) return;
+      if(!box||!document.body.contains(box)){ box=document.createElement("div"); box.className="fr-chips"; inp.__frBox=box;
+        var ancora=inp.closest("label")&&inp.closest("label").contains(inp)&&inp.id!=="fvs-trecho"?inp.closest("label"):inp;
+        if(ancora.parentNode&&getComputedStyle(ancora.parentNode).display==="grid") ancora=ancora.parentNode;
+        ancora.parentNode.insertBefore(box,ancora.nextSibling); }
+      box.__sig=sig;
+      box.innerHTML=(F.length?'<span class="fr-lbl">📍</span>'+F.map(function(n){ return '<button type="button" data-n="'+esc(n)+'"'+(inp.value===n?' class="on"':'')+'>'+esc(n)+'</button>'; }).join(""):'')+
+        '<button type="button" class="fr-add">'+(F.length?'+ nova frente':'📍 Cadastrar frentes no Mapa')+'</button>';
+      box.querySelectorAll("button[data-n]").forEach(function(b){ b.onclick=function(ev){ ev.preventDefault(); preencher(inp,b.getAttribute("data-n")); }; });
+      box.querySelector(".fr-add").onclick=function(ev){ ev.preventDefault(); if(typeof mgiMapaAbrir==="function") mgiMapaAbrir(); };
+    });
+  }
+  var t=null;
+  new MutationObserver(function(){ clearTimeout(t); t=setTimeout(decorar,120); }).observe(document.body,{childList:true,subtree:true});
+  setTimeout(decorar,1500);
+  window.mgiFrentesAtualizar=decorar;
 })();
 </script>
 </body>
