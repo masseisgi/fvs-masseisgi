@@ -2719,7 +2719,9 @@ async function enviarNuvem(){
     await window.MGI_DB.runTransaction(async tx=>{
       const doc = await tx.get(ref);
       mgiMesclarEstado(doc.exists ? doc.data() : {});
-      tx.set(ref, {
+      // Campos sem valor (undefined) fazem o banco recusar a gravação inteira: limpa antes de enviar
+      const _limpo = v => JSON.parse(JSON.stringify(v, (k,x) => (x===undefined || (typeof x==="number" && !isFinite(x))) ? null : x));
+      const _carga = _limpo({
         obras: state.obras,
         auditoriasSalvas: state.auditoriasSalvas.map(semFotos),
         fvsSalvas: state.fvsSalvas.map(semFotos),
@@ -2732,10 +2734,11 @@ async function enviarNuvem(){
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
         trechos: state.trechos || [], materiais: state.materiais || [], dds: state.dds || [], locais: state.locais || [],
-        historico: (state.historico||[]).slice(0,600),
-        atualizadoEm: firebase.firestore.FieldValue.serverTimestamp(),
-        atualizadoPor: window.MGI_USER.email || ""
-      }, { merge: true });
+        historico: (state.historico||[]).slice(0,600)
+      });
+      _carga.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
+      _carga.atualizadoPor = window.MGI_USER.email || "";
+      tx.set(ref, _carga, { merge: true });
     });
     mgiSalvarLocal();
     try{ if(typeof aplicarFichasCustom==="function") aplicarFichasCustom(); }catch(e){}
@@ -6811,6 +6814,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v50: Zerar dados no painel também limpa os celulares da equipe
 // MGI PRO · v51: Voltar e Início em todas as telas e botão voltar do celular
 // MGI PRO · v52: aviso de alterações não enviadas, Enviar agora e diagnóstico de sincronização
+// MGI PRO · v53: envio à nuvem ignora campos sem valor (frente não subia)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7077,8 +7081,8 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   // Marca pendência a cada salvamento e só limpa quando a nuvem confirmar
   if(typeof syncNuvem==="function"){ var _s=syncNuvem; window.syncNuvem=syncNuvem=function(){ if(window.MGI_USER&&!(window.MGI_USER.role==="fiscal")){ pendente=true; mostrar(); } return _s.apply(this,arguments); }; }
   if(typeof atualizarStatusSync==="function"){ var _a=atualizarStatusSync; window.atualizarStatusSync=atualizarStatusSync=function(txt){
-      try{ if(/Salvo na nuvem|Sincronizado/.test(txt)){ pendente=false; ultimoErro=""; ultimoOk=Date.now(); tentativas=0; mostrar(); }
-           else if(/Erro ao salvar/.test(txt)){ ultimoErro=txt; mostrar(); } }catch(e){}
+      try{ if(/Salvo na nuvem/.test(txt)){ pendente=false; ultimoErro=""; ultimoOk=Date.now(); tentativas=0; mostrar(); }
+           else if(/Erro ao salvar/.test(txt)){ pendente=true; if(!ultimoErro) ultimoErro=txt; mostrar(); } }catch(e){}
       return _a.apply(this,arguments); }; }
   // Mostra o erro real do envio
   var _log=console.log; console.log=function(){ try{ if(arguments[0]==="Erro ao sincronizar:"&&arguments[1]) ultimoErro=(arguments[1].code||"")+" "+(arguments[1].message||arguments[1]); }catch(e){} return _log.apply(console,arguments); };
