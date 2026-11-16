@@ -6815,6 +6815,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v51: Voltar e Início em todas as telas e botão voltar do celular
 // MGI PRO · v52: aviso de alterações não enviadas, Enviar agora e diagnóstico de sincronização
 // MGI PRO · v53: envio à nuvem ignora campos sem valor (frente não subia)
+// MGI PRO · v54: obra atual sempre definida (Mapa vazio no computador)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7128,5 +7129,26 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
 })();
 </script>
 
+<!-- ===== OBRA ATUAL SEMPRE DEFINIDA (v54) ===== -->
+<script>
+(function(){
+  // Se nenhuma obra estiver selecionada (ou a selecionada não existir mais), assume a da lista de cima
+  function garantir(){
+    try{
+      var r=state.removidos||{}, obras=(state.obras||[]).filter(function(o){ return o&&o.id&&!r[o.id]; });
+      if(!obras.length) return;
+      var ok=obras.some(function(o){ return o.id===state.obraAtual; });
+      if(!ok){ var sel=document.getElementById("obra-select"), v=sel&&sel.value;
+        state.obraAtual=obras.some(function(o){ return o.id===v; })?v:obras[0].id;
+        try{ localStorage.setItem("mgi_obra_atual",state.obraAtual); }catch(e){}
+        if(typeof renderObras==="function") renderObras();
+        if(state.currentModule==="inicio"&&typeof renderInicio==="function") renderInicio(); }
+    }catch(e){}
+  }
+  window.mgiGarantirObra=garantir;
+  if(typeof renderObras==="function"){ var _r=renderObras; window.renderObras=renderObras=function(){ var x=_r.apply(this,arguments); setTimeout(garantir,0); return x; }; }
+  setTimeout(garantir,1500); setInterval(garantir,10000);
+})();
+</script>
 </body>
 </html>
