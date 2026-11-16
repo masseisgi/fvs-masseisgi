@@ -86,7 +86,7 @@ svg text{fill:var(--mu);font-size:10px}
   <input id="al-senha" type="password" placeholder="Senha" autocomplete="current-password" style="padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--s2);color:var(--tx)">
   <button class="btn" onclick="entrarEmail()">Entrar</button><small id="al-erro" style="color:var(--rd);text-align:center"></small></div></div>
 <div id="app" style="display:none">
-<header><img src="icons/icon-192x192.png" alt=""><div class="t"><b>Painel MGI PRO</b><small id="hdr-sub">Administração</small></div><button class="ib" onclick="carregar(true)" title="Atualizar">↻</button><button class="ib" onclick="sair()">Sair</button></header>
+<header><button class="ib" id="nv-back" onclick="voltar()" title="Voltar" style="display:none">←</button><img src="icons/icon-192x192.png" alt=""><div class="t"><b>Painel MGI PRO</b><small id="hdr-sub">Administração</small></div><button class="ib" onclick="carregar(true)" title="Atualizar">↻</button><button class="ib" onclick="sair()">Sair</button></header>
 <nav id="tabs"></nav>
 <main id="main"></main>
 </div>
@@ -169,7 +169,19 @@ function render(){ const A=alertas(), nn=NOTIF.filter(n=>!n.lida).length;
   document.getElementById("fab").style.display=TAB==="empresas"?"block":"none";
   const m=document.getElementById("main");
   if(TAB==="geral") m.innerHTML=geral(A); else if(TAB==="empresas") m.innerHTML=empresas(); else if(TAB==="alertas") m.innerHTML=alertasHTML(A); else if(TAB==="result") m.innerHTML=resultadosHTML(); else m.innerHTML=notifHTML(); }
-function aba(k){ TAB=k; render(); scrollTo(0,0); }
+// ── Navegação: Voltar na tela e botão voltar do celular ──
+let NV_TABS=[], NV_SH=[], NV_PROF=0, NV_VOLTANDO=false;
+function nvPush(){ try{ history.pushState({adm:++NV_PROF},""); }catch(e){} nvBotao(); }
+function nvBotao(){ const b=document.getElementById("nv-back"); if(b) b.style.display=(TAB!=="geral"||document.getElementById("sh").classList.contains("on"))?"inline-flex":"none"; }
+function nvPasso(){
+  const sh=document.getElementById("sh");
+  if(sh.classList.contains("on")){ const ant=NV_SH.pop(); if(ant!=null){ document.getElementById("sb").innerHTML=ant; } else { sh.classList.remove("on"); } nvBotao(); return true; }
+  const t=NV_TABS.pop(); if(t){ NV_VOLTANDO=true; aba(t); NV_VOLTANDO=false; return true; }
+  if(TAB!=="geral"){ NV_VOLTANDO=true; aba("geral"); NV_VOLTANDO=false; return true; }
+  return false; }
+function voltar(){ if(NV_PROF>0) history.back(); else nvPasso(); }
+window.addEventListener("popstate",()=>{ if(NV_PROF>0) NV_PROF--; if(!nvPasso()&&NV_PROF>0) history.back(); });
+function aba(k){ if(!NV_VOLTANDO&&k!==TAB){ NV_TABS.push(TAB); nvPush(); } TAB=k; render(); scrollTo(0,0); nvBotao(); }
 
 function geral(A){ const c={}; E.forEach(e=>{ const s=status(e); c[s]=(c[s]||0)+1; });
   const mrr=E.filter(e=>status(e)==="ativo").reduce((t,e)=>t+valor(e),0);
@@ -250,8 +262,10 @@ function notifHTML(){ return `<div class="card"><h3>Notificações <small>· avi
 async function lida(id){ try{ await db.collection("notificacoes_admin").doc(id).update({lida:true}); const n=NOTIF.find(x=>x.id===id); if(n) n.lida=true; render(); }catch(e){ toast("Erro: "+e.message,1); } }
 
 // ── folhas de ação ──
-function abrir(h){ document.getElementById("sb").innerHTML=h; document.getElementById("sh").classList.add("on"); }
-function fechar(){ document.getElementById("sh").classList.remove("on"); }
+function abrir(h){ const sh=document.getElementById("sh"), sb=document.getElementById("sb");
+  if(sh.classList.contains("on")) NV_SH.push(sb.innerHTML); else NV_SH=[];
+  sb.innerHTML=`<div style="display:flex;margin:-6px 0 2px"><button class="ib" onclick="voltar()">← Voltar</button></div>`+h; sh.classList.add("on"); nvPush(); }
+function fechar(){ document.getElementById("sh").classList.remove("on"); NV_SH=[]; nvBotao(); }
 let PL=null;
 function planoSheet(id){ ATUAL=E.find(e=>e.id===id); PL={p:NOVOS.includes(ATUAL.planoNome)?ATUAL.planoNome:"Profissional",cort:!!ATUAL.cortesia}; planoRender(); }
 function planoRender(){ const e=ATUAL; abrir(`<h3>Plano de ${esc(e.nome||e.donoEmail)}</h3>
