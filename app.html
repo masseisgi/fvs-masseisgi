@@ -5705,6 +5705,7 @@ window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine
     ${op("💾","Exportar backup completo","Arquivo com todos os dados da empresa (LGPD e segurança).","mgiBackup()")}
     <label class="rel-op" style="cursor:pointer"><span>♻️</span><div><b>Restaurar backup</b><small>Mescla um arquivo de backup com os dados atuais.</small></div><input type="file" accept=".json,application/json" style="display:none" onchange="mgiRestaurar(this)"></label>
     ${typeof mgiIAPainel==="function"?op("⚡","Uso da IA",(function(){ const u=mgiIAUsoAtual(); return u.cota?u.usadas.toLocaleString("pt-BR")+" de "+u.cota.toLocaleString("pt-BR")+" usos"+(u.teste?" do teste":" este mês")+(u.extra?" · "+u.extra.toLocaleString("pt-BR")+" extras":"")+". Pacotes avulsos.":"Consulte o uso e compre pacotes avulsos."; })(),"mgiFechar();mgiIAPainel()"):""}
+    ${typeof mgiDiagnostico==="function"?op("🔄","Sincronização","Confira o que está no aparelho e na nuvem e envie pendências.","mgiFechar();mgiDiagnostico()"):""}
     ${op("📘","Manual do usuário","Passo a passo de todas as ferramentas, com busca.","mgiAjuda()")}
     ${op("🎓","Ver o tutorial","Passo a passo das principais funções.","mgiTutorial(true)")}
     ${typeof abrirModalPlanos==="function"&&!window.MGI_PLAY?op("💳","Planos e assinatura","Trocar de plano ou assinar.","mgiFechar();abrirModalPlanos()"):""}
@@ -6698,6 +6699,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v48: dados isolados por empresa no aparelho (troca de conta limpa o celular)
 // MGI PRO · v50: Zerar dados no painel também limpa os celulares da equipe
 // MGI PRO · v51: Voltar e Início em todas as telas e botão voltar do celular
+// MGI PRO · v52: aviso de alterações não enviadas, Enviar agora e diagnóstico de sincronização
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -6945,6 +6947,69 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     top.insertBefore(d,top.firstChild);
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",cabecalho); else cabecalho();
+})();
+</script>
+
+<!-- ===== SINCRONIZAÇÃO VISÍVEL: PENDÊNCIAS, ENVIAR AGORA E DIAGNÓSTICO (v52) ===== -->
+<style>
+#sync-pend{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:5500;display:none;align-items:center;gap:10px;background:#7c2d12;color:#fff;border:1px solid #f59e0b;border-radius:12px;padding:9px 12px;font:700 .8rem Barlow,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:92vw}
+#sync-pend button{background:#fff;color:#7c2d12;border:none;border-radius:8px;padding:6px 10px;font:800 .76rem Barlow,sans-serif;cursor:pointer}
+.sd-t{width:100%;border-collapse:collapse;font-size:.82rem}.sd-t td,.sd-t th{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}.sd-t th{color:var(--muted);font-weight:600}
+.sd-dif{color:#f59e0b;font-weight:800}
+</style>
+<script>
+(function(){
+  var LISTAS=[["obras","Obras"],["trechos","Frentes / trechos"],["locais","Locais da edificação"],["fvsSalvas","FVS"],["auditoriasSalvas","Auditorias"],["diarios","Diários"],["liberacoes","Liberações"],["materiais","Materiais"],["dds","DDS"],["docsCtl","Documentos"]];
+  var pendente=false, ultimoErro="", ultimoOk=0, tentativas=0;
+  function vivos(l){ var r=state.removidos||{}; return (l||[]).filter(function(x){ return x&&x.id&&!r[x.id]; }); }
+
+  // Marca pendência a cada salvamento e só limpa quando a nuvem confirmar
+  if(typeof syncNuvem==="function"){ var _s=syncNuvem; window.syncNuvem=syncNuvem=function(){ if(window.MGI_USER&&!(window.MGI_USER.role==="fiscal")){ pendente=true; mostrar(); } return _s.apply(this,arguments); }; }
+  if(typeof atualizarStatusSync==="function"){ var _a=atualizarStatusSync; window.atualizarStatusSync=atualizarStatusSync=function(txt){
+      try{ if(/Salvo na nuvem|Sincronizado/.test(txt)){ pendente=false; ultimoErro=""; ultimoOk=Date.now(); tentativas=0; mostrar(); }
+           else if(/Erro ao salvar/.test(txt)){ ultimoErro=txt; mostrar(); } }catch(e){}
+      return _a.apply(this,arguments); }; }
+  // Mostra o erro real do envio
+  var _log=console.log; console.log=function(){ try{ if(arguments[0]==="Erro ao sincronizar:"&&arguments[1]) ultimoErro=(arguments[1].code||"")+" "+(arguments[1].message||arguments[1]); }catch(e){} return _log.apply(console,arguments); };
+
+  function mostrar(){
+    var b=document.getElementById("sync-pend");
+    if(!b){ b=document.createElement("div"); b.id="sync-pend"; document.body.appendChild(b); }
+    if(pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
+      b.innerHTML='<span>⏳ Alterações ainda não enviadas para a nuvem'+(navigator.onLine?"":" (sem internet)")+'</span><button onclick="mgiEnviarAgora()">Enviar agora</button>';
+      b.style.display="flex";
+    } else b.style.display="none";
+  }
+  // Tenta de novo sozinho a cada 30 s enquanto houver pendência
+  setInterval(function(){ if(pendente&&navigator.onLine&&window.MGI_USER){ tentativas++; mostrar(); try{ enviarNuvem(); }catch(e){} } },30000);
+  window.addEventListener("online",function(){ if(pendente) try{ enviarNuvem(); }catch(e){} });
+  // Ao fechar ou trocar de app, tenta enviar na hora
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden"&&pendente) try{ clearTimeout(window._syncTimer); enviarNuvem(); }catch(e){} });
+
+  window.mgiEnviarAgora=async function(){
+    try{ if(typeof mgiToastSync==="function") mgiToastSync(); await enviarNuvem(); }catch(e){ ultimoErro=e.message||String(e); }
+    mostrar(); if(document.getElementById("sd-box")) mgiDiagnostico();
+  };
+
+  // Diagnóstico: o que está no aparelho x o que está na nuvem
+  window.mgiDiagnostico=async function(){
+    var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); }
+    m.onclick=function(ev){ if(ev.target===m) m.remove(); };
+    m.innerHTML='<div class="fm-box" id="sd-box"><h3>🔄 Sincronização</h3><p style="color:var(--muted);font-size:.85rem">Consultando a nuvem…</p></div>';
+    var nuvem=null, erroLer="";
+    try{ var d=await window.MGI_DB.collection("dados").doc(window.MGI_USER.tenantId).get(); nuvem=d.exists?d.data():{}; }catch(e){ erroLer=(e.code||"")+" "+(e.message||e); }
+    var ult=nuvem&&nuvem.atualizadoEm&&nuvem.atualizadoEm.toDate?nuvem.atualizadoEm.toDate().toLocaleString("pt-BR"):"—";
+    var linhas=LISTAS.map(function(l){ var a=vivos(state[l[0]]).length, n=nuvem?vivos(nuvem[l[0]]).length:"?"; var dif=nuvem&&a!==n; return '<tr><td>'+l[1]+'</td><td>'+a+'</td><td>'+n+'</td><td>'+(dif?'<span class="sd-dif">diferente</span>':'✓')+'</td></tr>'; }).join("");
+    var ob=(state.obras||[]).find(function(o){ return o.id===state.obraAtual; });
+    var tr=vivos(state.trechos).map(function(t){ var o=(state.obras||[]).find(function(x){ return x.id===t.obraId; }); return '• '+(t.nome||"(sem nome)")+' <span style="color:var(--muted)">('+(o?o.nome:"obra não encontrada")+')</span>'; }).join("<br>");
+    m.innerHTML='<div class="fm-box" id="sd-box"><h3>🔄 Sincronização</h3>'+
+      '<div style="font-size:.84rem;line-height:1.6;color:var(--text)"><b>Usuário:</b> '+(window.MGI_USER?window.MGI_USER.email+" ("+window.MGI_USER.role+")":"não conectado")+'<br><b>Empresa:</b> '+((window.MGI_EMPRESA||{}).nome||"—")+'<br><b>Obra selecionada:</b> '+(ob?ob.nome:"nenhuma")+'<br><b>Internet:</b> '+(navigator.onLine?"conectado":"sem conexão")+'<br><b>Último envio confirmado neste aparelho:</b> '+(ultimoOk?new Date(ultimoOk).toLocaleTimeString("pt-BR"):"nesta sessão, nenhum")+'<br><b>Última gravação na nuvem:</b> '+ult+' '+(nuvem&&nuvem.atualizadoPor?"por "+nuvem.atualizadoPor:"")+
+      (pendente?'<br><b style="color:#f59e0b">Há alterações pendentes de envio.</b>':'')+
+      (ultimoErro||erroLer?'<br><b style="color:#ef4444">Erro:</b> '+(ultimoErro||erroLer):'')+'</div>'+
+      '<table class="sd-t"><thead><tr><th>Item</th><th>Neste aparelho</th><th>Na nuvem</th><th></th></tr></thead><tbody>'+linhas+'</tbody></table>'+
+      (tr?'<div style="font-size:.8rem;color:var(--text)"><b>Frentes neste aparelho:</b><br>'+tr+'</div>':'')+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="document.getElementById(\'ficha-modal\').remove()">Fechar</button><button class="ac5-save" onclick="mgiEnviarAgora()">⬆️ Enviar agora</button></div></div>';
+  };
 })();
 </script>
 
