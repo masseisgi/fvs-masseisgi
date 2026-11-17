@@ -6026,7 +6026,7 @@ window.mgiDDSIniciar=async function(modo,tipo){ tipo=tipo||"qualidade"; const T=
     DD={...base,serviceId:sv?sv.id:"",servico:sv?sv.nome:"",tema:j.titulo||tema,temaPedido:tema,pontos:j.pontos.slice(0,8),perguntas:j.perguntas.slice(0,n).map(q=>({q:q.q,ops:(q.ops||[]).slice(0,4),certa:Math.max(0,Math.min((q.ops||[]).length-1,+q.certa||0)),exec:q.explicacao||""})),geradoPorIA:true};
     ddPasso(0);
   }catch(e){ modal(`<h3>Não foi possível montar com IA</h3><p style="color:var(--muted)">${$e(e.message||e)}. Verifique a internet e tente de novo, ou monte o DDS a partir de um serviço da FVS.</p><div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDSNovo('servico')">Usar serviço da FVS</button><button class="ac5-save" onclick="mgiDDSNovo('tema')">Tentar de novo</button></div>`); } };
-window.mgiDDAPI={get:()=>DD,passo:p=>ddPasso(p),ler:()=>lerPart()};
+window.mgiDDAPI={get:()=>DD,set:x=>{ DD=x; },passo:p=>ddPasso(p),ler:()=>lerPart()};
 window.mgiMTAPI={get:()=>MT,set:x=>{ MT=x; },render:()=>mtRender(),ler:()=>mtLer()};
 function lerPart(){ document.querySelectorAll(".dd-p").forEach((r,i)=>{ const p=DD.participantes[i]; if(!p) return; p.nome=r.querySelector(".dd-pn").value; p.funcao=r.querySelector(".dd-pf").value; }); }
 function ddPasso(p){
@@ -6849,6 +6849,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v58: visualização na tela de Liberação, Materiais e Diário; filtro de DDS por tipo, frente e mês; compartilhar no WhatsApp
 // MGI PRO · v59: visualização de FVS e Auditoria, cobrança de pendências e NCs pelo WhatsApp, painel mensal de DDS com horas de treinamento
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
+// MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7761,6 +7762,130 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
         html=html.replace(mm[0],sec+'<h3>'+(n+1)+'. Análise crítica do mês</h3>');
       }catch(e){}
       return html; }; }
+})();
+</script>
+
+<!-- ===== EDITAR E EXCLUIR EM TODAS AS FERRAMENTAS + QUEM FEZ E QUEM ALTEROU CADA REGISTRO (v61) ===== -->
+<style>
+.qa{border:1px dashed var(--border2,var(--border));border-radius:10px;padding:8px 10px;font-size:.76rem;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.qa b{color:var(--text)}
+.qa details summary{cursor:pointer;color:var(--cyan);font-weight:700;list-style:none}.qa details summary::-webkit-details-marker{display:none}
+.qa ol{margin:4px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:2px}
+.qa-l{display:block;font-size:.7rem;color:var(--muted);margin-top:2px}
+.vw-del{background:transparent!important;color:#DC2626!important;border-color:#DC2626!important}
+.dde{display:flex;flex-direction:column;gap:8px}
+</style>
+<script>
+(function(){
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function eu(){ var u=window.MGI_USER||{}; return u.nome||u.email||"Usuário deste aparelho"; }
+  function dh(iso){ try{ var d=new Date(iso); return isNaN(d)?"":d.toLocaleDateString("pt-BR")+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+  var LISTAS={fvs:["fvsSalvas","FVS"],aud:["auditoriasSalvas","auditoria"],dia:["diarios","diário de obra"],lib:["liberacoes","liberação de frente"],mat:["materiais","recebimento de material"],dds:["dds","DDS"]};
+  function rotulo(t,x){ if(!x) return ""; if(t==="fvs") return (x.serviceName||"FVS")+((x.info&&x.info.trecho)?" · "+x.info.trecho:""); if(t==="aud") return "Auditoria "+((x.info&&x.info.processo)||"")+" "+((x.info&&x.info.data)||"");
+    if(t==="dia") return "Diário de "+String(x.data||"").split("-").reverse().join("/"); if(t==="lib") return x.frente||"Liberação"; if(t==="mat") return (x.material||"Material")+(x.lote?" lote "+x.lote:""); if(t==="dds") return x.tema||x.servico||"DDS"; return ""; }
+
+  // ═══ Carimbo automático: quem criou e quem alterou cada registro ═══
+  function assinatura(r){ try{ return JSON.stringify(r,function(k,v){ if(k&&(k.charAt(0)==="_"||k==="atualizadoEm"||k==="savedAt"||k==="fotosUrl"||k==="obraNome")) return undefined; if(typeof v==="string"&&v.length>300) return v.length+":"+v.slice(-40); return v; }); }catch(e){ return ""; } }
+  var base={}, pronto=false;
+  function rebase(){ Object.keys(LISTAS).forEach(function(t){ (state[LISTAS[t][0]]||[]).forEach(function(r){ if(r&&r.id) base[r.id]=assinatura(r); }); }); pronto=true; }
+  function carimbar(){
+    if(!pronto) return; var agora=new Date().toISOString(), quem=eu();
+    Object.keys(LISTAS).forEach(function(t){ (state[LISTAS[t][0]]||[]).forEach(function(r){ if(!r||!r.id) return; var s=assinatura(r);
+      if(!(r.id in base)){ if(!r._cri) r._cri={por:quem,em:agora}; r._hist=(r._hist||[]).concat([{a:"Criou",por:quem,em:agora}]).slice(-15); }
+      else if(base[r.id]!==s){ r._alt={por:quem,em:agora}; var h=r._hist||[], u=h[h.length-1];
+        if(u&&u.a==="Alterou"&&u.por===quem&&(new Date(agora)-new Date(u.em))<10*60000) u.em=agora; else h=h.concat([{a:"Alterou",por:quem,em:agora}]);
+        r._hist=h.slice(-15); }
+      base[r.id]=s; }); });
+  }
+  if(typeof mgiSalvarLocal==="function"){ var _sl=mgiSalvarLocal; window.mgiSalvarLocal=mgiSalvarLocal=function(){ try{ carimbar(); }catch(e){} return _sl.apply(this,arguments); }; }
+  if(typeof syncNuvem==="function"){ var _sn=syncNuvem; window.syncNuvem=syncNuvem=function(){ try{ carimbar(); }catch(e){} return _sn.apply(this,arguments); }; }
+  if(typeof mgiMesclarEstado==="function"){ var _me=mgiMesclarEstado; window.mgiMesclarEstado=mgiMesclarEstado=function(){ var r=_me.apply(this,arguments); try{ rebase(); }catch(e){} return r; }; }
+  setTimeout(rebase,800);
+
+  // Bloco "quem fez / quem alterou"
+  function criador(t,x){ if(x._cri) return x._cri; var p=x.autor||x.recebidoPor||x.criadoPor||(t==="fvs"&&x.info&&x.info.resp)||(t==="aud"&&x.info&&x.info.auditor)||(t==="dds"&&x.ministrante)||"";
+    var em=x.criadoEm||x.savedAt||x.atualizadoEm||""; return (p||em)?{por:p,em:em,antigo:true}:null; }
+  window.mgiQuemHTML=function(t,x){ if(!x) return ""; var c=criador(t,x), a=x._alt, h=x._hist||[];
+    return '<div class="qa">'+(c?(c.por?'<span>👤 Registrado por <b>'+E(c.por)+'</b>'+(c.em?' em '+dh(c.em):'')+'</span>':'<span>👤 Registrado em '+dh(c.em)+' (autor não identificado, registro anterior ao controle)</span>'):'<span>👤 Autor não identificado (registro anterior ao controle)</span>')+
+      (a?'<span>✏️ Última alteração por <b>'+E(a.por)+'</b> em '+dh(a.em)+'</span>':'<span>✏️ Sem alterações depois do registro</span>')+
+      (h.length>1?'<details><summary>Ver histórico ('+h.length+')</summary><ol>'+h.slice().reverse().map(function(i){ return '<li>'+E(i.a)+' por '+E(i.por)+' em '+dh(i.em)+'</li>'; }).join("")+'</ol></details>':'')+'</div>'; };
+  function quemCurto(t,x){ var c=criador(t,x), a=x&&x._alt; if(!c&&!a) return ""; return (c&&c.por?"👤 "+c.por:"")+(a?(c&&c.por?" · ":"")+"✏️ "+a.por+" "+dh(a.em).split(" às ")[0]:""); }
+
+  // ═══ Excluir qualquer registro (com lápide para não voltar pela nuvem) ═══
+  window.mgiExcluir=function(t,id){
+    if(fiscal()) return; var L=LISTAS[t]; if(!L) return; var lst=state[L[0]]||[], x=lst.find(function(r){ return r.id===id; }); if(!x) return;
+    if(!confirm("Excluir "+(t==="aud"||t==="fvs"||t==="dds"?"esta ":"este ")+L[1]+"?\n\n"+rotulo(t,x)+"\n\nA exclusão vale para todos os aparelhos da empresa e fica registrada em seu nome.")) return;
+    state[L[0]]=lst.filter(function(r){ return r.id!==id; }); delete base[id];
+    try{ if(typeof mgiLapide==="function") mgiLapide(id); }catch(e){}
+    try{ mgiLog("Excluiu "+L[1],rotulo(t,x)); }catch(e){}
+    try{ if(t==="fvs"&&typeof salvarFVSLS==="function") salvarFVSLS(); }catch(e){}
+    try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){}
+    var m=document.getElementById("ficha-modal");
+    if(t==="dds") return mgiDDS(); if(t==="lib") return mgiLibLista(); if(t==="mat") return mgiMateriais();
+    if(m) m.remove();
+    try{ if(t==="fvs") renderHistoricoFVS(); if(t==="aud") renderHistoricoISO(); if(t==="dia") renderHistorico(); }catch(e){}
+    try{ if(typeof render==="function"&&document.body.classList.contains("mod-inicio")) render(); }catch(e){}
+    if(typeof aviso==="function") try{ aviso("🗑️ Registro excluído.",false); }catch(e){}
+  };
+
+  // ═══ Editar DDS: cabeçalho, presença, assinaturas e fotos ═══
+  var TIPOS={qualidade:"🎯 Qualidade",sst:"🦺 Segurança do trabalho",ambiental:"🌱 Meio ambiente",integrado:"🧩 Integrado (QSMS)"};
+  window.mgiDDSEditar=function(id){
+    if(fiscal()) return; var d=(state.dds||[]).find(function(x){ return x.id===id; }); if(!d) return;
+    var D=JSON.parse(JSON.stringify(d)); D.participantes=(D.participantes||[]).map(function(p){ return typeof p==="string"?{nome:p,funcao:"",assin:null}:p; }); D.respostas=D.respostas||[]; D.perguntas=D.perguntas||[]; D.pontos=D.pontos||[];
+    mgiDDAPI.set(D); window.__ddEdit=id;
+    var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); }
+    m.onclick=function(e){ if(e.target===m) m.remove(); };
+    m.innerHTML='<div class="fm-box rg-box"><h3>✏️ Editar DDS</h3><div class="dde">'+
+      '<label>Tipo<select id="dde-tipo">'+Object.keys(TIPOS).map(function(k){ return '<option value="'+k+'"'+((D.tipo||"qualidade")===k?" selected":"")+'>'+TIPOS[k]+'</option>'; }).join("")+'</select></label>'+
+      '<label>Tema<textarea id="dde-tema" rows="2">'+E(D.tema||"")+'</textarea></label>'+
+      '<div class="fm-g2"><label>Data<input type="date" id="dde-data" value="'+E(D.data||"")+'"></label><label>Ministrado por<input id="dde-min" value="'+E(D.ministrante||"")+'"></label></div>'+
+      '<label>Frente ou trecho<input id="dd-fr" value="'+E(D.frente||"")+'"></label>'+
+      '<p style="margin:0;color:var(--muted);font-size:.78rem">Na próxima tela dá para corrigir nomes e funções, incluir ou remover participantes, colher assinaturas que faltaram e trocar as fotos.</p></div>'+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="window.__ddEdit=null;mgiDDSVer(\''+id+'\')">Cancelar</button><button class="ac5-save" onclick="mgiDDSEditarSeguir()">Presença e fotos ›</button></div></div>';
+  };
+  window.mgiDDSEditarSeguir=function(){ var D=mgiDDAPI.get(); if(!D) return; var g=function(i){ return (document.getElementById(i)||{}).value; };
+    D.tipo=g("dde-tipo")||D.tipo; D.tema=(g("dde-tema")||"").trim()||D.tema; D.data=g("dde-data")||D.data; D.ministrante=g("dde-min"); D.frente=g("dd-fr");
+    mgiDDAPI.passo(99); };
+  if(typeof mgiDDSSalvar==="function"){ var _ds=mgiDDSSalvar; window.mgiDDSSalvar=mgiDDSSalvar=function(){
+      var D=mgiDDAPI.get(), id=window.__ddEdit; if(!D||!id||D.id!==id) return _ds.apply(this,arguments);
+      var guarda={inicio:D.inicio,fim:D.fim,dur:D.duracaoMin,man:D.duracaoManual}; delete D.inicio;
+      var antes=(state.dds||[]).slice(); state.dds=(state.dds||[]).filter(function(x){ return x.id!==id; });
+      var r; try{ r=_ds.apply(this,arguments); }finally{
+        if(!(state.dds||[]).some(function(x){ return x.id===id; })){ state.dds=antes; }   // usuário desistiu na confirmação: volta como estava
+        else { window.__ddEdit=null; if(guarda.inicio) D.inicio=guarda.inicio; if(guarda.fim) D.fim=guarda.fim; if(guarda.dur) D.duracaoMin=guarda.dur; if(guarda.man) D.duracaoManual=true; try{ mgiLog("Editou DDS",D.tema||""); mgiSalvarLocal(); }catch(e){} } }
+      return r; }; }
+
+  // ═══ Botões Editar e Excluir + bloco de autoria em todas as telas de visualização ═══
+  function acoes(t,id,editarJS){
+    var box=document.querySelector("#ficha-modal .fm-box"), ac=box&&box.querySelector(".ac5-acoes"); if(!ac) return;
+    var lst=state[LISTAS[t][0]]||[], x=lst.find(function(r){ return r.id===id; });
+    if(x&&!box.querySelector(".qa")){ var q=document.createElement("div"); q.innerHTML=mgiQuemHTML(t,x); ac.parentNode.insertBefore(q.firstChild,ac); }
+    if(fiscal()) return;
+    if(editarJS&&!ac.querySelector('[data-ed]')&&![].slice.call(ac.querySelectorAll("button")).some(function(b){ return /Editar/.test(b.textContent); })){ var e=document.createElement("button"); e.className="ac5-cancel"; e.setAttribute("data-ed","1"); e.textContent="✏️ Editar"; e.setAttribute("onclick",editarJS); ac.insertBefore(e,ac.children[1]||null); }
+    if(!ac.querySelector(".vw-del")){ var d=document.createElement("button"); d.className="ac5-cancel vw-del"; d.textContent="🗑️ Excluir"; d.setAttribute("onclick","mgiExcluir('"+t+"','"+id+"')"); ac.appendChild(d); }
+  }
+  [["mgiDDSVer","dds","mgiDDSEditar('ID')"],["mgiLibVer","lib",null],["mgiMatVer","mat",null],["mgiDiarioVer","dia",null],["mgiFVSVer","fvs",null],["mgiAudVer","aud",null]].forEach(function(c){
+    var f=window[c[0]]; if(typeof f!=="function") return;
+    window[c[0]]=function(id){ var r=f.apply(this,arguments); try{ acoes(c[1],id,c[2]?c[2].replace("ID",id):null); }catch(e){} return r; }; });
+
+  // ═══ Quem fez / alterou também nas listas ═══
+  function marcarListas(){
+    var pares=[['#ficha-modal .rg-tx[onclick^="mgiDDSVer"]',"dds"],['#ficha-modal .rg-tx[onclick^="mgiLibVer"]',"lib"],['#ficha-modal .rg-it[onclick^="mgiMatVer"]',"mat"],
+      ['#diario-historico .diary-card[onclick^="mgiDiarioVer"]',"dia"],['#fvs-historico-container .vw-verbtn',"fvs"],['#iso-historico-container .vw-verbtn',"aud"]];
+    pares.forEach(function(p){ document.querySelectorAll(p[0]).forEach(function(el){
+      var id=((el.getAttribute("onclick")||"").match(/'([^']+)'/)||[])[1]; if(!id) return; var alvo=(p[1]==="fvs"||p[1]==="aud")?el.closest(".diary-card"):(p[1]==="mat"?el.querySelector(".rg-tx"):el); if(!alvo||alvo.querySelector(".qa-l")) return;
+      var x=(state[LISTAS[p[1]][0]]||[]).find(function(r){ return r.id===id; }); var t=quemCurto(p[1],x); if(!t) return;
+      var s=document.createElement("span"); s.className="qa-l"; s.textContent=t; alvo.appendChild(s); }); });
+  }
+  var tm=null; new MutationObserver(function(){ clearTimeout(tm); tm=setTimeout(marcarListas,150); }).observe(document.body,{childList:true,subtree:true});
+
+  // Lista de DDS: botão Excluir direto (além de Ver e PDF)
+  if(typeof mgiDDS==="function"){ var _dd=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_dd.apply(this,arguments); if(fiscal()) return r;
+      document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiDDSPDF"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'([^']+)'/)||[])[1]; if(!id||b.parentNode.querySelector('[onclick^="mgiDDSEditar"]')) return;
+        var e=document.createElement("button"); e.textContent="✏️"; e.title="Editar"; e.setAttribute("onclick","mgiDDSEditar('"+id+"')"); b.parentNode.appendChild(e); });
+      return r; }; }
 })();
 </script>
 
