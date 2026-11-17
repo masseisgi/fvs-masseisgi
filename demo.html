@@ -5992,10 +5992,16 @@ const pNome=p=>typeof p==="string"?p:(p&&p.nome)||"";
 function itensTipo(sv,tipo){ const f=tipo==='sst'?(i=>i.dim==='SST'):tipo==='ambiental'?(i=>i.dim==='MA'):tipo==='integrado'?(i=>true):(i=>!i.dim); return sv.itens.filter(i=>i.tol&&f(i)); }
 function perguntasServico(sv,n,tipo){ const it=itensTipo(sv,tipo); const pool=SERVICOS.filter(s=>s.cat===sv.cat).flatMap(s=>itensTipo(s,tipo).map(i=>i.tol));
   return it.slice().sort(()=>Math.random()-.5).slice(0,n).map(i=>{ const ops=[i.tol,...pool.filter(t=>t!==i.tol).sort(()=>Math.random()-.5).slice(0,2)].sort(()=>Math.random()-.5); return {q:`Qual é o critério de aceitação para "${i.t}"?`,ops,certa:ops.indexOf(i.tol),exec:i.exec||""}; }); }
-window.mgiDDS=function(){ const L0=daObra(state.dds).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+window.__ddF=window.__ddF||{tipo:"",frente:"",mes:""};
+window.mgiDDSFiltro=function(k,v){ window.__ddF[k]=v; mgiDDS(); };
+window.mgiDDS=function(){ const LT=daObra(state.dds).sort((a,b)=>(b.data||"").localeCompare(a.data||"")); const F=window.__ddF;
+  const FR=[...new Set(LT.map(d=>(d.frente||"").trim()).filter(Boolean))].sort(), MS=[...new Set(LT.map(d=>(d.data||"").slice(0,7)).filter(Boolean))].sort().reverse();
+  const nomeMes=m=>{ const [a,b]=m.split("-"); return ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"][+b-1]+"/"+a; };
+  const L0=LT.filter(d=>(!F.tipo||(d.tipo||"qualidade")===F.tipo)&&(!F.frente||(d.frente||"").trim()===F.frente)&&(!F.mes||(d.data||"").startsWith(F.mes)));
+  const filtro=LT.length>1?`<div class="ddf-filtro"><select onchange="mgiDDSFiltro('tipo',this.value)"><option value="">Todos os tipos</option>${Object.entries(DDT).map(([k,v])=>`<option value="${k}"${F.tipo===k?" selected":""}>${v[1]} ${v[0]}</option>`).join("")}</select><select onchange="mgiDDSFiltro('frente',this.value)"><option value="">Todas as frentes</option>${FR.map(f=>`<option${F.frente===f?" selected":""}>${$e(f)}</option>`).join("")}</select><select onchange="mgiDDSFiltro('mes',this.value)"><option value="">Todos os meses</option>${MS.map(m=>`<option value="${m}"${F.mes===m?" selected":""}>${nomeMes(m)}</option>`).join("")}</select></div><p style="margin:0;color:var(--muted);font-size:.78rem">${L0.length} de ${LT.length} DDS · ${L0.reduce((t,d)=>t+(d.participantes||[]).length,0)} participações${F.tipo||F.frente||F.mes?` · <a href="#" onclick="window.__ddF={tipo:'',frente:'',mes:''};mgiDDS();return false" style="color:var(--cyan)">limpar filtros</a>`:""}</p>`:"";
   modal(`<h3>🎓 DDS</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Diálogo diário de qualidade, segurança do trabalho ou meio ambiente: conteúdo, perguntas e presença com assinatura de cada participante. Vale como evidência de treinamento na auditoria.</p>
-   ${ro()?"":`<button class="ac5-save" onclick="mgiDDSNovo()">+ Novo DDS</button>`}
-   <div class="rg-lista">${L0.map(d=>`<div class="rg-it" style="border-left-color:var(--cyan)"><div class="rg-tx" style="cursor:pointer" onclick="mgiDDSVer('${d.id}')"><span class="rg-tp">${tipoDD(d)[1]} ${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")} · ${d.acertos}/${d.perguntas.length} acertos</span><b>${$e(d.tema||d.servico)}</b><span>${(d.participantes||[]).length} participante(s) · ministrado por ${$e(d.ministrante||"")}</span></div><div class="rg-bt"><button onclick="mgiDDSVer('${d.id}')">👁️ Ver</button><button onclick="mgiDDSPDF('${d.id}')">PDF</button></div></div>`).join("")||`<p class="pi-nada">Nenhum DDS registrado.</p>`}</div>
+   ${ro()?"":`<button class="ac5-save" onclick="mgiDDSNovo()">+ Novo DDS</button>`}${filtro}
+   <div class="rg-lista">${L0.map(d=>`<div class="rg-it" style="border-left-color:var(--cyan)"><div class="rg-tx" style="cursor:pointer" onclick="mgiDDSVer('${d.id}')"><span class="rg-tp">${tipoDD(d)[1]} ${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")} · ${d.acertos}/${d.perguntas.length} acertos</span><b>${$e(d.tema||d.servico)}</b><span>${(d.participantes||[]).length} participante(s) · ministrado por ${$e(d.ministrante||"")}</span></div><div class="rg-bt"><button onclick="mgiDDSVer('${d.id}')">👁️ Ver</button><button onclick="mgiDDSPDF('${d.id}')">PDF</button></div></div>`).join("")||`<p class="pi-nada">${LT.length?"Nenhum DDS com esses filtros.":"Nenhum DDS registrado."}</p>`}</div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
 window.mgiDDSNovo=function(modo,tipo){ modo=modo||"tema"; tipo=tipo||(window.__ddTipo)||"qualidade"; window.__ddTipo=tipo;
   modal(`<h3>Novo DDS</h3>
@@ -6839,6 +6845,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v55: frentes cadastradas para tocar e escolher em FVS, Diário, Liberação e DDS
 // MGI PRO · v56: DDS com fotos da equipe como evidência (no PDF e na nuvem)
 // MGI PRO · v57: DDS registrados podem ser visualizados na tela (conteúdo, perguntas, presença, assinaturas e fotos)
+// MGI PRO · v58: visualização na tela de Liberação, Materiais e Diário; filtro de DDS por tipo, frente e mês; compartilhar no WhatsApp
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7295,5 +7302,147 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
       return r; }; }
 })();
 </script>
+<!-- ===== VISUALIZAÇÃO NA TELA: LIBERAÇÃO, MATERIAIS E DIÁRIO + COMPARTILHAR NO WHATSAPP (v58) ===== -->
+<style>
+.vw-st{display:inline-block;padding:3px 9px;border-radius:999px;font:800 .72rem Barlow,sans-serif;color:#fff}
+.vw-i{display:flex;flex-direction:column;gap:3px;border:1px solid var(--border2,var(--border));border-radius:10px;padding:7px 9px;font-size:.8rem;color:var(--text)}
+.vw-i .r{font:800 .72rem Barlow,sans-serif}
+.vw-i .o{color:var(--muted);font-size:.76rem}
+.vw-pend{border-color:#DC2626;background:rgba(220,38,38,.07)}
+.vw-g summary{cursor:pointer;font:800 .84rem Barlow,sans-serif;color:var(--text);padding:6px 0}
+.vw-g>div{display:flex;flex-direction:column;gap:5px}
+.vw-tab{width:100%;border-collapse:collapse;font-size:.8rem;color:var(--text)}.vw-tab td,.vw-tab th{padding:5px 6px;border-bottom:1px solid var(--border);text-align:left}.vw-tab th{color:var(--muted);font-weight:600}
+.vw-info{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:.78rem;color:var(--text)}.vw-info span{color:var(--muted)}
+.vw-ass{display:grid;grid-template-columns:1fr 1fr;gap:6px}.vw-ass div{border:1px solid var(--border2,var(--border));border-radius:10px;padding:6px;text-align:center;font-size:.72rem;color:var(--muted)}.vw-ass img{display:block;margin:0 auto 3px;height:34px;max-width:100%;object-fit:contain;background:#fff;border-radius:6px}.vw-ass b{display:block;color:var(--text);font-size:.78rem}
+.vw-fi{display:flex;gap:5px;flex-wrap:wrap}.vw-fi img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in}
+.vw-wa{background:#25D366!important;color:#fff!important;border-color:#25D366!important}
+.ddf-filtro{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}.ddf-filtro select{width:100%;min-width:0;padding:7px 6px;border-radius:9px;border:1px solid var(--border2,var(--border));background:var(--surf2,transparent);color:var(--text);font:600 .76rem Barlow,sans-serif}
+</style>
+<script>
+(function(){
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function dBR(s){ return s?String(s).slice(0,10).split("-").reverse().join("/"):""; }
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function nomeObra(id,alt){ var o=(state.obras||[]).find(function(x){ return x.id===id; }); return (o&&o.nome)||alt||""; }
+  function fotosDe(f,u){ var n=Math.max(Array.isArray(f)?f.length:0,Array.isArray(u)?u.length:0), o=[]; for(var i=0;i<n;i++){ var a=(f||[])[i], b=(u||[])[i]; var v=(typeof a==="string"&&a)?a:(typeof b==="string"?b:""); if(v) o.push(v); } return o; }
+  function abrir(h){ var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=function(e){ if(e.target===m) m.remove(); }; m.innerHTML='<div class="fm-box rg-box">'+h+'</div>'; m.scrollTop=0; var b=m.querySelector(".fm-box"); if(b) b.scrollTop=0; return m; }
+  function zoomImgs(list){ return '<div class="vw-fi">'+list.map(function(f,i){ return '<img src="'+f+'" alt="Foto '+(i+1)+'" onclick="mgiDDSFotoZoom(this.src)">'; }).join("")+'</div>'; }
+  window.__vwTxt={};
+
+  // ── Compartilhar: no celular abre o menu do aparelho (WhatsApp com fotos); no computador abre o WhatsApp Web com o texto ──
+  window.mgiCompartilhar=async function(chave,fotos){
+    var txt=window.__vwTxt[chave]||""; fotos=(fotos||[]).filter(function(f){ return typeof f==="string"&&f.indexOf("data:")===0; }).slice(0,4);
+    try{
+      if(navigator.share){
+        var files=[];
+        if(fotos.length&&navigator.canShare){ for(var i=0;i<fotos.length;i++){ var bl=await (await fetch(fotos[i])).blob(); files.push(new File([bl],"foto-"+(i+1)+".jpg",{type:bl.type||"image/jpeg"})); }
+          if(!navigator.canShare({files:files})) files=[]; }
+        await navigator.share(files.length?{text:txt,files:files}:{text:txt}); return;
+      }
+    }catch(e){ if(e&&e.name==="AbortError") return; }
+    window.open("https://wa.me/?text="+encodeURIComponent(txt),"_blank");
+  };
+  window.__vwFotos={};
+  window.mgiCompartilharChave=function(k){ return window.mgiCompartilhar(k,window.__vwFotos[k]||[]); };
+  function botaoWA(k,txt,fotos){ window.__vwTxt[k]=txt; window.__vwFotos[k]=fotos||[]; return '<button class="ac5-cancel vw-wa" onclick="mgiCompartilharChave(\''+k+'\')">📲 WhatsApp</button>'; }
+
+  // ── DDS: texto para o WhatsApp ──
+  window.mgiDDSTextoWA=function(d){
+    var T={qualidade:"Qualidade",sst:"Segurança do trabalho",ambiental:"Meio ambiente",integrado:"Integrado (QSMS)"}[d.tipo]||"Qualidade";
+    var p=(d.participantes||[]).map(function(x){ return typeof x==="string"?{nome:x}:x; });
+    return "*DDS de "+T+"*\n*Tema:* "+(d.tema||d.servico||"")+"\n*Data:* "+dBR(d.data)+(d.frente?"\n*Frente:* "+d.frente:"")+"\n*Obra:* "+nomeObra(d.obraId)+"\n*Ministrante:* "+(d.ministrante||"")+
+      "\n*Participantes:* "+p.length+" ("+p.filter(function(x){ return x.assin; }).length+" assinaram)\n*Avaliação:* "+(d.acertos||0)+" de "+(d.perguntas||[]).length+" acertos"+
+      ((d.pontos||[]).length?"\n\n*Pontos tratados*\n"+d.pontos.map(function(x,i){ return (i+1)+". "+x.t; }).join("\n"):"")+
+      (p.length?"\n\n*Presença*\n"+p.map(function(x,i){ return (i+1)+". "+x.nome+(x.funcao?" ("+x.funcao+")":""); }).join("\n"):"")+"\n\n_Registrado no MGI PRO_";
+  };
+  if(typeof mgiDDSVer==="function"){ var _dv=mgiDDSVer; window.mgiDDSVer=mgiDDSVer=function(id){ var r=_dv.apply(this,arguments);
+      var d=(state.dds||[]).find(function(x){ return x.id===id; }); var ac=document.querySelector("#ficha-modal .ac5-acoes");
+      if(d&&ac&&!ac.querySelector(".vw-wa")){ var w=document.createElement("span"); w.innerHTML=botaoWA("dds_"+id,mgiDDSTextoWA(d),fotosDe(d.fotos,d.fotosUrl)); ac.insertBefore(w.firstChild,ac.lastElementChild); }
+      return r; }; }
+
+  // ── Liberação de frente ──
+  var LIBN={resp:"Responsável pela frente",qual:"Qualidade",sst:"Segurança do trabalho",fiscal:"Fiscalização"};
+  var LIBC={"Liberada":"#0A9E6C","Liberada com ressalvas":"#D97706","Não liberada":"#DC2626"};
+  window.mgiLibVer=function(id){
+    var x=(state.liberacoes||[]).find(function(l){ return l.id===id; }); if(!x) return; var G=(window.mgiLibAPI&&mgiLibAPI.grupos)||[];
+    var resp=x.resp||{}, obs=x.obs||{}, F=x.fotos||{}, U=(x.fotosUrl&&!Array.isArray(x.fotosUrl))?x.fotosUrl:{};
+    var c=0,nc=0,na=0,tot=0, pend=[];
+    G.forEach(function(g,gi){ g[1].forEach(function(t,ii){ var k=gi+"_"+ii, r=resp[k]; tot++; if(r==="C") c++; else if(r==="NC"){ nc++; pend.push({g:g[0],t:t,o:obs[k]||"",k:k}); } else if(r==="NA") na++; }); });
+    var cor=LIBC[x.situacao]||"#64748b";
+    var item=function(k,t){ var r=resp[k]||"", fs=fotosDe(F[k],U[k]); return '<div class="vw-i'+(r==="NC"?" vw-pend":"")+'"><span>'+E(t)+'</span><span class="r" style="color:'+(r==="C"?"var(--green)":r==="NC"?"var(--red)":"var(--muted)")+'">'+(r==="C"?"✓ Conforme":r==="NC"?"✗ Pendente":r==="NA"?"Não se aplica":"Sem resposta")+'</span>'+(obs[k]?'<span class="o">'+E(obs[k])+'</span>':'')+(fs.length?zoomImgs(fs):'')+'</div>'; };
+    var todasFotos=[]; Object.keys(F).forEach(function(k){ todasFotos=todasFotos.concat(fotosDe(F[k],U[k])); });
+    var txt="*Liberação de frente*\n*Frente:* "+(x.frente||"")+"\n*Data prevista:* "+dBR(x.dataPrev)+(x.servico?"\n*Serviço:* "+x.servico:"")+(x.endereco?"\n*Endereço:* "+x.endereco:"")+"\n*Obra:* "+(x.obraNome||nomeObra(x.obraId))+"\n*Situação:* "+(x.situacao||"Em preenchimento")+"\n*Checklist:* "+c+" conformes, "+nc+" pendentes, "+na+" não se aplicam"+
+      (pend.length?"\n\n*Pendências*\n"+pend.map(function(p,i){ return (i+1)+". "+p.t+(p.o?": "+p.o:""); }).join("\n"):"")+(x.parecer?"\n\n*Parecer:* "+x.parecer:"")+"\n\n_Registrado no MGI PRO_";
+    abrir('<h3>🚧 Liberação registrada</h3>'+
+      '<div class="ddv-cab"><b>'+E(x.frente||"Frente sem nome")+'</b><span>'+dBR(x.dataPrev)+(x.servico?' · '+E(x.servico):'')+'</span>'+(x.endereco?'<span>📍 '+E(x.endereco)+'</span>':'')+'<span>'+E(x.obraNome||nomeObra(x.obraId))+'</span><span style="margin-top:4px"><span class="vw-st" style="background:'+cor+'">'+E(x.situacao||"Em preenchimento")+'</span></span></div>'+
+      '<div class="ddv-kpi"><div><b style="color:var(--green)">'+c+'</b><span>conformes</span></div><div><b style="color:var(--red)">'+nc+'</b><span>pendentes</span></div><div><b>'+na+'</b><span>não se aplica</span></div><div><b>'+(tot-c-nc-na)+'</b><span>sem resposta</span></div></div>'+
+      (pend.length?'<div class="ddv-s"><h4>⚠️ Pendências</h4>'+pend.map(function(p){ return item(p.k,p.g+": "+p.t); }).join("")+'</div>':'')+
+      (x.parecer?'<div class="ddv-s"><h4>Parecer final</h4><div class="vw-i">'+E(x.parecer)+'</div></div>':'')+
+      '<div class="ddv-s"><h4>Checklist completo</h4>'+G.map(function(g,gi){ return '<details class="vw-g"><summary>'+(gi+1)+'. '+E(g[0])+'</summary><div>'+g[1].map(function(t,ii){ return item(gi+"_"+ii,t); }).join("")+'</div></details>'; }).join("")+'</div>'+
+      '<div class="ddv-s"><h4>Assinaturas</h4><div class="vw-ass">'+["resp","qual","sst","fiscal"].map(function(k){ var a=(x.assin||{})[k]||{}; return '<div>'+(a.img?'<img src="'+a.img+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(a.nome||"—")+'</b>'+LIBN[k]+'</div>'; }).join("")+'</div></div>'+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiLibLista()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiLibAbrir(\''+x.id+'\')">✏️ Editar</button>')+botaoWA("lib_"+x.id,txt,todasFotos)+'<button class="ac5-save" onclick="mgiLibPDF(\''+x.id+'\')">📄 PDF</button></div>');
+  };
+  if(typeof mgiLibLista==="function"){ var _ll=mgiLibLista; window.mgiLibLista=mgiLibLista=function(){ var r=_ll.apply(this,arguments);
+      document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiLibPDF"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'([^']+)'/)||[])[1]; if(!id) return;
+        var v=document.createElement("button"); v.textContent="👁️ Ver"; v.setAttribute("onclick","mgiLibVer('"+id+"')"); b.parentNode.insertBefore(v,b);
+        var tx=b.closest(".rg-it")&&b.closest(".rg-it").querySelector(".rg-tx"); if(tx){ tx.style.cursor="pointer"; tx.setAttribute("onclick","mgiLibVer('"+id+"')"); }
+        var ab=b.parentNode.querySelector('button[onclick^="mgiLibAbrir"]'); if(ab) ab.textContent=fiscal()?"Abrir":"✏️ Editar"; });
+      return r; }; }
+
+  // ── Materiais ──
+  window.mgiMatVer=function(id){
+    var m=(state.materiais||[]).find(function(x){ return x.id===id; }); if(!m) return;
+    var cor={Aprovado:"#0A9E6C",Reprovado:"#DC2626","Aprovado com ressalva":"#D97706"}[m.inspecao]||"#64748b";
+    var tr=(m.trechos||[]).map(function(t){ return (typeof mgiNomeLocal==="function"?mgiNomeLocal(t):((state.trechos||[]).find(function(x){ return x.id===t; })||{}).nome)||""; }).filter(Boolean);
+    var lin=function(a,b){ return b?'<div><span>'+a+'</span><br>'+E(b)+'</div>':''; };
+    var txt="*Recebimento de material*\n*Material:* "+(m.material||"")+"\n*Data:* "+dBR(m.data)+"\n*Lote:* "+(m.lote||"-")+" · *NF:* "+(m.nf||"-")+"\n*Quantidade:* "+(m.qtd||"")+" "+(m.unidade||"")+(m.fabricante?"\n*Fabricante:* "+m.fabricante:"")+(m.fornecedor?"\n*Fornecedor:* "+m.fornecedor:"")+(m.certificado?"\n*Certificado:* "+m.certificado:"")+"\n*Inspeção:* "+(m.inspecao||"Sem inspeção")+(tr.length?"\n*Aplicado em:* "+tr.join(", "):"")+(m.obs?"\n*Obs.:* "+m.obs:"")+"\n*Obra:* "+nomeObra(m.obraId)+"\n\n_Registrado no MGI PRO_";
+    abrir('<h3>📦 Material recebido</h3>'+
+      '<div class="ddv-cab"><b>'+E(m.material||"")+'</b><span>'+dBR(m.data)+' · '+E(nomeObra(m.obraId))+'</span><span style="margin-top:4px"><span class="vw-st" style="background:'+cor+'">'+E(m.inspecao||"Sem inspeção")+'</span></span></div>'+
+      '<div class="ddv-kpi" style="grid-template-columns:repeat(3,1fr)"><div><b>'+E(m.lote||"-")+'</b><span>lote</span></div><div><b>'+E(m.nf||"-")+'</b><span>nota fiscal</span></div><div><b>'+E((m.qtd||"-")+" "+(m.unidade||""))+'</b><span>quantidade</span></div></div>'+
+      '<div class="vw-info">'+lin("Fabricante",m.fabricante)+lin("Fornecedor",m.fornecedor)+lin("Certificado",m.certificado)+lin("Recebido por",m.recebidoPor)+'</div>'+
+      '<div class="ddv-s"><h4>Onde foi aplicado</h4><div class="vw-i">'+(tr.length?tr.map(E).join("<br>"):"Ainda não aplicado")+'</div></div>'+
+      (m.obs?'<div class="ddv-s"><h4>Observações</h4><div class="vw-i">'+E(m.obs)+'</div></div>':'')+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiMateriais()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiMaterialForm(\''+m.id+'\')">✏️ Editar</button>')+botaoWA("mat_"+m.id,txt,[])+'</div>');
+  };
+  if(typeof mgiMateriais==="function"){ var _mm=mgiMateriais; window.mgiMateriais=mgiMateriais=function(){ var r=_mm.apply(this,arguments);
+      document.querySelectorAll('#ficha-modal .rg-it[onclick^="mgiMaterialForm"]').forEach(function(it){ it.setAttribute("onclick",it.getAttribute("onclick").replace("mgiMaterialForm","mgiMatVer")); });
+      return r; }; }
+
+  // ── Diário de obra ──
+  window.mgiDiarioVer=function(id){
+    var d=(state.diarios||[]).find(function(x){ return x.id===id; }); if(!d) return;
+    var mo=(d.mo||[]).filter(function(x){ return x&&x.funcao; }), eq=(d.eq||[]).filter(function(x){ return x&&x.nome; }), at=(d.atividades||[]).filter(function(x){ return x&&x.desc; }), oc=(d.ocorrencias||[]).filter(function(x){ return x&&(x.tipo||x.desc); });
+    var ef=mo.reduce(function(t,x){ return t+(parseInt(x.qtd,10)||0); },0), fs=fotosDe(d.fotos,d.fotosUrl), nF=fs.length||(typeof d.fotos==="number"?d.fotos:0);
+    var turnos=[d.manha?"Manhã":"",d.tarde?"Tarde":"",d.noite?"Noite":""].filter(Boolean).join(" · ")||"—";
+    var ds=typeof diaSemana==="function"?diaSemana(d.data):"";
+    var lin=function(a,b){ return '<div><span>'+a+'</span><br>'+E(b||"—")+'</div>'; };
+    var txt="*Diário de obra*\n*Data:* "+dBR(d.data)+(ds?" ("+ds+")":"")+"\n*Obra:* "+(d.obra||nomeObra(d.obraId))+(d.tempo?"\n*Tempo:* "+d.tempo:"")+"\n*Efetivo:* "+ef+" pessoa(s)"+(d.parou&&d.parou!=="Não"?"\n*Paralisação:* "+d.parou:"")+
+      (at.length?"\n\n*Atividades*\n"+at.map(function(a,i){ return (i+1)+". "+a.desc+(a.local?" ["+a.local+"]":"")+(a.quant?" — "+a.quant:""); }).join("\n"):"")+
+      (oc.length?"\n\n*Ocorrências*\n"+oc.map(function(o){ return "• "+(o.tipo?o.tipo+": ":"")+(o.desc||""); }).join("\n"):"")+(d.obs?"\n\n*Obs.:* "+d.obs:"")+"\n\n_Registrado no MGI PRO_";
+    abrir('<h3>📒 Diário de obra</h3>'+
+      '<div class="ddv-cab"><b>'+dBR(d.data)+(ds?' · '+E(ds):'')+'</b><span>'+E(d.obra||nomeObra(d.obraId)||"(sem obra)")+'</span>'+(d.tempo?'<span>'+E(d.tempo)+'</span>':'')+'</div>'+
+      '<div class="ddv-kpi"><div><b>'+ef+'</b><span>efetivo</span></div><div><b>'+at.length+'</b><span>atividades</span></div><div><b style="color:'+(oc.length?"var(--red)":"inherit")+'">'+oc.length+'</b><span>ocorrências</span></div><div><b>'+nF+'</b><span>fotos</span></div></div>'+
+      '<div class="vw-info">'+lin("Resp. técnico",d.resp)+lin("Encarregado",d.mestre)+lin("Turnos",turnos)+lin("Paralisação",d.parou||"Não")+lin("Temp. manhã",d.tempM?d.tempM+" °C":"")+lin("Temp. tarde",d.tempT?d.tempT+" °C":"")+(d.chuvaH?lin("Chuva",d.chuvaH):"")+'</div>'+
+      (at.length?'<div class="ddv-s"><h4>🔨 Atividades executadas</h4>'+at.map(function(a){ return '<div class="vw-i"><b>'+E(a.desc)+'</b>'+(a.local||a.quant?'<span class="o">'+(a.local?'📍 '+E(a.local):'')+(a.local&&a.quant?' · ':'')+(a.quant?E(a.quant):'')+'</span>':'')+'</div>'; }).join("")+'</div>':'')+
+      (mo.length?'<div class="ddv-s"><h4>👷 Mão de obra</h4><table class="vw-tab"><tr><th>Função</th><th>Qtd.</th><th>Horas</th></tr>'+mo.map(function(x){ return '<tr><td>'+E(x.funcao)+'</td><td>'+E(x.qtd||"—")+'</td><td>'+E(x.horas||"—")+'</td></tr>'; }).join("")+'</table></div>':'')+
+      (eq.length?'<div class="ddv-s"><h4>🚜 Equipamentos</h4><table class="vw-tab"><tr><th>Equipamento</th><th>H. trab.</th><th>H. par.</th></tr>'+eq.map(function(x){ return '<tr><td>'+E(x.nome)+'</td><td>'+E(x.ht||"—")+'</td><td>'+E(x.hp||"—")+'</td></tr>'; }).join("")+'</table></div>':'')+
+      (oc.length?'<div class="ddv-s"><h4>⚠️ Ocorrências</h4>'+oc.map(function(o){ return '<div class="vw-i vw-pend"><b>'+E(o.tipo||"Ocorrência")+'</b><span class="o">'+E(o.desc||"")+'</span></div>'; }).join("")+'</div>':'')+
+      (d.obs?'<div class="ddv-s"><h4>📝 Observações</h4><div class="vw-i">'+E(d.obs)+'</div></div>':'')+
+      (nF?'<div class="ddv-s"><h4>📷 Fotos</h4>'+(fs.length?'<div class="ddv-f">'+fs.map(function(f,i){ return '<img src="'+f+'" alt="Foto '+(i+1)+'" onclick="mgiDDSFotoZoom(this.src)">'; }).join("")+'</div>':'<p class="pi-nada">'+nF+' foto(s) ainda sendo enviadas pelo aparelho que registrou.</p>')+'</div>':'')+
+      '<div class="ddv-s"><h4>Assinaturas</h4><div class="vw-ass"><div>'+(d.signRTImg?'<img src="'+d.signRTImg+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(d.signRT||d.resp||"—")+'</b>Responsável técnico</div><div>'+(d.signFiscalImg?'<img src="'+d.signFiscalImg+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(d.signFiscal||"—")+'</b>Fiscal / cliente</div></div></div>'+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiVoltar()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiRegAbrir(\'Diário\',\''+d.id+'\')">✏️ Editar</button>')+botaoWA("dia_"+d.id,txt,fs)+'<button class="ac5-save" onclick="mgiRegPDF(\'Diário\',\''+d.id+'\')">📄 PDF</button></div>');
+  };
+  // Histórico do Diário: tocar no card abre a visualização
+  if(typeof renderHistorico==="function"){ var _rh=renderHistorico; window.renderHistorico=renderHistorico=function(){ var r=_rh.apply(this,arguments);
+      document.querySelectorAll('#diario-historico .diary-card[onclick^="editarDiario"]').forEach(function(c){ c.setAttribute("onclick",c.getAttribute("onclick").replace("editarDiario","mgiDiarioVer")); });
+      return r; }; }
+  // Registros: botão Ver para os diários
+  if(typeof mgiRegistrosRender==="function"){ var _rr=mgiRegistrosRender; window.mgiRegistrosRender=function(){ var r=_rr.apply(this,arguments);
+      document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiRegAbrir(\'Diário\'"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'Diário','([^']+)'/)||[])[1]; if(!id) return;
+        var v=document.createElement("button"); v.textContent="👁️ Ver"; v.setAttribute("onclick","mgiDiarioVer('"+id+"')"); b.parentNode.insertBefore(v,b.parentNode.firstChild); });
+      return r; }; }
+})();
+</script>
+
 </body>
 </html>
