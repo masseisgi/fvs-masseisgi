@@ -6850,6 +6850,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v59: visualização de FVS e Auditoria, cobrança de pendências e NCs pelo WhatsApp, painel mensal de DDS com horas de treinamento
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
+// MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7280,7 +7281,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     var files=Array.from(inp.files||[]).slice(0,MAX-d.fotos.length); inp.value="";
     files.forEach(function(file){
       var ctx=(typeof mgiCtxFoto==="function")?mgiCtxFoto("dds",null,modo,file):null;
-      if(ctx) ctx.ref="DDS"+(d.tema?", "+d.tema:"")+(d.data?", "+d.data.split("-").reverse().join("/"):"")+(d.frente?", "+d.frente:"");
+      if(ctx){ var tm=String(d.tema||"").replace(/^[^:]{0,30}:\s*/,""); ctx.ref="DDS"+(d.frente?" · "+d.frente:"")+(tm?" · "+(tm.length>38?tm.slice(0,37)+"…":tm):""); }
       var r=new FileReader();
       r.onload=function(e){ mgiComprimirFoto(e.target.result,1280,0.78).then(function(f){ return mgiCarimbar(f,ctx); }).then(function(f){ d.fotos.push(f); injetar(); }); };
       r.readAsDataURL(file);
@@ -7885,6 +7886,97 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   if(typeof mgiDDS==="function"){ var _dd=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_dd.apply(this,arguments); if(fiscal()) return r;
       document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiDDSPDF"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'([^']+)'/)||[])[1]; if(!id||b.parentNode.querySelector('[onclick^="mgiDDSEditar"]')) return;
         var e=document.createElement("button"); e.textContent="✏️"; e.title="Editar"; e.setAttribute("onclick","mgiDDSEditar('"+id+"')"); b.parentNode.appendChild(e); });
+      return r; }; }
+})();
+</script>
+
+<!-- ===== DDS: HORÁRIO DE APLICAÇÃO E DURAÇÃO SEMPRE REGISTRADOS + CARIMBO DAS FOTOS VISÍVEL (v62) ===== -->
+<style>
+.ddh{border:1px solid var(--border2,var(--border));border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;margin:8px 0}
+.ddh-t{font:800 .84rem Barlow,sans-serif;color:var(--text)}
+.ddh-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end}
+.ddh-g label{display:flex;flex-direction:column;gap:3px;font-size:.72rem;color:var(--muted)}
+.ddh-g input{width:100%;min-width:0;padding:8px;border-radius:9px;border:1px solid var(--border2,var(--border));background:var(--surf2,transparent);color:var(--text);font:700 .9rem Barlow,sans-serif}
+.ddh-d{text-align:center;border-radius:9px;background:rgba(20,206,141,.12);color:#14CE8D;font:800 .9rem Barlow,sans-serif;padding:9px 4px}
+.ddh-d.err{background:rgba(220,38,38,.1);color:#DC2626}
+.ddv-f img{object-fit:contain!important;background:#0b1220}
+.ddf-g img{object-fit:contain!important;background:#0b1220}
+</style>
+<script>
+(function(){
+  function hhmm(d){ d=d instanceof Date?d:new Date(d); return isNaN(d)?"":String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+  function minutos(a,b){ if(!/^\d\d:\d\d$/.test(a||"")||!/^\d\d:\d\d$/.test(b||"")) return null; var x=+a.slice(0,2)*60+ +a.slice(3), y=+b.slice(0,2)*60+ +b.slice(3); var m=y-x; if(m<0) m+=1440; return m; }
+  function DD(){ try{ return mgiDDAPI.get(); }catch(e){ return null; } }
+  function horario(d){ if(!d) return null; var a=d.hIni||(d.inicio?hhmm(d.inicio):""), b=d.hFim||(d.fim?hhmm(d.fim):""), m=d.duracaoMin>0?d.duracaoMin:minutos(a,b);
+    return (a||b||m)?{ini:a,fim:b,min:m}:null; }
+  window.mgiDDSHorario=horario;
+  function txtHorario(h){ if(!h) return "não registrado"; return (h.ini&&h.fim?"das "+h.ini+" às "+h.fim:h.ini?"início às "+h.ini:"")+(h.min?((h.ini?" · ":"")+h.min+" min"):""); }
+
+  // ── Campo de horário na lista de presença (preenchido sozinho, dá para corrigir) ──
+  function bloco(){
+    var d=DD(); if(!d) return null;
+    var ed=!!window.__ddEdit;
+    if(!d.hIni) d.hIni=d.inicio?hhmm(d.inicio):(ed?"":hhmm(new Date()));
+    if(ed){ if(!d.hFim) d.hFim=d.fim?hhmm(d.fim):""; }
+    else if(!d.hFim||d.__fimAuto){ d.hFim=hhmm(new Date()); d.__fimAuto=true; }
+    var m=minutos(d.hIni,d.hFim);
+    var b=document.createElement("div"); b.className="ddh"; b.id="ddh";
+    b.innerHTML='<div class="ddh-t">🕒 Horário do DDS</div><div class="ddh-g"><label>Início<input type="time" id="ddh-i" value="'+d.hIni+'"></label><label>Término<input type="time" id="ddh-f" value="'+d.hFim+'"></label><div class="ddh-d'+(m&&m<=240?'':' err')+'" id="ddh-d">'+(m&&m<=240?m+' min':'confira')+'</div></div>'+
+      '<small style="color:var(--muted);font-size:.72rem">O início é marcado quando o conteúdo abre e o término ao concluir. Ajuste se o DDS foi aplicado em outro horário.</small>';
+    var upd=function(){ d.hIni=b.querySelector("#ddh-i").value; d.hFim=b.querySelector("#ddh-f").value; var mm=minutos(d.hIni,d.hFim), el=b.querySelector("#ddh-d"); el.textContent=(mm&&mm<=240)?mm+" min":"confira"; el.className="ddh-d"+((mm&&mm<=240)?"":" err"); };
+    b.querySelector("#ddh-i").oninput=upd; b.querySelector("#ddh-f").oninput=function(){ d.__fimAuto=false; upd(); };
+    return b;
+  }
+  function injetar(){
+    var m=document.getElementById("ficha-modal"); if(!m) return; var h=m.querySelector(".fm-box h3"); if(!h||!/Lista de presen/i.test(h.textContent)) return;
+    if(document.getElementById("ddh")) return; var nb=bloco(); if(!nb) return;
+    var ref=document.getElementById("ddf")||m.querySelector(".lib-as")||m.querySelector(".ac5-acoes"); if(ref&&ref.parentNode) ref.parentNode.insertBefore(nb,ref);
+  }
+  new MutationObserver(function(){ if(!document.getElementById("ddh")) injetar(); }).observe(document.body,{childList:true,subtree:true});
+
+  // ── Ao concluir: grava início, término e duração a partir do horário ──
+  if(typeof mgiDDSSalvar==="function"){ var _s=mgiDDSSalvar; window.mgiDDSSalvar=mgiDDSSalvar=function(){
+      var d=DD(); if(!d) return _s.apply(this,arguments);
+      var ei=document.getElementById("ddh-i"), ef=document.getElementById("ddh-f");
+      if(ei) d.hIni=ei.value||d.hIni; if(ef) d.hFim=ef.value||d.hFim; if(d.__fimAuto) d.hFim=hhmm(new Date());
+      var m=minutos(d.hIni,d.hFim), ini=d.hIni, fim=d.hFim, id=d.id;
+      var r=_s.apply(this,arguments);
+      var x=(state.dds||[]).find(function(y){ return y.id===id; });
+      if(x){ delete x.__fimAuto; x.hIni=ini; x.hFim=fim;
+        if(m&&m<=240){ x.duracaoMin=m; x.duracaoManual=false; var base=(x.data||new Date().toISOString().slice(0,10)); try{ x.inicio=new Date(base+"T"+ini+":00").toISOString(); var f=new Date(base+"T"+fim+":00"); if(f<new Date(x.inicio)) f=new Date(f.getTime()+864e5); x.fim=f.toISOString(); }catch(e){} }
+        try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){} }
+      return r; }; }
+  // Ajuste manual da duração também mexe no horário de término
+  if(typeof mgiDDSAjustarDur==="function"){ var _aj=mgiDDSAjustarDur; window.mgiDDSAjustarDur=function(id){ var d=(state.dds||[]).find(function(x){ return x.id===id; }); if(!d) return;
+      var h=horario(d)||{}; var v=prompt("Horário de início (HH:MM)",h.ini||""); if(v===null) return; v=v.trim();
+      var w=prompt("Horário de término (HH:MM)",h.fim||""); if(w===null) return; w=w.trim();
+      var m=minutos(v,w); if(!(m&&m<=240)){ alert("Horário inválido. Use o formato 07:10."); return; }
+      d.hIni=v; d.hFim=w; d.duracaoMin=m; d.duracaoManual=true; d.atualizadoEm=new Date().toISOString();
+      try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){} mgiDDSVer(id); }; }
+
+  // ── Tela do DDS: horário e duração em destaque ──
+  if(typeof mgiDDSVer==="function"){ var _v=mgiDDSVer; window.mgiDDSVer=mgiDDSVer=function(id){ var r=_v.apply(this,arguments);
+      var d=(state.dds||[]).find(function(x){ return x.id===id; }), el=document.querySelector("#ficha-modal .ddd"); if(!d||!el) return r; var h=horario(d);
+      var fiscal=!!(window.MGI_USER&&window.MGI_USER.role==="fiscal");
+      el.innerHTML='🕒 '+(h?'Aplicado <b style="color:var(--text)">'+txtHorario(h)+'</b>':'Horário não registrado')+(fiscal?'':' <button onclick="mgiDDSAjustarDur(\''+d.id+'\')">'+(h?'corrigir':'informar')+'</button>');
+      return r; }; }
+
+  // ── Ata em PDF: linha "Horário e duração" sempre presente; fotos inteiras para o carimbo aparecer ──
+  if(typeof mgiDDSPDF==="function"){ var _p=mgiDDSPDF; window.mgiDDSPDF=mgiDDSPDF=function(id){
+      var d=(state.dds||[]).find(function(x){ return x.id===id; }); if(!d) return _p.apply(this,arguments); var h=horario(d);
+      var _ab=window.abrirJanelaPDF; window.abrirJanelaPDF=abrirJanelaPDF=function(html){ window.abrirJanelaPDF=abrirJanelaPDF=_ab;
+        html=html.replace(/<tr><th>Duração<\/th><td>[\s\S]*?<\/td><\/tr>/,"");
+        html=html.replace("<tr><th>Avaliação</th>",'<tr><th>Horário e duração</th><td>'+(h?(h.ini&&h.fim?h.ini+" às "+h.fim:h.ini||"")+(h.min?(h.ini?" · ":"")+h.min+" minutos":""):"não registrado")+'</td></tr><tr><th>Avaliação</th>');
+        html=html.replace(/height:60mm;object-fit:cover/g,"height:63mm;object-fit:contain;background:#f1f5f9");
+        return _ab.call(this,html); };
+      try{ return _p.apply(this,arguments); }finally{ setTimeout(function(){ window.abrirJanelaPDF=abrirJanelaPDF=_ab; },0); } }; }
+
+  // ── WhatsApp e lista: incluir o horário ──
+  if(typeof mgiDDSTextoWA==="function"){ var _w=mgiDDSTextoWA; window.mgiDDSTextoWA=function(d){ var t=_w.apply(this,arguments), h=horario(d); if(!h) return t;
+      return t.replace(/(\*Data:\*[^\n]*)/,"$1\n*Horário:* "+txtHorario(h)); }; }
+  if(typeof mgiDDS==="function"){ var _l=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_l.apply(this,arguments);
+      document.querySelectorAll('#ficha-modal .rg-tx[onclick^="mgiDDSVer"]').forEach(function(tx){ var id=(tx.getAttribute("onclick").match(/'([^']+)'/)||[])[1], d=(state.dds||[]).find(function(x){ return x.id===id; }), h=horario(d);
+        if(!h||tx.querySelector(".ddh-l")) return; var tp=tx.querySelector(".rg-tp"); if(!tp) return; var s=document.createElement("span"); s.className="ddh-l"; s.textContent=" · 🕒 "+(h.ini||"")+(h.min?" ("+h.min+" min)":""); tp.appendChild(s); });
       return r; }; }
 })();
 </script>
