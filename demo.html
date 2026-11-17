@@ -5137,6 +5137,13 @@ html.light .logo-img{box-shadow:0 2px 8px rgba(15,23,42,.18)}
 .st-pill{display:inline-block;color:#fff;border-radius:999px;padding:3px 10px;font-weight:700;font-size:.76rem}
 .mt-trs{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:180px;overflow:auto}.mt-trs label{flex-direction:row!important;align-items:center;gap:6px;font-weight:500!important;color:var(--text)!important;font-size:.8rem}.mt-trs input{width:auto!important}
 .dd-modo{display:grid;grid-template-columns:1fr 1fr;gap:6px}.dd-tipo button{font-size:.78rem!important}.dd-modo button{background:var(--bg2);border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:9px;font:600 .82rem Barlow,sans-serif;cursor:pointer}.dd-modo button.on{border-color:var(--cyan);background:rgba(59,155,255,.12)}
+.ddv-cab{display:flex;flex-direction:column;gap:2px;font-size:.8rem;color:var(--muted)}.ddv-cab b{font-size:1rem;color:var(--text)}
+.ddv-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.ddv-kpi div{border:1px solid var(--border2);border-radius:10px;padding:7px 4px;text-align:center;background:var(--surf2)}.ddv-kpi b{display:block;font-size:1.05rem;color:var(--text)}.ddv-kpi span{font-size:.68rem;color:var(--muted)}
+.ddv-s{display:flex;flex-direction:column;gap:6px}.ddv-s h4{margin:6px 0 0;font:800 .86rem Barlow,sans-serif;color:var(--text)}
+.ddv-q{display:flex;flex-direction:column;gap:2px;border:1px solid var(--border2);border-radius:10px;padding:8px;font-size:.8rem;color:var(--text)}.ddv-q .ok{color:var(--green)}.ddv-q .rv{color:#f59e0b}
+.ddv-f{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.ddv-f img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--border);cursor:zoom-in}
+.ddv-p{display:flex;gap:8px;align-items:center;border:1px solid var(--border2);border-radius:10px;padding:6px 8px;background:var(--surf2)}.ddv-p>div{flex:1;display:flex;flex-direction:column;font-size:.8rem;color:var(--text)}.ddv-p>div span{color:var(--muted);font-size:.72rem}.ddv-p img{height:34px;max-width:110px;object-fit:contain;background:#fff;border-radius:6px}.ddv-p em{font-size:.72rem;color:var(--muted)}.ddv-min{border-style:dashed}
+.ddv-zoom{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px}.ddv-zoom img{max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px}.ddv-zoom button{background:#fff;border:none;border-radius:10px;padding:8px 14px;font:700 .85rem Barlow,sans-serif}
 .dd-lista{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto}.dd-p{display:flex;gap:6px;align-items:center;border:1px solid var(--border2);border-radius:10px;padding:6px;background:var(--surf2)}
 .dd-n{font-weight:800;color:var(--cyan);min-width:18px;text-align:center}.dd-pc{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}.dd-pc input{font:14px Barlow,sans-serif;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 8px;width:100%}
 .dd-pa{display:flex;flex-direction:column;gap:4px;align-items:center}.dd-pa img{height:34px;max-width:90px;object-fit:contain;background:#fff;border-radius:6px;cursor:pointer}.dd-pa button{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 8px;font:600 .74rem Barlow,sans-serif;cursor:pointer;white-space:nowrap}.dd-pa .dd-x{padding:2px 8px;color:var(--muted)}
@@ -5988,7 +5995,7 @@ function perguntasServico(sv,n,tipo){ const it=itensTipo(sv,tipo); const pool=SE
 window.mgiDDS=function(){ const L0=daObra(state.dds).sort((a,b)=>(b.data||"").localeCompare(a.data||""));
   modal(`<h3>🎓 DDS</h3><p style="margin:0;color:var(--muted);font-size:.8rem">Diálogo diário de qualidade, segurança do trabalho ou meio ambiente: conteúdo, perguntas e presença com assinatura de cada participante. Vale como evidência de treinamento na auditoria.</p>
    ${ro()?"":`<button class="ac5-save" onclick="mgiDDSNovo()">+ Novo DDS</button>`}
-   <div class="rg-lista">${L0.map(d=>`<div class="rg-it" style="border-left-color:var(--cyan)"><div class="rg-tx"><span class="rg-tp">${tipoDD(d)[1]} ${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")} · ${d.acertos}/${d.perguntas.length} acertos</span><b>${$e(d.tema||d.servico)}</b><span>${(d.participantes||[]).length} participante(s) · ministrado por ${$e(d.ministrante||"")}</span></div><div class="rg-bt"><button onclick="mgiDDSPDF('${d.id}')">PDF</button></div></div>`).join("")||`<p class="pi-nada">Nenhum DDS registrado.</p>`}</div>
+   <div class="rg-lista">${L0.map(d=>`<div class="rg-it" style="border-left-color:var(--cyan)"><div class="rg-tx" style="cursor:pointer" onclick="mgiDDSVer('${d.id}')"><span class="rg-tp">${tipoDD(d)[1]} ${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")} · ${d.acertos}/${d.perguntas.length} acertos</span><b>${$e(d.tema||d.servico)}</b><span>${(d.participantes||[]).length} participante(s) · ministrado por ${$e(d.ministrante||"")}</span></div><div class="rg-bt"><button onclick="mgiDDSVer('${d.id}')">👁️ Ver</button><button onclick="mgiDDSPDF('${d.id}')">PDF</button></div></div>`).join("")||`<p class="pi-nada">Nenhum DDS registrado.</p>`}</div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
 window.mgiDDSNovo=function(modo,tipo){ modo=modo||"tema"; tipo=tipo||(window.__ddTipo)||"qualidade"; window.__ddTipo=tipo;
   modal(`<h3>Novo DDS</h3>
@@ -6038,6 +6045,19 @@ window.mgiDDSAssinar=()=>{ lerPart(); mgiPadAssinatura("Assinatura do ministrant
 window.mgiDDSSalvar=function(){ lerPart(); DD.participantes=DD.participantes.filter(x=>x.nome.trim()); if(!DD.participantes.length){ alert("Informe ao menos um participante."); ddPasso(99); return; }
   const sem=DD.participantes.filter(x=>!x.assin).length; if(sem&&!confirm(`${sem} participante(s) sem assinatura. Concluir assim mesmo? Eles poderão assinar a ata impressa.`)){ ddPasso(99); return; }
   DD.acertos=DD.perguntas.filter((q,i)=>DD.respostas[i]===q.certa).length; DD.atualizadoEm=agora(); state.dds.push(DD); log("Registrou DDS de "+tipoDD(DD)[0].toLowerCase(),DD.tema); salvar(); const id=DD.id; mgiDDS(); setTimeout(()=>{ if(confirm("DDS registrado. Gerar a ata em PDF agora?")) mgiDDSPDF(id); },100); };
+window.mgiDDSVer=function(id){ const d=(state.dds||[]).find(x=>x.id===id); if(!d) return; const parts=(d.participantes||[]).map(x=>typeof x==="string"?{nome:x,funcao:"",assin:null}:x);
+  const fts=(()=>{ const n=Math.max((d.fotos||[]).length,(d.fotosUrl||[]).length), o=[]; for(let i=0;i<n;i++){ const f=(d.fotos||[])[i], u=(d.fotosUrl||[])[i]; const v=typeof f==="string"&&f?f:(typeof u==="string"?u:""); if(v) o.push(v); } return o; })();
+  const nFt=fts.length||(typeof d.fotos==="number"?d.fotos:0); const perg=d.perguntas||[], resp=d.respostas||[];
+  modal(`<h3>${tipoDD(d)[1]} DDS registrado</h3>
+   <div class="ddv-cab"><b>${$e(d.tema||d.servico||"")}</b><span>${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")}${d.frente?" · 📍 "+$e(d.frente):""}</span><span>${$e(obraNm(d.obraId))}</span><span>Ministrado por ${$e(d.ministrante||"—")}${d.servico&&d.servico!==d.tema?" · Serviço: "+$e(d.servico):""}</span></div>
+   <div class="ddv-kpi"><div><b>${parts.length}</b><span>participantes</span></div><div><b>${parts.filter(x=>x.assin).length}</b><span>assinaturas</span></div><div><b>${d.acertos||0}/${perg.length}</b><span>acertos</span></div><div><b>${nFt}</b><span>fotos</span></div></div>
+   ${d.pontos&&d.pontos.length?`<div class="ddv-s"><h4>Conteúdo apresentado</h4>${d.pontos.map((p,k)=>`<div class="pet-e"><span>${k+1}</span><div><b>${$e(p.t)}</b><p>${$e(p.texto)}</p></div></div>`).join("")}</div>`:""}
+   ${perg.length?`<div class="ddv-s"><h4>Perguntas aplicadas</h4>${perg.map((q,i)=>`<div class="ddv-q"><b>${i+1}. ${$e(q.q)}</b><span class="ok">✔ ${$e((q.ops||[])[q.certa]||"")}</span><span class="${resp[i]===q.certa?"ok":"rv"}">${resp[i]===q.certa?"Equipe acertou":"Revisada com a equipe"}</span></div>`).join("")}</div>`:""}
+   ${nFt?`<div class="ddv-s"><h4>📸 Fotos da equipe</h4>${fts.length?`<div class="ddv-f">${fts.map((f,i)=>`<img src="${f}" alt="Foto ${i+1}" onclick="mgiDDSFotoZoom(this.src)">`).join("")}</div>`:`<p class="pi-nada">${nFt} foto(s) ainda sendo enviadas pelo aparelho que registrou.</p>`}</div>`:""}
+   <div class="ddv-s"><h4>Lista de presença</h4>${parts.map((x,i)=>`<div class="ddv-p"><span class="dd-n">${i+1}</span><div><b>${$e(x.nome)}</b><span>${$e(x.funcao||"")}</span></div>${x.assin?`<img src="${x.assin}" alt="Assinatura">`:`<em>sem assinatura</em>`}</div>`).join("")||`<p class="pi-nada">Sem participantes.</p>`}
+   <div class="ddv-p ddv-min"><span class="dd-n">✍</span><div><b>${$e(d.ministrante||"Ministrante")}</b><span>Ministrante</span></div>${d.assin?`<img src="${d.assin}" alt="Assinatura">`:`<em>sem assinatura</em>`}</div></div>
+   <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDS()">Voltar</button><button class="ac5-save" onclick="mgiDDSPDF('${d.id}')">📄 Gerar PDF</button></div>`); };
+window.mgiDDSFotoZoom=function(src){ const z=document.createElement("div"); z.className="ddv-zoom"; z.innerHTML=`<img src="${src}"><button>✕ Fechar</button>`; z.onclick=()=>z.remove(); document.body.appendChild(z); };
 window.mgiDDSPDF=function(id){ const d=state.dds.find(x=>x.id===id); if(!d) return; const parts=(d.participantes||[]).map(x=>typeof x==="string"?{nome:x,funcao:"",assin:null}:x);
   abrirJanelaPDF(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${tipoDD(d)[2]} — ${$e(d.tema||d.servico)}</title><style>${typeof cssPDF==="function"?cssPDF():""} .sg{height:10mm;max-width:45mm;object-fit:contain} td{vertical-align:middle}</style></head><body><h1 style="font-size:16pt;margin:0 0 2mm">${tipoDD(d)[2]}</h1><p style="color:#475569;font-size:9pt;margin:0 0 5mm">${$e(obraNm(d.obraId))} · ${(d.data||"").split("-").reverse().join("/")}${d.frente?" · "+$e(d.frente):""}</p>
    <table><tr><th style="width:28%">Tema</th><td>${$e(d.tema||d.servico)}</td></tr>${d.servico&&d.servico!==d.tema?`<tr><th>Serviço relacionado</th><td>${$e(d.servico)}</td></tr>`:""}<tr><th>Ministrante</th><td>${$e(d.ministrante)}</td></tr><tr><th>Avaliação</th><td>${d.acertos} de ${d.perguntas.length} perguntas respondidas corretamente pela equipe</td></tr></table>
@@ -6818,6 +6838,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v54: obra atual sempre definida (Mapa vazio no computador)
 // MGI PRO · v55: frentes cadastradas para tocar e escolher em FVS, Diário, Liberação e DDS
 // MGI PRO · v56: DDS com fotos da equipe como evidência (no PDF e na nuvem)
+// MGI PRO · v57: DDS registrados podem ser visualizados na tela (conteúdo, perguntas, presença, assinaturas e fotos)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7093,7 +7114,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   function mostrar(){
     var b=document.getElementById("sync-pend");
     if(!b){ b=document.createElement("div"); b.id="sync-pend"; document.body.appendChild(b); }
-    if(!window.MGI_PREVIA&&typeof firebase!=="undefined"&&window.MGI_DB&&pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
+    if(!(window.MGI_PREVIA||window.__MGI_PREVIA)&&typeof firebase!=="undefined"&&window.MGI_DB&&pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
       b.innerHTML='<span>⏳ Alterações ainda não enviadas para a nuvem'+(navigator.onLine?"":" (sem internet)")+'</span><button onclick="mgiEnviarAgora()">Enviar agora</button>';
       b.style.display="flex";
     } else b.style.display="none";
