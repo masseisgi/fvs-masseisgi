@@ -2592,7 +2592,7 @@ async function mgiEnviarFotos(){
       await ref.putString(dado,"data_url",{contentType:"image/jpeg",customMetadata:{autor:window.MGI_USER.email||""}});
       return await ref.getDownloadURL();
     };
-    const listas=[state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes||[],state.dds||[]];
+    const listas=[state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes||[],state.dds||[],state.materiais||[]];
     for(const l of listas){ for(const snap of (l||[])){
       if(!snap||!snap.fotos||typeof snap.fotos!=="object") continue;
       let mudou=false;
@@ -2673,7 +2673,7 @@ async function enviarNuvem(){
         empresaCfg: state.empresaCfg || null,
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
-        trechos: state.trechos || [], materiais: state.materiais || [], dds: (state.dds || []).map(semFotos), locais: state.locais || [],
+        trechos: state.trechos || [], materiais: (state.materiais || []).map(semFotos), dds: (state.dds || []).map(semFotos), locais: state.locais || [],
         historico: (state.historico||[]).slice(0,600)
       });
       _carga.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
@@ -3768,8 +3768,8 @@ function _empRender(){
     <label>Segundo logo, à direita (contratante)</label>${prev(e.logo2,"logo2","Opcional, por exemplo o logo da Sabesp")}
     ${(state.obras||[]).length?`<label>Logo e contrato por obra (opcional, substituem os da empresa)</label>${state.obras.map(o=>`<div class="emp-obra"><b>${acEsc(o.nome)}</b>${prev(e._obras[o.id].logo,"obra:"+o.id,"Usa o logo da empresa")}<input placeholder="Contrato desta obra" value="${acEsc(e._obras[o.id].contrato)}" onchange="_empEd._obras['${o.id}'].contrato=this.value"${dis}></div>`).join("")}`:""}
     <label>Carimbo nas fotos</label>
-    <div class="emp-ck">${[["ativo","Carimbar as fotos"],["logo","Logo"],["gps","Localização GPS"],["autor","Quem registrou"]].map(([k,n])=>`<label><input type="checkbox"${c[k]!==false?" checked":""} onchange="_empEd.carimbo['${k}']=this.checked"${dis}> ${n}</label>`).join("")}</div>
-    <p style="margin:0;color:var(--muted);font-size:.76rem">Data, hora, obra e serviço sempre entram no carimbo. Fotos da galeria indicam a data do arquivo.</p>
+    <div class="emp-ck">${[["ativo","Carimbar as fotos"],["logo","Logo"],["gps","Localização GPS"],["autor","Quem registrou"],["marcaDagua","Marca d'água com o logo"]].map(([k,n])=>`<label><input type="checkbox"${(k==="marcaDagua"?c[k]===true:c[k]!==false)?" checked":""} onchange="_empEd.carimbo['${k}']=this.checked"${dis}> ${n}</label>`).join("")}</div>
+    <p style="margin:0;color:var(--muted);font-size:.76rem">Data, hora, obra e serviço sempre entram no carimbo. Fotos da galeria indicam a data do arquivo. Quando a obra tem logo próprio (consórcio), o carimbo leva o logo da obra e o da empresa.</p>
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="document.getElementById('ficha-modal').remove()">${admin?"Cancelar":"Fechar"}</button>${admin?`<button class="ac5-save" onclick="_empSalvar()">Salvar</button>`:""}</div></div>`;
 }
 function _empLer(){ const g=id=>(document.getElementById(id)||{}).value; if(g("emp-razao")!==undefined){ _empEd.razao=g("emp-razao")||""; _empEd.cnpj=g("emp-cnpj")||""; _empEd.contrato=g("emp-contrato")||""; _empEd.emails=g("emp-emails")||""; } }
@@ -4092,30 +4092,39 @@ function mgiCtxFoto(module,id,modo,file){
   const u=window.MGI_USER||{};
   return {obra,ref,quando:daCamera?agora:(lm||agora),daCamera,autor:u.nome||u.email||"",gps:_gps};
 }
-function _logoCarimbo(){ const c=state.empresaCfg||{}; const ob=(state.obras.find(o=>o.id===state.obraAtual)||{}); return ob.logo||c.logo||""; }
 function mgiCarimbar(dataURL,ctx){
   const cfg=(state.empresaCfg||{}).carimbo||{};
   if(cfg.ativo===false||!ctx) return Promise.resolve(dataURL);
-  return new Promise(res=>{ const img=new Image(); img.onload=()=>{
+  const carrega=src=>new Promise(r=>{ if(!src) return r(null); const im=new Image(); im.onload=()=>r(im); im.onerror=()=>r(null); im.src=src; });
+  // Logos: o da obra (ex.: consórcio) e o da empresa, os dois quando forem diferentes
+  const ob=(state.obras.find(o=>o.id===state.obraAtual)||{}), emp=(state.empresaCfg||{}).logo||"";
+  const fontes=cfg.logo===false?[]:[ob.logo||"",emp].filter((v,i,a)=>v&&a.indexOf(v)===i);
+  return new Promise(res=>{ const img=new Image(); img.onload=async()=>{
+    const lgs=(await Promise.all(fontes.map(carrega))).filter(Boolean);
     const w=img.naturalWidth,h=img.naturalHeight,cv=document.createElement("canvas"); cv.width=w; cv.height=h; const g=cv.getContext("2d"); g.drawImage(img,0,0);
-    const fs=Math.max(14,Math.round(Math.min(w,h)*0.028)), pad=Math.round(fs*0.6), lh=Math.round(fs*1.3);
+    const fs=Math.max(16,Math.round(Math.max(w,h)*0.02)), pad=Math.round(fs*0.6), lh=Math.round(fs*1.28);
+    // Marca d'água discreta no centro
+    if(cfg.marcaDagua===true&&lgs.length){ const L=lgs[lgs.length-1], r=Math.min((w*0.42)/L.naturalWidth,(h*0.3)/L.naturalHeight); g.save(); g.globalAlpha=0.13; g.drawImage(L,(w-L.naturalWidth*r)/2,(h-L.naturalHeight*r)/2,L.naturalWidth*r,L.naturalHeight*r); g.restore(); }
     const dt=ctx.quando.toLocaleDateString("pt-BR")+" "+ctx.quando.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
     const l1=[ctx.obra,ctx.ref].filter(Boolean).join(" · ");
     const l2=[(ctx.daCamera?"Foto em ":"Arquivo de ")+dt, (cfg.gps!==false&&ctx.gps)?("GPS "+ctx.gps.lat.toFixed(5)+", "+ctx.gps.lng.toFixed(5)):"", cfg.autor===false?"":ctx.autor].filter(Boolean).join(" · ");
-    const linhas=[l1,l2].filter(Boolean); const bh=pad*2+lh*linhas.length;
-    const desenha=(lg)=>{
-      g.fillStyle="rgba(10,18,30,0.72)"; g.fillRect(0,h-bh,w,bh);
-      let x=pad; if(lg){ const s=bh-pad*1.2, r=Math.min(s/lg.naturalHeight,(w*0.22)/lg.naturalWidth); const lw=lg.naturalWidth*r, lhh=lg.naturalHeight*r, bx=x, by=h-bh+(bh-lhh)/2, m=Math.round(fs*0.25);
-        g.fillStyle="rgba(255,255,255,0.95)"; const rr=m*1.5; g.beginPath(); if(g.roundRect) g.roundRect(bx-m,by-m,lw+2*m,lhh+2*m,rr); else g.rect(bx-m,by-m,lw+2*m,lhh+2*m); g.fill();
-        g.drawImage(lg,bx,by,lw,lhh); x+=lw+pad+m*2; }
-      g.fillStyle="#fff"; g.textBaseline="top";
-      linhas.forEach((t,i)=>{ g.font=(i===0?"bold ":"")+fs+"px Arial, sans-serif"; let tx=t; while(g.measureText(tx).width>w-x-pad&&tx.length>8) tx=tx.slice(0,-2); if(tx!==t) tx=tx.slice(0,-1)+"…"; g.fillText(tx,x,h-bh+pad+i*lh); });
-      res(cv.toDataURL("image/jpeg",0.82));
-    };
-    const lsrc=cfg.logo===false?"":_logoCarimbo();
-    if(lsrc){ const lg=new Image(); lg.onload=()=>desenha(lg); lg.onerror=()=>desenha(null); lg.src=lsrc; } else desenha(null);
+    // Área dos logos à esquerda
+    const alvoH=lh*2, m=Math.round(fs*0.25); let lx=pad; const caixas=lgs.map(L=>{ const r=Math.min(alvoH/L.naturalHeight,(w*0.2)/L.naturalWidth); const c={L,w:L.naturalWidth*r,h:L.naturalHeight*r,x:lx}; lx+=c.w+m*2+Math.round(pad*0.6); return c; });
+    const x0=caixas.length?lx+Math.round(pad*0.4):pad, larg=w-x0-pad;
+    // Quebra o texto em linhas, sem cortar (no máximo 4 linhas)
+    const quebra=(t,bold)=>{ g.font=(bold?"bold ":"")+fs+"px Arial, sans-serif"; const ps=String(t).split(" "), out=[]; let cur="";
+      ps.forEach(p=>{ const tt=cur?cur+" "+p:p; if(g.measureText(tt).width>larg&&cur){ out.push(cur); cur=p; } else cur=tt; }); if(cur) out.push(cur); return out.map(x=>({t:x,b:bold})); };
+    const corta=(ls,n)=>{ if(ls.length>n){ ls=ls.slice(0,n); ls[n-1].t=ls[n-1].t.replace(/\s*\S{0,3}$/,"")+"…"; } return ls; };
+    let linhas=[].concat(l1?corta(quebra(l1,true),2):[],l2?corta(quebra(l2,false),2):[]);
+    const bh=Math.max(pad*2+lh*linhas.length, caixas.length?alvoH+pad*2:0);
+    g.fillStyle="rgba(10,18,30,0.74)"; g.fillRect(0,h-bh,w,bh);
+    caixas.forEach(c=>{ const by=h-bh+(bh-c.h)/2; g.fillStyle="rgba(255,255,255,0.96)"; g.beginPath(); if(g.roundRect) g.roundRect(c.x-m,by-m,c.w+2*m,c.h+2*m,m*1.5); else g.rect(c.x-m,by-m,c.w+2*m,c.h+2*m); g.fill(); g.drawImage(c.L,c.x,by,c.w,c.h); });
+    g.fillStyle="#fff"; g.textBaseline="top"; const ty=h-bh+(bh-lh*linhas.length)/2;
+    linhas.forEach((l,i)=>{ g.font=(l.b?"bold ":"")+fs+"px Arial, sans-serif"; g.fillText(l.t,x0,ty+i*lh); });
+    res(cv.toDataURL("image/jpeg",0.82));
   }; img.onerror=()=>res(dataURL); img.src=dataURL; });
 }
+function _logoCarimbo(){ const c=state.empresaCfg||{}; const ob=(state.obras.find(o=>o.id===state.obraAtual)||{}); return ob.logo||c.logo||""; }
 function mgiComprimirFoto(dataURL,max=1600,q=0.8){
   return new Promise(res=>{ try{ const img=new Image(); img.onload=()=>{ let w=img.naturalWidth,h=img.naturalHeight; const r=Math.min(1,max/Math.max(w,h)); w=Math.round(w*r); h=Math.round(h*r);
     const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h); const out=c.toDataURL("image/jpeg",q); res(out.length<dataURL.length?out:dataURL); };
@@ -5703,7 +5712,7 @@ window.mgiBackup=function(){ const d={versao:"mgi-pro-backup-1",geradoEm:agoraIS
 window.mgiRestaurar=function(inp){ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.versao!=="mgi-pro-backup-1") throw 0; if(!confirm("Mesclar o backup com os dados atuais? Nada existente será apagado.")) return;
    if(typeof mgiMesclarEstado==="function") mgiMesclarEstado(d); state.liberacoes=_mesclarLista(state.liberacoes||[],d.liberacoes,{},false); state.docsCtl=_mesclarLista(state.docsCtl||[],d.docsCtl,{},false); mgiLog("Restaurou backup",d.geradoEm); persistir(); alert("Backup mesclado."); location.reload(); }catch(e){ alert("Arquivo de backup inválido."); } }; r.readAsText(f); };
 window.mgiHistorico=function(){ const L=(state.historico||[]).slice(0,200); modal(`<h3>🕓 Registro de alterações</h3><p style="margin:0;color:var(--muted);font-size:.82rem">Quem fez o quê e quando, para rastreabilidade em auditoria.</p><div class="rg-lista">${L.map(h=>`<div class="rg-it"><div class="rg-tx"><span class="rg-tp">${new Date(h.em).toLocaleString("pt-BR")}</span><b>${$e(h.acao)}</b><span>${$e(h.alvo||"")}${h.por?" · "+$e(h.por):""}</span></div></div>`).join("")||`<p class="pi-nada">Sem alterações registradas ainda.</p>`}</div><div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFerramentas()">Voltar</button></div>`,"rg-box"); };
-function fotosPendentes(){ let n=0; [state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes,state.dds].forEach(l=>(l||[]).forEach(s=>{ const f=s.fotos, u=s.fotosUrl; if(Array.isArray(f)) f.forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[i])) n++; }); else if(f&&typeof f==="object") Object.keys(f).forEach(k=>(f[k]||[]).forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[k]&&u[k][i])) n++; })); })); return n; }
+function fotosPendentes(){ let n=0; [state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes,state.dds,state.materiais].forEach(l=>(l||[]).forEach(s=>{ const f=s.fotos, u=s.fotosUrl; if(Array.isArray(f)) f.forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[i])) n++; }); else if(f&&typeof f==="object") Object.keys(f).forEach(k=>(f[k]||[]).forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[k]&&u[k][i])) n++; })); })); return n; }
 window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine;
   const op=(ic,t,d,fn)=>`<button class="rel-op" onclick="${fn}"><span>${ic}</span><div><b>${t}</b><small>${d}</small></div></button>`;
   modal(`<h3>🧰 Ferramentas</h3>
@@ -6740,6 +6749,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v63: fotos carimbadas na liberação de frente (por item) e no recebimento de material; carimbo com logo da obra e da empresa, texto sem corte e marca d'água opcional
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7866,6 +7876,84 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   if(typeof mgiDDS==="function"){ var _l=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_l.apply(this,arguments);
       document.querySelectorAll('#ficha-modal .rg-tx[onclick^="mgiDDSVer"]').forEach(function(tx){ var id=(tx.getAttribute("onclick").match(/'([^']+)'/)||[])[1], d=(state.dds||[]).find(function(x){ return x.id===id; }), h=horario(d);
         if(!h||tx.querySelector(".ddh-l")) return; var tp=tx.querySelector(".rg-tp"); if(!tp) return; var s=document.createElement("span"); s.className="ddh-l"; s.textContent=" · 🕒 "+(h.ini||"")+(h.min?" ("+h.min+" min)":""); tp.appendChild(s); });
+      return r; }; }
+})();
+</script>
+
+<!-- ===== FOTOS CARIMBADAS NA LIBERAÇÃO DE FRENTE E NO RECEBIMENTO DE MATERIAL (v63) ===== -->
+<style>
+.lbf{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.lbf img{width:54px!important;height:54px!important;max-width:none!important;object-fit:contain;background:#0b1220;border-radius:8px;border:1px solid var(--border);cursor:zoom-in;display:block}
+.lbf .lbf-x{position:relative;display:block;flex:0 0 54px;width:54px;height:54px}.lbf .lbf-x button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.7);color:#fff;font-size:.7rem;cursor:pointer;line-height:1}
+.lbf label{display:inline-flex;align-items:center;gap:4px;padding:6px 9px;border-radius:9px;border:1px dashed var(--border2,var(--border));font:700 .74rem Barlow,sans-serif;color:var(--muted);cursor:pointer}
+.lbf input{display:none}
+</style>
+<script>
+(function(){
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function curto(t,n){ t=String(t||""); return t.length>n?t.slice(0,n-1)+"…":t; }
+  function processa(files,ctxFn,max,cb){ Array.from(files||[]).slice(0,max).forEach(function(file){ var ctx=ctxFn(file); var r=new FileReader();
+      r.onload=function(e){ mgiComprimirFoto(e.target.result,1280,0.78).then(function(f){ return mgiCarimbar(f,ctx); }).then(cb); }; r.readAsDataURL(file); }); }
+  function fotosDe(f,u){ var n=Math.max(Array.isArray(f)?f.length:0,Array.isArray(u)?u.length:0), o=[]; for(var i=0;i<n;i++){ var a=(f||[])[i], b=(u||[])[i]; var v=(typeof a==="string"&&a)?a:(typeof b==="string"?b:""); if(v) o.push(v); } return o; }
+
+  // ═══ Liberação de frente: foto por item do checklist ═══
+  function LIBx(){ try{ return mgiLibAPI.get(); }catch(e){ return null; } }
+  function libFotos(L,k){ L.fotos=(L.fotos&&typeof L.fotos==="object"&&!Array.isArray(L.fotos))?L.fotos:{}; var U=(L.fotosUrl&&!Array.isArray(L.fotosUrl))?L.fotosUrl:{};
+    if(!Array.isArray(L.fotos[k])) L.fotos[k]=[]; (U[k]||[]).forEach(function(v,i){ if(v&&!L.fotos[k][i]) L.fotos[k][i]=v; }); return L.fotos[k]; }
+  function itemTexto(k){ var p=k.split("_"), G=(window.mgiLibAPI&&mgiLibAPI.grupos)||[]; return ((G[+p[0]]||[])[1]||[])[+p[1]]||""; }
+  function decorarLib(){
+    var m=document.getElementById("ficha-modal"); if(!m||!document.getElementById("lib-frente")) return; var L=LIBx(); if(!L) return;
+    m.querySelectorAll(".lib-i").forEach(function(it){ if(it.querySelector(".lbf")) return; var b=it.querySelector('button[onclick^="mgiLibResp"]'); if(!b) return;
+      var k=(b.getAttribute("onclick").match(/'([^']+)'/)||[])[1]; if(!k) return; var fs=libFotos(L,k).filter(function(x){ return typeof x==="string"&&x; });
+      var ro=fiscal()||b.disabled; if(ro&&!fs.length) return;
+      var d=document.createElement("div"); d.className="lbf";
+      d.innerHTML=fs.map(function(f,i){ return '<div class="lbf-x"><img src="'+f+'" onclick="mgiDDSFotoZoom(this.src)" alt="Foto">'+(ro?'':'<button type="button" onclick="mgiLibFotoRem(\''+k+'\','+i+')" aria-label="Remover">✕</button>')+'</div>'; }).join("")+
+        (ro||fs.length>=4?'':'<label>📷 Foto<input type="file" accept="image/*" capture="environment" onchange="mgiLibFotoAdd(\''+k+'\',this,\'camera\')"></label><label>🖼️<input type="file" accept="image/*" multiple onchange="mgiLibFotoAdd(\''+k+'\',this,\'galeria\')"></label>');
+      it.appendChild(d); });
+  }
+  window.mgiLibFotoAdd=function(k,inp,modo){ try{ mgiLibAPI.ler(); }catch(e){} var L=LIBx(); if(!L) return; var arr=libFotos(L,k), files=Array.from(inp.files||[]); inp.value="";
+    processa(files,function(file){ var c=mgiCtxFoto("lib",null,modo,file); if(c) c.ref="Liberação"+(L.frente?" · "+curto(L.frente,40):"")+" · "+curto(itemTexto(k),45); return c; },4-arr.length,function(f){ arr.push(f); mgiLibAPI.render(); }); };
+  window.mgiLibFotoRem=function(k,i){ try{ mgiLibAPI.ler(); }catch(e){} var L=LIBx(); if(!L) return; var arr=libFotos(L,k); arr.splice(i,1); if(L.fotosUrl&&L.fotosUrl[k]) L.fotosUrl[k].splice(i,1); mgiLibAPI.render(); };
+  // PDF da liberação com o registro fotográfico
+  if(typeof mgiLibPDF==="function"){ var _lp=mgiLibPDF; window.mgiLibPDF=function(id){
+      var x=(state.liberacoes||[]).find(function(l){ return l.id===id; }); if(!x) return _lp.apply(this,arguments);
+      var F=(x.fotos&&typeof x.fotos==="object"&&!Array.isArray(x.fotos))?x.fotos:{}, U=(x.fotosUrl&&!Array.isArray(x.fotosUrl))?x.fotosUrl:{}, lista=[];
+      Array.from(new Set(Object.keys(F).concat(Object.keys(U)))).sort().forEach(function(k){ fotosDe(F[k],U[k]).forEach(function(f){ lista.push({f:f,t:itemTexto(k),r:(x.resp||{})[k]}); }); });
+      if(!lista.length) return _lp.apply(this,arguments);
+      var _ab=window.abrirJanelaPDF; window.abrirJanelaPDF=abrirJanelaPDF=function(html){ window.abrirJanelaPDF=abrirJanelaPDF=_ab;
+        var bloco='<h3>Registro fotográfico</h3><div style="display:flex;flex-wrap:wrap;gap:3mm">'+lista.map(function(o,i){ return '<figure style="margin:0;width:84mm;break-inside:avoid"><img src="'+o.f+'" style="width:84mm;height:63mm;object-fit:contain;background:#f1f5f9;border:1px solid #ccd"><figcaption style="font-size:7.5pt;color:#556">Foto '+(i+1)+(o.r==="NC"?" · pendência":"")+": "+E(o.t)+'</figcaption></figure>'; }).join("")+'</div>';
+        var i=html.indexOf('<div class="ass"'); html=i>=0?html.slice(0,i)+bloco+html.slice(i):html.replace("</body>",bloco+"</body>"); return _ab.call(this,html); };
+      try{ return _lp.apply(this,arguments); }finally{ setTimeout(function(){ window.abrirJanelaPDF=abrirJanelaPDF=_ab; },0); } }; }
+
+  // ═══ Recebimento de material: fotos do material, da etiqueta e da nota fiscal ═══
+  function MTx(){ try{ return mgiMTAPI.get(); }catch(e){ return null; } }
+  function matFotos(M){ if(!Array.isArray(M.fotos)) M.fotos=[]; (Array.isArray(M.fotosUrl)?M.fotosUrl:[]).forEach(function(v,i){ if(v&&!M.fotos[i]) M.fotos[i]=v; }); return M.fotos; }
+  function decorarMat(){
+    var m=document.getElementById("ficha-modal"); if(!m||!document.getElementById("mt-mat")||document.getElementById("mtf")) return; var M=MTx(); if(!M) return;
+    var fs=matFotos(M).filter(function(x){ return typeof x==="string"&&x; }), ro=fiscal()||document.getElementById("mt-mat").disabled;
+    var b=document.createElement("div"); b.className="ddf"; b.id="mtf";
+    b.innerHTML='<div class="ddf-t">📸 Fotos do material ('+fs.length+'/6)<small>Material, etiqueta do lote, certificado e nota fiscal. Saem carimbadas com data, hora, obra e logo.</small></div>'+
+      (fs.length?'<div class="ddf-g">'+fs.map(function(f,i){ return '<div><img src="'+f+'" alt="Foto '+(i+1)+'" onclick="mgiDDSFotoZoom(this.src)">'+(ro?'':'<button type="button" onclick="mgiMatFotoRem('+i+')" aria-label="Remover foto">✕</button>')+'</div>'; }).join("")+'</div>':'')+
+      (ro||fs.length>=6?'':'<div class="ddf-b"><label>📷 Tirar foto<input type="file" accept="image/*" capture="environment" onchange="mgiMatFotoAdd(this,\'camera\')"></label><label>🖼️ Da galeria<input type="file" accept="image/*" multiple onchange="mgiMatFotoAdd(this,\'galeria\')"></label></div>');
+    var ref=m.querySelector(".pet-s")||m.querySelector(".ac5-acoes"); if(ref) ref.parentNode.insertBefore(b,ref);
+  }
+  window.mgiMatFotoAdd=function(inp,modo){ try{ mgiMTAPI.ler(); }catch(e){} var M=MTx(); if(!M) return; var arr=matFotos(M), files=Array.from(inp.files||[]); inp.value="";
+    processa(files,function(file){ var c=mgiCtxFoto("mat",null,modo,file); if(c) c.ref="Recebimento de material"+(M.material?" · "+curto(M.material,40):"")+(M.lote?" · lote "+M.lote:"")+(M.nf?" · NF "+M.nf:""); return c; },6-arr.length,function(f){ arr.push(f); mgiMTAPI.render(); }); };
+  window.mgiMatFotoRem=function(i){ try{ mgiMTAPI.ler(); }catch(e){} var M=MTx(); if(!M) return; matFotos(M).splice(i,1); if(Array.isArray(M.fotosUrl)) M.fotosUrl.splice(i,1); mgiMTAPI.render(); };
+  // Tela do material: mostra as fotos
+  if(typeof mgiMatVer==="function"){ var _mv=mgiMatVer; window.mgiMatVer=mgiMatVer=function(id){ var r=_mv.apply(this,arguments);
+      var M=(state.materiais||[]).find(function(x){ return x.id===id; }), cab=document.querySelector("#ficha-modal .ddv-kpi"); if(!M||!cab) return r;
+      var fs=fotosDe(M.fotos,M.fotosUrl); if(!fs.length) return r;
+      var s=document.createElement("div"); s.className="ddv-s"; s.innerHTML='<h4>📸 Fotos</h4><div class="ddv-f">'+fs.map(function(f,i){ return '<img src="'+f+'" alt="Foto '+(i+1)+'" onclick="mgiDDSFotoZoom(this.src)">'; }).join("")+'</div>';
+      cab.parentNode.insertBefore(s,cab.nextSibling); return r; }; }
+
+  var t=null; new MutationObserver(function(){ clearTimeout(t); t=setTimeout(function(){ try{ decorarLib(); }catch(e){} try{ decorarMat(); }catch(e){} },60); }).observe(document.body,{childList:true,subtree:true});
+
+  // Fotos que vieram da nuvem (em outro aparelho) voltam a aparecer
+  if(typeof mgiMesclarEstado==="function"){ var _me=mgiMesclarEstado; window.mgiMesclarEstado=mgiMesclarEstado=function(){ var r=_me.apply(this,arguments);
+      try{ (state.materiais||[]).forEach(function(x){ if(x) matFotos(x); });
+        (state.liberacoes||[]).forEach(function(x){ if(!x) return; if(!x.fotos||typeof x.fotos!=="object"||Array.isArray(x.fotos)) x.fotos={}; var U=(x.fotosUrl&&!Array.isArray(x.fotosUrl))?x.fotosUrl:{}; Object.keys(U).forEach(function(k){ libFotos(x,k); }); }); }catch(e){}
       return r; }; }
 })();
 </script>
