@@ -6735,6 +6735,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v56: DDS com fotos da equipe como evidência (no PDF e na nuvem)
 // MGI PRO · v57: DDS registrados podem ser visualizados na tela (conteúdo, perguntas, presença, assinaturas e fotos)
 // MGI PRO · v58: visualização na tela de Liberação, Materiais e Diário; filtro de DDS por tipo, frente e mês; compartilhar no WhatsApp
+// MGI PRO · v59: visualização de FVS e Auditoria, cobrança de pendências e NCs pelo WhatsApp, painel mensal de DDS com horas de treinamento
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7329,6 +7330,163 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   if(typeof mgiRegistrosRender==="function"){ var _rr=mgiRegistrosRender; window.mgiRegistrosRender=function(){ var r=_rr.apply(this,arguments);
       document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiRegAbrir(\'Diário\'"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'Diário','([^']+)'/)||[])[1]; if(!id) return;
         var v=document.createElement("button"); v.textContent="👁️ Ver"; v.setAttribute("onclick","mgiDiarioVer('"+id+"')"); b.parentNode.insertBefore(v,b.parentNode.firstChild); });
+      return r; }; }
+})();
+</script>
+
+<!-- ===== VISUALIZAÇÃO DE FVS E AUDITORIA, COBRANÇA DE PENDÊNCIAS E PAINEL MENSAL DE DDS (v59) ===== -->
+<style>
+.vw-pct{font:800 1.5rem Barlow,sans-serif;line-height:1}
+.vw-g summary{display:block;list-style:none}.vw-g summary::-webkit-details-marker{display:none}.vw-g summary::before{content:"▸ ";color:var(--muted)}.vw-g[open] summary::before{content:"▾ "}
+.vw-g summary .vw-cl{display:inline-flex;width:calc(100% - 1.3em);vertical-align:top}.vw-g summary .vw-bar{margin-left:1.3em}
+#ficha-modal .ac5-acoes{flex-wrap:wrap}#ficha-modal .ac5-acoes>button{flex:1 1 auto}
+.vw-ac{border-top:1px dashed var(--border2,var(--border));margin-top:4px;padding-top:4px;font-size:.76rem;color:var(--text);display:flex;flex-direction:column;gap:2px}
+.vw-ac b{color:var(--cyan)}
+.vw-cl{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.vw-cl small{color:var(--muted);font-weight:600}
+.vw-bar{display:block;height:6px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:3px}.vw-bar i{display:block;height:100%}
+.vw-cob{background:#DC2626!important;color:#fff!important;border-color:#DC2626!important}
+.pd-cfg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pd-cfg select{width:100%;padding:8px;border-radius:9px;border:1px solid var(--border2,var(--border));background:var(--surf2,transparent);color:var(--text);font:600 .8rem Barlow,sans-serif}
+</style>
+<script>
+(function(){
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function dBR(s){ return s?String(s).slice(0,10).split("-").reverse().join("/"):""; }
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function fotosDe(f,u){ var n=Math.max(Array.isArray(f)?f.length:0,Array.isArray(u)?u.length:0), o=[]; for(var i=0;i<n;i++){ var a=(f||[])[i], b=(u||[])[i]; var v=(typeof a==="string"&&a)?a:(typeof b==="string"?b:""); if(v) o.push(v); } return o; }
+  function fotosItem(x,k){ var F=x.fotos||{}, U=(x.fotosUrl&&!Array.isArray(x.fotosUrl))?x.fotosUrl:{}; return fotosDe(F[k],U[k]); }
+  function abrir(h){ var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=function(e){ if(e.target===m) m.remove(); }; m.innerHTML='<div class="fm-box rg-box">'+h+'</div>'; var b=m.querySelector(".fm-box"); if(b) b.scrollTop=0; return m; }
+  function imgs(list){ return list.length?'<div class="vw-fi">'+list.map(function(f,i){ return '<img src="'+f+'" alt="Foto '+(i+1)+'" onclick="mgiDDSFotoZoom(this.src)">'; }).join("")+'</div>':''; }
+  function botao(k,txt,fotos,rot,cls){ window.__vwTxt=window.__vwTxt||{}; window.__vwFotos=window.__vwFotos||{}; window.__vwTxt[k]=txt; window.__vwFotos[k]=fotos||[]; return '<button class="ac5-cancel '+(cls||"vw-wa")+'" onclick="mgiCompartilharChave(\''+k+'\')">'+(rot||"📲 WhatsApp")+'</button>'; }
+  function acHTML(ac){ if(!ac) return ""; var l=function(r,v){ return v?'<span><b>'+r+':</b> '+E(v)+'</span>':''; };
+    var como=Array.isArray(ac.como)?ac.como.join("; "):ac.como;
+    return '<div class="vw-ac">'+(ac.resumo?'<span style="font-weight:700">'+E(ac.resumo)+'</span>':'')+l("O que fazer",ac.o_que)+l("Por que",ac.por_que)+l("Quem",ac.quem)+l("Prazo",ac.quando)+l("Onde",ac.onde)+l("Como",como)+l("Custo",ac.quanto)+'</div>'; }
+  function acTxt(ac){ if(!ac) return ""; return (ac.resumo||ac.o_que?"\n   Ação: "+(ac.resumo||ac.o_que):"")+(ac.quem?"\n   Quem: "+ac.quem:"")+(ac.quando?"\n   Prazo: "+ac.quando:""); }
+  function cor(p){ return p>=80?"#14CE8D":p>=60?"#F59E0B":"#f87171"; }
+  function assin(a,b,ra,rb,na,nb){ return '<div class="ddv-s"><h4>Assinaturas</h4><div class="vw-ass"><div>'+(a?'<img src="'+a+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(na||"—")+'</b>'+ra+'</div><div>'+(b?'<img src="'+b+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(nb||"—")+'</b>'+rb+'</div></div></div>'; }
+  function sigImg(s){ return typeof s==="string"?s:(s&&(s.img||s.data))||""; }
+
+  // ── FVS ──
+  window.mgiFVSVer=function(id){
+    var f=(state.fvsSalvas||[]).find(function(x){ return x.id===id; }); if(!f) return;
+    var info=f.info||{}, R=f.respostas||{}, O=f.observacoes||{}, A=f.acoes||{}, S=f.signatures||{};
+    var svc=(typeof SERVICOS!=="undefined"&&SERVICOS.find(function(s){ return s.id===f.serviceId; }))||{nome:f.serviceName||"Serviço",itens:[]};
+    var it=svc.itens.map(function(x,i){ return {t:x.t,m:x.m,tol:x.tol,i:i,k:(f.serviceId||svc.id)+"_"+i}; });
+    var c=it.filter(function(x){ return R[x.k]==="C"; }).length, nc=it.filter(function(x){ return R[x.k]==="NC"; }), na=it.filter(function(x){ return R[x.k]==="NA"; }).length;
+    var apl=c+nc.length, pct=apl?Math.round(c/apl*100):0;
+    var item=function(x){ var r=R[x.k]||"", fs=fotosItem(f,x.k); return '<div class="vw-i'+(r==="NC"?" vw-pend":"")+'"><b>'+String(x.i+1).padStart(2,"0")+'. '+E(x.t)+'</b>'+(x.tol?'<span class="o">📐 '+E(x.tol)+'</span>':'')+'<span class="r" style="color:'+(r==="C"?"var(--green)":r==="NC"?"var(--red)":"var(--muted)")+'">'+(r==="C"?"✓ Conforme":r==="NC"?"✗ Não conforme":r==="NA"?"Não se aplica":"Sem resposta")+'</span>'+(O[x.k]?'<span class="o">📝 '+E(O[x.k])+'</span>':'')+imgs(fs)+(r==="NC"?acHTML(A[x.k]):'')+'</div>'; };
+    var fotosNC=[]; nc.forEach(function(x){ fotosNC=fotosNC.concat(fotosItem(f,x.k)); });
+    var txt="*FVS: "+(f.serviceName||svc.nome)+"*\n*Obra:* "+(info.obra||"")+(info.trecho?"\n*Frente:* "+info.trecho:"")+"\n*Data:* "+dBR(info.data||f.savedAt)+"\n*Responsável:* "+(info.resp||"—")+"\n*Conformidade:* "+pct+"% ("+c+" conformes, "+nc.length+" não conformes, "+na+" não se aplicam)"+
+      (nc.length?"\n\n*Não conformidades*\n"+nc.map(function(x,n){ return (n+1)+". "+x.t+(O[x.k]?": "+O[x.k]:"")+acTxt(A[x.k]); }).join("\n"):"")+"\n\n_Registrado no MGI PRO_";
+    var cob=nc.length?"Olá"+(info.resp?", "+info.resp:"")+". Na FVS de *"+(f.serviceName||svc.nome)+"*"+(info.trecho?" na frente *"+info.trecho+"*":"")+" ("+dBR(info.data||f.savedAt)+") ficaram estas não conformidades para tratar:\n\n"+nc.map(function(x,n){ return (n+1)+". "+x.t+(O[x.k]?": "+O[x.k]:"")+acTxt(A[x.k]); }).join("\n")+"\n\nPode me retornar com a correção e uma foto de evidência? Obrigado.":"";
+    abrir('<h3>🔧 FVS registrada</h3>'+
+      '<div class="ddv-cab"><div class="vw-cl"><b>'+E(f.serviceName||svc.nome)+'</b><span class="vw-pct" style="color:'+cor(pct)+'">'+pct+'%</span></div><span>'+E(info.obra||"")+(info.trecho?' · 📍 '+E(info.trecho):'')+'</span><span>'+dBR(info.data||f.savedAt)+' · Responsável: '+E(info.resp||"—")+'</span></div>'+
+      '<div class="ddv-kpi"><div><b style="color:var(--green)">'+c+'</b><span>conformes</span></div><div><b style="color:var(--red)">'+nc.length+'</b><span>não conformes</span></div><div><b>'+na+'</b><span>não se aplica</span></div><div><b>'+(it.length-c-nc.length-na)+'</b><span>sem resposta</span></div></div>'+
+      (nc.length?'<div class="ddv-s"><h4>⚠️ Não conformidades</h4>'+nc.map(item).join("")+'</div>':'')+
+      '<details class="vw-g ddv-s"><summary>Todos os itens verificados ('+it.length+')</summary><div>'+it.map(item).join("")+'</div></details>'+
+      assin(sigImg(S.fvs_inspetor),sigImg(S.fvs_responsavel),"Inspetor / executor","Responsável",info.resp,"")+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiVoltar()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiRegAbrir(\'FVS\',\''+f.id+'\')">✏️ Editar</button>')+(nc.length?botao("fvsc_"+f.id,cob,fotosNC,"📤 Cobrar NCs","vw-cob"):'')+botao("fvs_"+f.id,txt,fotosNC)+'<button class="ac5-save" onclick="exportarPDFFVS(\''+f.id+'\')">📄 PDF</button></div>');
+  };
+
+  // ── Auditoria ──
+  var NORMA={iso:"ISO 9001",pbqp:"PBQP-H/SiAC","14001":"ISO 14001","45001":"ISO 45001"};
+  window.mgiAudVer=function(id){
+    var a=(state.auditoriasSalvas||[]).find(function(x){ return x.id===id; }); if(!a) return;
+    var info=a.info||{}, R=a.respostas||{}, O=a.observacoes||{}, A=a.acoes||{}, S=a.signatures||{}, N=info.normas||["iso","pbqp"];
+    var CL=(window._CLAUS_ALL||(typeof CLAUSULAS!=="undefined"?CLAUSULAS:[])).filter(function(c){ return N.indexOf(c.norma)>=0; });
+    var all=[]; CL.forEach(function(cl){ (cl.itens||[]).forEach(function(i){ all.push({id:i.id,txt:i.txt,cl:cl}); }); });
+    var c=all.filter(function(x){ return R[x.id]==="C"; }).length, nc=all.filter(function(x){ return R[x.id]==="NC"; }), na=all.filter(function(x){ return R[x.id]==="NA"; }).length;
+    var apl=c+nc.length, pct=apl?Math.round(c/apl*100):0;
+    var item=function(x){ var r=R[x.id]||"", fs=fotosItem(a,x.id); return '<div class="vw-i'+(r==="NC"?" vw-pend":"")+'"><b>'+E(x.id)+' · '+E(x.txt)+'</b><span class="r" style="color:'+(r==="C"?"var(--green)":r==="NC"?"var(--red)":"var(--muted)")+'">'+(r==="C"?"✓ Conforme":r==="NC"?"✗ Não conforme":r==="NA"?"Não se aplica":"Sem resposta")+'</span>'+(O[x.id]?'<span class="o">📝 '+E(O[x.id])+'</span>':'')+imgs(fs)+(r==="NC"?acHTML(A[x.id]):'')+'</div>'; };
+    var cls=CL.map(function(cl){ var its=(cl.itens||[]), ok=its.filter(function(i){ return R[i.id]==="C"; }).length, n=its.filter(function(i){ return R[i.id]==="NC"; }).length, nA=its.filter(function(i){ return R[i.id]==="NA"; }).length, ap=ok+n, p=ap?Math.round(ok/ap*100):null;
+      return '<details class="vw-g"><summary><span class="vw-cl"><span>'+E(cl.rotulo||cl.id)+' · '+E(cl.titulo)+' <small>('+NORMA[cl.norma]+')</small></span><small style="color:'+(p==null?"var(--muted)":cor(p))+'">'+(p==null?"—":p+"%")+(n?" · "+n+" NC":"")+'</small></span><span class="vw-bar"><i style="width:'+(p||0)+'%;background:'+(p==null?"transparent":cor(p))+'"></i></span></summary><div>'+its.map(function(i){ return item({id:i.id,txt:i.txt,cl:cl}); }).join("")+'</div></details>'; }).join("");
+    var fotosNC=[]; nc.forEach(function(x){ fotosNC=fotosNC.concat(fotosItem(a,x.id)); });
+    var txt="*Auditoria interna*\n*Normas:* "+N.map(function(n){ return NORMA[n]; }).join(" + ")+"\n*Empresa:* "+(info.empresa||"")+(info.obra?"\n*Obra:* "+info.obra:"")+"\n*Processo:* "+(info.processo||"—")+"\n*Data:* "+dBR(info.data||a.savedAt)+"\n*Auditor:* "+(info.auditor||"—")+"\n*Conformidade:* "+pct+"% ("+nc.length+" não conformidades)"+
+      (nc.length?"\n\n*Não conformidades*\n"+nc.map(function(x,n){ return (n+1)+". Cláusula "+x.id+": "+x.txt+(O[x.id]?"\n   Evidência: "+O[x.id]:"")+acTxt(A[x.id]); }).join("\n"):"")+"\n\n_Registrado no MGI PRO_";
+    var cob=nc.length?"Olá"+(info.responsavel?", "+info.responsavel:"")+". Na auditoria interna de "+dBR(info.data||a.savedAt)+(info.processo?" do processo *"+info.processo+"*":"")+" foram registradas estas não conformidades:\n\n"+nc.map(function(x,n){ return (n+1)+". Cláusula "+x.id+": "+x.txt+(O[x.id]?"\n   Evidência: "+O[x.id]:"")+acTxt(A[x.id]); }).join("\n")+"\n\nPeço o tratamento dentro dos prazos e o envio das evidências de correção. Obrigado.":"";
+    abrir('<h3>📘 Auditoria registrada</h3>'+
+      '<div class="ddv-cab"><div class="vw-cl"><b>'+E(info.empresa||"(sem empresa)")+'</b><span class="vw-pct" style="color:'+cor(pct)+'">'+pct+'%</span></div><span>'+N.map(function(n){ return NORMA[n]; }).join(" + ")+(info.nivel?' · Nível '+E(info.nivel):'')+'</span><span>'+(info.obra?E(info.obra)+' · ':'')+'Processo: '+E(info.processo||"—")+'</span><span>'+dBR(info.data||a.savedAt)+' · Auditor: '+E(info.auditor||"—")+' · Responsável: '+E(info.responsavel||"—")+'</span></div>'+
+      '<div class="ddv-kpi"><div><b style="color:var(--green)">'+c+'</b><span>conformes</span></div><div><b style="color:var(--red)">'+nc.length+'</b><span>não conformes</span></div><div><b>'+na+'</b><span>não se aplica</span></div><div><b>'+(all.length-c-nc.length-na)+'</b><span>sem resposta</span></div></div>'+
+      (nc.length?'<div class="ddv-s"><h4>⚠️ Não conformidades</h4>'+nc.map(item).join("")+'</div>':'')+
+      '<div class="ddv-s"><h4>Resultado por cláusula</h4>'+cls+'</div>'+
+      assin(sigImg(S.iso_auditor),sigImg(S.iso_responsavel),"Auditor","Responsável do processo",info.auditor,info.responsavel)+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiVoltar()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiRegAbrir(\'Auditoria\',\''+a.id+'\')">✏️ Editar</button>')+(nc.length?botao("audc_"+a.id,cob,fotosNC,"📤 Cobrar NCs","vw-cob"):'')+botao("aud_"+a.id,txt,fotosNC)+'<button class="ac5-save" onclick="exportarPDFAuditoria(\''+a.id+'\')">📄 PDF</button></div>');
+  };
+
+  // Históricos de FVS e Auditoria: botão Ver e "Abrir" vira "Editar"
+  function decorarHist(cont,abrirFn,verFn){ var el=document.getElementById(cont); if(!el) return;
+    el.querySelectorAll('button[onclick^="'+abrirFn+'("]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/'([^']+)'/)||[])[1]; if(!id||b.parentNode.querySelector(".vw-verbtn")) return;
+      var v=b.cloneNode(false); v.className=b.className+" vw-verbtn"; v.textContent="👁️ Ver"; v.setAttribute("onclick",verFn+"('"+id+"')"); b.parentNode.insertBefore(v,b); b.textContent="✏️ Editar"; b.style.background=""; b.style.borderColor=""; b.style.color=""; if(fiscal()) b.style.display="none";
+      var card=b.closest(".diary-card"); if(card){ card.style.cursor="pointer"; card.onclick=function(ev){ if(ev.target.closest("button")) return; window[verFn](id); }; } }); }
+  if(typeof renderHistoricoFVS==="function"){ var _hf=renderHistoricoFVS; window.renderHistoricoFVS=renderHistoricoFVS=function(){ var r=_hf.apply(this,arguments); decorarHist("fvs-historico-container","carregarFVS","mgiFVSVer"); return r; }; }
+  if(typeof renderHistoricoISO==="function"){ var _hi=renderHistoricoISO; window.renderHistoricoISO=renderHistoricoISO=function(){ var r=_hi.apply(this,arguments); decorarHist("iso-historico-container","carregarAuditoria","mgiAudVer"); return r; }; }
+  // Registros: Ver também para FVS e Auditoria
+  if(typeof mgiRegistrosRender==="function"){ var _rr=mgiRegistrosRender; window.mgiRegistrosRender=function(){ var r=_rr.apply(this,arguments);
+      [["FVS","mgiFVSVer"],["Auditoria","mgiAudVer"]].forEach(function(t){ document.querySelectorAll('#ficha-modal .rg-bt button[onclick^="mgiRegAbrir(\''+t[0]+'\'"]').forEach(function(b){ var id=(b.getAttribute("onclick").match(/','([^']+)'/)||[])[1]; if(!id||b.parentNode.querySelector('[onclick^="'+t[1]+'"]')) return;
+        var v=document.createElement("button"); v.textContent="👁️ Ver"; v.setAttribute("onclick",t[1]+"('"+id+"')"); b.parentNode.insertBefore(v,b.parentNode.firstChild); }); });
+      return r; }; }
+
+  // ── Liberação: cobrar pendências do responsável pela frente ──
+  if(typeof mgiLibVer==="function"){ var _lv=mgiLibVer; window.mgiLibVer=mgiLibVer=function(id){ var r=_lv.apply(this,arguments);
+      var x=(state.liberacoes||[]).find(function(l){ return l.id===id; }); var ac=document.querySelector("#ficha-modal .ac5-acoes"); if(!x||!ac) return r;
+      var G=(window.mgiLibAPI&&mgiLibAPI.grupos)||[], resp=x.resp||{}, obs=x.obs||{}, pend=[], fts=[];
+      G.forEach(function(g,gi){ g[1].forEach(function(t,ii){ var k=gi+"_"+ii; if(resp[k]==="NC"){ pend.push({g:g[0],t:t,o:obs[k]||""}); fts=fts.concat(fotosItem(x,k)); } }); });
+      if(!pend.length) return r;
+      var nome=((x.assin||{}).resp||{}).nome||"";
+      var msg="Olá"+(nome?", "+nome:"")+". Para liberar a frente *"+(x.frente||"")+"*"+(x.dataPrev?" (início previsto em "+dBR(x.dataPrev)+")":"")+" ainda faltam:\n\n"+pend.map(function(p,i){ return (i+1)+". "+p.t+(p.o?"\n   "+p.o:""); }).join("\n")+"\n\nAssim que resolver, me mande a evidência para eu atualizar a liberação. Obrigado.";
+      var w=document.createElement("span"); w.innerHTML=botao("libc_"+x.id,msg,fts,"📤 Cobrar pendências","vw-cob"); ac.insertBefore(w.firstChild,ac.querySelector(".vw-wa")||ac.lastElementChild);
+      return r; }; }
+
+  // ── Painel mensal de DDS: participações e horas de treinamento por frente ──
+  function minDDS(){ try{ return parseInt(localStorage.getItem("mgi_dds_min"),10)||10; }catch(e){ return 10; } }
+  var TIPOS={qualidade:"🎯 Qualidade",sst:"🦺 Segurança do trabalho",ambiental:"🌱 Meio ambiente",integrado:"🧩 Integrado (QSMS)"};
+  function horas(min){ var h=Math.floor(min/60), m=Math.round(min%60); return h?(h+"h"+(m?String(m).padStart(2,"0"):"")):(m+" min"); }
+  function nomeMes(m){ var p=m.split("-"); return ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"][+p[1]-1]+" de "+p[0]; }
+  function dadosPainel(mes){
+    var ob=state.obraAtual||null, rm=state.removidos||{}, MIN=minDDS();
+    var L=(state.dds||[]).filter(function(d){ return d&&!rm[d.id]&&(d.obraId||null)===ob&&(!mes||(d.data||"").indexOf(mes)===0); });
+    var part=function(d){ return (d.participantes||[]).map(function(p){ return typeof p==="string"?{nome:p}:p; }).filter(function(p){ return p&&p.nome; }); };
+    var fr={}, tp={}, pes={}, tot=0, ac=0, q=0;
+    L.forEach(function(d){ var P=part(d), n=P.length, f=(d.frente||"").trim()||"Sem frente", t=d.tipo||"qualidade"; tot+=n; ac+=(d.acertos||0); q+=(d.perguntas||[]).length;
+      fr[f]=fr[f]||{dds:0,p:0}; fr[f].dds++; fr[f].p+=n; tp[t]=tp[t]||{dds:0,p:0}; tp[t].dds++; tp[t].p+=n;
+      P.forEach(function(p){ var k=p.nome.trim().toLowerCase(); pes[k]=pes[k]||{nome:p.nome.trim(),funcao:p.funcao||"",n:0}; pes[k].n++; }); });
+    return {L:L,MIN:MIN,tot:tot,min:tot*MIN,acerto:q?Math.round(ac/q*100):null,fr:fr,tp:tp,pes:Object.keys(pes).map(function(k){ return pes[k]; }).sort(function(a,b){ return b.n-a.n||a.nome.localeCompare(b.nome); })};
+  }
+  window.mgiDDSPainel=function(mes){
+    var todos=(state.dds||[]).filter(function(d){ return d&&(d.obraId||null)===(state.obraAtual||null); });
+    var MS=Array.from(new Set(todos.map(function(d){ return (d.data||"").slice(0,7); }).filter(Boolean))).sort().reverse();
+    if(mes===undefined) mes=MS[0]||new Date().toISOString().slice(0,7);
+    window.__ddPMes=mes; var D=dadosPainel(mes);
+    var tab=function(o,rot){ var ks=Object.keys(o).sort(function(a,b){ return o[b].p-o[a].p; }); return ks.length?'<table class="vw-tab"><tr><th>'+rot+'</th><th>DDS</th><th>Particip.</th><th>Horas</th></tr>'+ks.map(function(k){ return '<tr><td>'+E(rot==="Tipo"?(TIPOS[k]||k):k)+'</td><td>'+o[k].dds+'</td><td>'+o[k].p+'</td><td>'+horas(o[k].p*D.MIN)+'</td></tr>'; }).join("")+'</table>':'<p class="pi-nada">Sem dados.</p>'; };
+    var ob=((state.obras||[]).find(function(o){ return o.id===state.obraAtual; })||{}).nome||"";
+    var txt="*Painel de DDS · "+(mes?nomeMes(mes):"todo o período")+"*\n*Obra:* "+ob+"\n*DDS realizados:* "+D.L.length+"\n*Participações:* "+D.tot+"\n*Pessoas treinadas:* "+D.pes.length+"\n*Horas de treinamento:* "+horas(D.min)+" (DDS de "+D.MIN+" min)"+(D.acerto!=null?"\n*Acerto nas perguntas:* "+D.acerto+"%":"")+
+      (Object.keys(D.fr).length?"\n\n*Por frente*\n"+Object.keys(D.fr).sort(function(a,b){ return D.fr[b].p-D.fr[a].p; }).map(function(k){ return "• "+k+": "+D.fr[k].dds+" DDS, "+D.fr[k].p+" participações, "+horas(D.fr[k].p*D.MIN); }).join("\n"):"")+"\n\n_Gerado no MGI PRO_";
+    abrir('<h3>📊 Painel de DDS</h3>'+
+      '<div class="pd-cfg"><select onchange="mgiDDSPainel(this.value)"><option value="">Todo o período</option>'+MS.map(function(m){ return '<option value="'+m+'"'+(m===mes?" selected":"")+'>'+nomeMes(m)+'</option>'; }).join("")+'</select><select onchange="try{localStorage.setItem(\'mgi_dds_min\',this.value)}catch(e){};mgiDDSPainel(window.__ddPMes)">'+[5,10,15,20,30].map(function(n){ return '<option value="'+n+'"'+(n===D.MIN?" selected":"")+'>DDS de '+n+' min</option>'; }).join("")+'</select></div>'+
+      '<div class="ddv-kpi"><div><b>'+D.L.length+'</b><span>DDS</span></div><div><b>'+D.tot+'</b><span>participações</span></div><div><b>'+D.pes.length+'</b><span>pessoas</span></div><div><b>'+horas(D.min)+'</b><span>de treinamento</span></div></div>'+
+      (D.acerto!=null?'<div class="vw-i"><div class="vw-cl"><span>Acerto nas perguntas</span><b style="color:'+cor(D.acerto)+'">'+D.acerto+'%</b></div><span class="vw-bar"><i style="width:'+D.acerto+'%;background:'+cor(D.acerto)+'"></i></span></div>':'')+
+      '<div class="ddv-s"><h4>📍 Por frente</h4>'+tab(D.fr,"Frente")+'</div>'+
+      '<div class="ddv-s"><h4>Por tipo</h4>'+tab(D.tp,"Tipo")+'</div>'+
+      '<details class="vw-g ddv-s"><summary>👥 Participação por pessoa ('+D.pes.length+')</summary><div><table class="vw-tab"><tr><th>Nome</th><th>Função</th><th>DDS</th><th>Horas</th></tr>'+D.pes.map(function(p){ return '<tr><td>'+E(p.nome)+'</td><td>'+E(p.funcao)+'</td><td>'+p.n+'</td><td>'+horas(p.n*D.MIN)+'</td></tr>'; }).join("")+'</table></div></details>'+
+      '<p style="margin:0;color:var(--muted);font-size:.74rem">Horas de treinamento = participações × duração do DDS escolhida acima.</p>'+
+      '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDS()">Voltar</button>'+botao("ddsp_"+mes,txt,[])+'<button class="ac5-save" onclick="mgiDDSPainelPDF()">📄 PDF</button></div>');
+  };
+  window.mgiDDSPainelPDF=function(){
+    var mes=window.__ddPMes, D=dadosPainel(mes), ob=((state.obras||[]).find(function(o){ return o.id===state.obraAtual; })||{}).nome||"";
+    var tab=function(o,rot){ var ks=Object.keys(o).sort(function(a,b){ return o[b].p-o[a].p; }); return '<table><tr><th>'+rot+'</th><th>DDS</th><th>Participações</th><th>Horas</th></tr>'+ks.map(function(k){ return '<tr><td>'+E(rot==="Tipo"?(TIPOS[k]||k).replace(/^\S+\s/,""):k)+'</td><td>'+o[k].dds+'</td><td>'+o[k].p+'</td><td>'+horas(o[k].p*D.MIN)+'</td></tr>'; }).join("")+'</table>'; };
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Painel de DDS — '+E(mes?nomeMes(mes):"todo o período")+'</title><style>'+(typeof cssPDF==="function"?cssPDF():"")+'</style></head><body><h1 style="font-size:16pt;margin:0 0 2mm">Painel de DDS · '+E(mes?nomeMes(mes):"todo o período")+'</h1><p style="color:#475569;font-size:9pt;margin:0 0 5mm">'+E(ob)+' · emitido em '+new Date().toLocaleDateString("pt-BR")+' pelo MGI PRO</p>'+
+      '<table><tr><th>DDS realizados</th><td>'+D.L.length+'</td><th>Participações</th><td>'+D.tot+'</td></tr><tr><th>Pessoas treinadas</th><td>'+D.pes.length+'</td><th>Horas de treinamento</th><td>'+horas(D.min)+' (DDS de '+D.MIN+' min)</td></tr>'+(D.acerto!=null?'<tr><th>Acerto nas perguntas</th><td colspan="3">'+D.acerto+'%</td></tr>':'')+'</table>'+
+      '<h3>Por frente</h3>'+tab(D.fr,"Frente")+'<h3>Por tipo</h3>'+tab(D.tp,"Tipo")+
+      '<h3>DDS realizados</h3><table><tr><th>Data</th><th>Tipo</th><th>Tema</th><th>Frente</th><th>Ministrante</th><th>Particip.</th></tr>'+D.L.slice().sort(function(a,b){ return (a.data||"").localeCompare(b.data||""); }).map(function(d){ return '<tr><td>'+dBR(d.data)+'</td><td>'+E((TIPOS[d.tipo||"qualidade"]||"").replace(/^\S+\s/,""))+'</td><td>'+E(d.tema||d.servico||"")+'</td><td>'+E(d.frente||"")+'</td><td>'+E(d.ministrante||"")+'</td><td>'+(d.participantes||[]).length+'</td></tr>'; }).join("")+'</table>'+
+      '<h3>Participação por pessoa</h3><table><tr><th>Nome</th><th>Função</th><th>DDS</th><th>Horas</th></tr>'+D.pes.map(function(p){ return '<tr><td>'+E(p.nome)+'</td><td>'+E(p.funcao)+'</td><td>'+p.n+'</td><td>'+horas(p.n*D.MIN)+'</td></tr>'; }).join("")+'</table>'+
+      '<div class="footer">MGI PRO, Massei Gestão Integrada.</div></body></html>';
+    abrirJanelaPDF(html);
+  };
+  // Botão do painel na lista de DDS
+  if(typeof mgiDDS==="function"){ var _dd=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_dd.apply(this,arguments);
+      var box=document.querySelector("#ficha-modal .fm-box"); if(box&&!box.querySelector(".dd-painel-btn")&&(state.dds||[]).length){ var ref=box.querySelector(".ddf-filtro")||box.querySelector(".rg-lista");
+        var b=document.createElement("button"); b.className="ac5-cancel dd-painel-btn"; b.style.width="100%"; b.textContent="📊 Painel do mês: participações e horas de treinamento"; b.onclick=function(){ mgiDDSPainel(); };
+        if(ref) ref.parentNode.insertBefore(b,ref); }
       return r; }; }
 })();
 </script>
