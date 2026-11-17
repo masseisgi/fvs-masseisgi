@@ -2652,7 +2652,7 @@ async function mgiEnviarFotos(){
       await ref.putString(dado,"data_url",{contentType:"image/jpeg",customMetadata:{autor:window.MGI_USER.email||""}});
       return await ref.getDownloadURL();
     };
-    const listas=[state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes||[]];
+    const listas=[state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes||[],state.dds||[]];
     for(const l of listas){ for(const snap of (l||[])){
       if(!snap||!snap.fotos||typeof snap.fotos!=="object") continue;
       let mudou=false;
@@ -2733,7 +2733,7 @@ async function enviarNuvem(){
         empresaCfg: state.empresaCfg || null,
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
-        trechos: state.trechos || [], materiais: state.materiais || [], dds: state.dds || [], locais: state.locais || [],
+        trechos: state.trechos || [], materiais: state.materiais || [], dds: (state.dds || []).map(semFotos), locais: state.locais || [],
         historico: (state.historico||[]).slice(0,600)
       });
       _carga.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
@@ -5806,7 +5806,7 @@ window.mgiBackup=function(){ const d={versao:"mgi-pro-backup-1",geradoEm:agoraIS
 window.mgiRestaurar=function(inp){ const f=inp.files&&inp.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const d=JSON.parse(r.result); if(d.versao!=="mgi-pro-backup-1") throw 0; if(!confirm("Mesclar o backup com os dados atuais? Nada existente será apagado.")) return;
    if(typeof mgiMesclarEstado==="function") mgiMesclarEstado(d); state.liberacoes=_mesclarLista(state.liberacoes||[],d.liberacoes,{},false); state.docsCtl=_mesclarLista(state.docsCtl||[],d.docsCtl,{},false); mgiLog("Restaurou backup",d.geradoEm); persistir(); alert("Backup mesclado."); location.reload(); }catch(e){ alert("Arquivo de backup inválido."); } }; r.readAsText(f); };
 window.mgiHistorico=function(){ const L=(state.historico||[]).slice(0,200); modal(`<h3>🕓 Registro de alterações</h3><p style="margin:0;color:var(--muted);font-size:.82rem">Quem fez o quê e quando, para rastreabilidade em auditoria.</p><div class="rg-lista">${L.map(h=>`<div class="rg-it"><div class="rg-tx"><span class="rg-tp">${new Date(h.em).toLocaleString("pt-BR")}</span><b>${$e(h.acao)}</b><span>${$e(h.alvo||"")}${h.por?" · "+$e(h.por):""}</span></div></div>`).join("")||`<p class="pi-nada">Sem alterações registradas ainda.</p>`}</div><div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFerramentas()">Voltar</button></div>`,"rg-box"); };
-function fotosPendentes(){ let n=0; [state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes].forEach(l=>(l||[]).forEach(s=>{ const f=s.fotos, u=s.fotosUrl; if(Array.isArray(f)) f.forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[i])) n++; }); else if(f&&typeof f==="object") Object.keys(f).forEach(k=>(f[k]||[]).forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[k]&&u[k][i])) n++; })); })); return n; }
+function fotosPendentes(){ let n=0; [state.fvsSalvas,state.auditoriasSalvas,state.diarios,state.liberacoes,state.dds].forEach(l=>(l||[]).forEach(s=>{ const f=s.fotos, u=s.fotosUrl; if(Array.isArray(f)) f.forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[i])) n++; }); else if(f&&typeof f==="object") Object.keys(f).forEach(k=>(f[k]||[]).forEach((x,i)=>{ if(typeof x==="string"&&x.startsWith("data:")&&!(u&&u[k]&&u[k][i])) n++; })); })); return n; }
 window.mgiFerramentas=function(){ const fp=fotosPendentes(), on=navigator.onLine;
   const op=(ic,t,d,fn)=>`<button class="rel-op" onclick="${fn}"><span>${ic}</span><div><b>${t}</b><small>${d}</small></div></button>`;
   modal(`<h3>🧰 Ferramentas</h3>
@@ -6817,6 +6817,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v53: envio à nuvem ignora campos sem valor (frente não subia)
 // MGI PRO · v54: obra atual sempre definida (Mapa vazio no computador)
 // MGI PRO · v55: frentes cadastradas para tocar e escolher em FVS, Diário, Liberação e DDS
+// MGI PRO · v56: DDS com fotos da equipe como evidência (no PDF e na nuvem)
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
 window.mgiAjuda=function(sec){
@@ -7092,7 +7093,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   function mostrar(){
     var b=document.getElementById("sync-pend");
     if(!b){ b=document.createElement("div"); b.id="sync-pend"; document.body.appendChild(b); }
-    if(typeof firebase!=="undefined"&&window.MGI_DB&&pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
+    if(!window.MGI_PREVIA&&typeof firebase!=="undefined"&&window.MGI_DB&&pendente&&(ultimoErro||!navigator.onLine||tentativas>0)){
       b.innerHTML='<span>⏳ Alterações ainda não enviadas para a nuvem'+(navigator.onLine?"":" (sem internet)")+'</span><button onclick="mgiEnviarAgora()">Enviar agora</button>';
       b.style.display="flex";
     } else b.style.display="none";
@@ -7200,6 +7201,77 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   new MutationObserver(function(){ clearTimeout(t); t=setTimeout(decorar,120); }).observe(document.body,{childList:true,subtree:true});
   setTimeout(decorar,1500);
   window.mgiFrentesAtualizar=decorar;
+})();
+</script>
+<!-- ===== DDS: FOTOS DA EQUIPE COMO EVIDÊNCIA (v56) ===== -->
+<style>
+.ddf{border:1px dashed var(--border2,var(--border));border-radius:12px;padding:10px;margin:8px 0;display:flex;flex-direction:column;gap:8px}
+.ddf-t{font:800 .84rem Barlow,sans-serif;color:var(--text)}
+.ddf-t small{display:block;font-weight:500;color:var(--muted);font-size:.74rem;margin-top:2px}
+.ddf-g{display:flex;gap:8px;flex-wrap:wrap}
+.ddf-g div{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.ddf-g img{width:100%;height:100%;object-fit:cover}
+.ddf-g button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:.75rem;cursor:pointer;line-height:1}
+.ddf-b{display:flex;gap:8px}
+.ddf-b label{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;border-radius:10px;border:1px solid var(--border2,var(--border));background:var(--surf2,rgba(255,255,255,.05));font:700 .8rem Barlow,sans-serif;color:var(--text);cursor:pointer}
+.ddf-b input{display:none}
+</style>
+<script>
+(function(){
+  var MAX=4;
+  function DD(){ try{ return window.mgiDDAPI&&window.mgiDDAPI.get(); }catch(e){ return null; } }
+  function urlDe(d,i){ var f=(d.fotos||[])[i]; if(typeof f==="string"&&f) return f; var u=(d.fotosUrl||[])[i]; return typeof u==="string"?u:""; }
+  function lista(d){ var n=Math.max(Array.isArray(d.fotos)?d.fotos.length:0,Array.isArray(d.fotosUrl)?d.fotosUrl.length:0), out=[]; for(var i=0;i<n;i++){ var s=urlDe(d,i); if(s) out.push(s); } return out; }
+
+  function bloco(){
+    var d=DD(); if(!d) return null;
+    if(!Array.isArray(d.fotos)) d.fotos=[];
+    var b=document.createElement("div"); b.className="ddf"; b.id="ddf";
+    var g=d.fotos.map(function(f,i){ return '<div><img src="'+f+'" alt="Foto '+(i+1)+'"><button type="button" onclick="mgiDDFotoRem('+i+')" aria-label="Remover foto">✕</button></div>'; }).join("");
+    b.innerHTML='<div class="ddf-t">📸 Fotos da equipe ('+d.fotos.length+'/'+MAX+')<small>Registro do DDS sendo ministrado, como evidência do treinamento. As fotos saem carimbadas com data, hora, local e obra. Use só para comprovar o treinamento.</small></div>'+
+      (g?'<div class="ddf-g">'+g+'</div>':'')+
+      (d.fotos.length<MAX?'<div class="ddf-b"><label>📷 Tirar foto<input type="file" accept="image/*" capture="environment" onchange="mgiDDFotoAdd(this,\'camera\')"></label><label>🖼️ Da galeria<input type="file" accept="image/*" multiple onchange="mgiDDFotoAdd(this,\'galeria\')"></label></div>':'');
+    return b;
+  }
+  function injetar(){
+    var m=document.getElementById("ficha-modal"); if(!m) return;
+    var h=m.querySelector(".fm-box h3"); if(!h||!/Lista de presen/i.test(h.textContent)) return;
+    var velho=document.getElementById("ddf"), novo=bloco(); if(!novo) return;
+    if(velho){ velho.replaceWith(novo); return; }
+    var ref=m.querySelector(".lib-as")||m.querySelector(".dd-lista");
+    if(ref&&ref.parentNode) ref.parentNode.insertBefore(novo,ref.classList.contains("lib-as")?ref:ref.nextSibling);
+  }
+  new MutationObserver(function(){ if(!document.getElementById("ddf")) injetar(); }).observe(document.body,{childList:true,subtree:true});
+
+  window.mgiDDFotoAdd=function(inp,modo){
+    var d=DD(); if(!d) return; if(!Array.isArray(d.fotos)) d.fotos=[];
+    var files=Array.from(inp.files||[]).slice(0,MAX-d.fotos.length); inp.value="";
+    files.forEach(function(file){
+      var ctx=(typeof mgiCtxFoto==="function")?mgiCtxFoto("dds",null,modo,file):null;
+      if(ctx) ctx.ref="DDS"+(d.tema?", "+d.tema:"")+(d.data?", "+d.data.split("-").reverse().join("/"):"")+(d.frente?", "+d.frente:"");
+      var r=new FileReader();
+      r.onload=function(e){ mgiComprimirFoto(e.target.result,1280,0.78).then(function(f){ return mgiCarimbar(f,ctx); }).then(function(f){ d.fotos.push(f); injetar(); }); };
+      r.readAsDataURL(file);
+    });
+  };
+  window.mgiDDFotoRem=function(i){ var d=DD(); if(!d||!Array.isArray(d.fotos)) return; d.fotos.splice(i,1); if(Array.isArray(d.fotosUrl)) d.fotosUrl.splice(i,1); injetar(); };
+
+  // PDF do DDS: acrescenta o registro fotográfico
+  if(typeof mgiDDSPDF==="function"){ var _pdf=mgiDDSPDF; window.mgiDDSPDF=mgiDDSPDF=function(id){
+      var d=(state.dds||[]).find(function(x){ return x.id===id; }), fs=d?lista(d):[];
+      if(!fs.length) return _pdf.apply(this,arguments);
+      var _ab=window.abrirJanelaPDF;
+      window.abrirJanelaPDF=abrirJanelaPDF=function(html){
+        var bloco='<h3>Registro fotográfico</h3><div style="display:flex;flex-wrap:wrap;gap:3mm">'+fs.map(function(f,i){ return '<figure style="margin:0;width:84mm;break-inside:avoid"><img src="'+f+'" style="width:84mm;height:60mm;object-fit:cover;border:1px solid #ccd"><figcaption style="font-size:7.5pt;color:#556">Foto '+(i+1)+'</figcaption></figure>'; }).join("")+'</div>';
+        html=html.replace('<div class="footer">',bloco+'<div class="footer">');
+        window.abrirJanelaPDF=abrirJanelaPDF=_ab; return _ab.call(this,html); };
+      try{ return _pdf.apply(this,arguments); }finally{ setTimeout(function(){ window.abrirJanelaPDF=abrirJanelaPDF=_ab; },0); }
+  }; }
+
+  // Nuvem: fotos do DDS sobem para o armazenamento, e o banco guarda só os links
+  if(typeof mgiMesclarEstado==="function"){ var _m=mgiMesclarEstado; window.mgiMesclarEstado=mgiMesclarEstado=function(){ var r=_m.apply(this,arguments);
+      (state.dds||[]).forEach(function(x){ if(!x) return; if(!Array.isArray(x.fotos)){ x.fotos=Array.isArray(x.fotosUrl)?x.fotosUrl.slice():[]; } else if(Array.isArray(x.fotosUrl)){ x.fotosUrl.forEach(function(v,i){ if(v&&!x.fotos[i]) x.fotos[i]=v; }); } });
+      return r; }; }
 })();
 </script>
 </body>
