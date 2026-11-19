@@ -1000,6 +1000,209 @@ const SERVICOS = [
   { id:"pit76", cat:"construcao", grupo:"Instalações", nome:"Cabeamento Estruturado e Rede Lógica", normas:["NBR 14565","ANSI/TIA-568"], itens:[{t:"Infraestrutura",m:"Conferir eletrocalhas e eletrodutos.",tol:"Separados da rede elétrica conforme NBR 14565",exec:"Conferir trajetos e separações."},{t:"Cabos",m:"Conferir categoria e raio de curvatura.",tol:"Categoria do projeto; raio ≥ 4 × diâmetro do cabo",exec:"Lançar sem tracionar ou dobrar."},{t:"Terminações",m:"Conferir tomadas e patch panel.",tol:"Terminação no padrão T568A ou T568B do projeto",exec:"Crimpar e identificar cada ponto."},{t:"Certificação",m:"Certificar os pontos.",tol:"Todos os pontos aprovados no certificador",exec:"Certificar e emitir o relatório."},{t:"Identificação",m:"Conferir identificação.",tol:"Pontos e cabos identificados conforme projeto",exec:"Etiquetar nas duas pontas."}] },
   { id:"pit77", cat:"construcao", grupo:"Acabamentos", nome:"Limpeza Final e Entrega da Unidade", normas:["NBR 15575","NBR 14037","PBQP-H SiAC"], itens:[{t:"Limpeza final",m:"Conferir limpeza de pisos, vidros e louças.",tol:"Ambientes limpos, sem resíduos de obra",exec:"Limpar com produtos adequados a cada revestimento."},{t:"Testes finais",m:"Testar instalações.",tol:"Instalações elétricas e hidráulicas funcionando",exec:"Testar todos os pontos e registrar."},{t:"Vistoria de entrega",m:"Vistoriar a unidade com checklist.",tol:"Checklist de entrega sem pendências",exec:"Vistoriar cada ambiente e anotar pendências."},{t:"Manual do proprietário",m:"Entregar o manual de uso e manutenção.",tol:"Manual conforme NBR 14037",exec:"Entregar o manual e registrar o recebimento."},{t:"Termo de entrega",m:"Assinar o termo.",tol:"Termo assinado pelo cliente",exec:"Assinar e arquivar no SGQ."}] }
 ];
+// ===== REVISÃO DAS FVS DE SANEAMENTO PELAS NTS SABESP (v64) =====
+// Regras: itens existentes mantêm a posição (as FVS já salvas usam o número do item); novos itens entram no fim.
+(function(){
+  const S=id=>SERVICOS.find(s=>s.id===id);
+  const I=(t,m,tol,exec)=>({t,m,tol,exec});
+  function rev(id,o){ const s=S(id); if(!s) return;
+    if(o.nome) s.nome=o.nome; if(o.normas) s.normas=o.normas;
+    Object.keys(o.set||{}).forEach(k=>{ const i=s.itens[+k]; if(i) Object.assign(i,o.set[k]); });
+    (o.add||[]).forEach(x=>s.itens.push(x)); if(o.pet) s.pet=o.pet; s.revNTS="v64"; }
+
+  // ── Sinalização (NTS 370) ──
+  rev("pv02",{normas:["NTS 370","NR-18","CTB","Lei Municipal","ATO"],
+    set:{0:{tol:"Placas de advertência e de início de obra, cones refletivos ao longo de toda a obra e cavaletes refletivos a no mínimo 10 m antes e depois do serviço (NTS 370, 4.1.2 e 4.1.3); conforme CTB e órgão de trânsito"},
+         1:{tol:"Perímetro cercado com tapume contínuo: material resistente até 1,20 m e tela até 2,20 m, sem pregos ou saliências; poços e shafts só com New Jersey ou estrutura intransponível; proibido isolar vala com fita, tela ou cone (NTS 370, 4.1.1 e 4.1.9)",exec:"Montar o tapume contínuo antes de abrir a vala; usar New Jersey à frente do tapume em vias de médio e alto fluxo e obras longas; fita zebrada só como complemento ou emergência."},
+         2:{tol:"Sinalização noturna refletiva e/ou iluminada em toda a frente, reposta em caso de dano ou furto (NTS 370, 4.1.8)"}},
+    add:[I("Passagem de pedestres","Medir o corredor de pedestres e conferir separação física da obra e dos veículos.","Corredor com no mínimo 1,20 m de largura e 2,20 m de altura, livre de obstáculos, limpo e iluminado à noite (NTS 370, 4.3)","Delimitar o corredor com cercas ou tapume; sem espaço seguro, sinalizar o desvio para a calçada oposta."),
+         I("Vala ao fim da jornada","Conferir a frente no encerramento do turno.","Vala fechada ao fim da jornada; quando não for possível, coberta com chapa metálica ou material equivalente (NTS 370, 4.1.1)","Planejar o avanço diário para fechar a vala; manter chapas na frente para os casos excepcionais."),
+         I("Pare e siga","Conferir o controle do tráfego em bloqueio parcial de faixa.","Placa PARE/SIGA operada por funcionário treinado sempre que uma faixa for bloqueada (NTS 370, 4.1.4)","Designar e treinar o sinaleiro; usar rádio ou apito quando necessário.")],
+    pet:{seguranca:"Sinalização e isolamento conforme NTS 370: tapume contínuo (1,20 m de material resistente e tela até 2,20 m), cavaletes refletivos a 10 m antes e depois, cones ao longo da obra, New Jersey em poços, shafts e vias de maior fluxo. É vedado isolar vala só com fita, tela ou cone. Uso obrigatório de colete refletivo."}});
+
+  // ── Escavação de vala (NTS 392 e ETRPCM cap. 4) ──
+  rev("pv03",{normas:["NTS 392","NR-18","ABNT NBR 9061","ABNT NBR 12266","ETRPCM Sabesp cap. 4"],
+    set:{1:{tol:"Cota de fundo conforme greide do projeto, com recobrimento mínimo: água 0,70 m no passeio e 1,00 m na via pavimentada; esgoto 0,80 m no passeio e 1,00 m na via; 1,20 m em via de terra (ETRPCM 4.2.1)"},
+         2:{tol:"Acima de 1,25 m de profundidade, escoramento ou talude conforme projeto executivo com ART; abaixo disso, avaliar estabilidade, solo, água e sobrecargas (NTS 392, item 8)"},
+         3:{t:"Faixa de proteção e material escavado",m:"Medir a faixa livre na borda e a altura do monte de material.",tol:"Faixa livre de no mínimo 1,0 m da borda, sem material, máquina ou equipamento; material fora dessa faixa com altura máxima de 1,5 m; sem espaço, retirar o material da frente (NTS 392, 7.8)",exec:"Depositar o solo fora da faixa de 1,0 m, em monte estável de até 1,5 m, sem obstruir acessos e a visão do operador; sem espaço, carregar e levar ao depósito definido."},
+         4:{tol:"Margem de segurança mínima de 0,50 m de qualquer interferência e de 1,00 m de rede ou ramal de gás; dentro da margem, só escavação manual (sondagem com haste de ponteira polimérica a cada 35 cm) ou a vácuo (NTS 392, 7.6)",exec:"Demarcar as interferências no piso; dentro da margem, escavar à mão ou a vácuo; se o gás não for encontrado na posição do cadastro, acionar a concessionária."}},
+    add:[I("Permissão de Trabalho e checklist","Conferir PT e checklist de liberação do turno na frente.","Checklist de liberação e Permissão de Trabalho emitidos na frente, válidos por 1 dia e renovados a cada turno, com Líbero de Segurança e operador designados (NTS 392, 7.1)","Emitir a PT no início do turno, após conferir documentos, interferências, isolamento, EPI, máquina e recursos de emergência; arquivar ao fim do turno."),
+         I("Líbero de Segurança e bandeira","Conferir a presença do líbero e a sinalização de estado da vala.","Líbero presente e identificado; bandeira vermelha fluorescente de no mínimo 0,50 × 0,70 m junto ao acesso: hasteada = trabalhador na vala e máquina proibida de operar (NTS 392, 5.3 e 7.7)","O líbero conduz o rito de segurança, controla quem está na vala, hasteia a bandeira e autoriza cada acionamento da máquina."),
+         I("Interação homem-máquina","Observar a escavação mecanizada.","Nenhum trabalhador dentro da vala ou na Zona de Exclusão com a máquina operando; trânsito de máquinas a no mínimo 1,0 m da borda; escavação nunca por um único trabalhador (NTS 392, 7.6.3 e 7.8)","Delimitar a Zona de Exclusão; o operador só aciona a máquina com autorização expressa do líbero."),
+         I("Acesso e esgotamento","Conferir escadas ou rampas e a água na vala.","Acima de 1,25 m, escada ou rampa próxima aos postos de trabalho; vala esgotada antes da entrada de trabalhadores (NTS 392, 7.9 e 7.10)","Posicionar escadas antes de descer; manter bomba na frente e esgotar a vala antes de qualquer acesso.")],
+    pet:{condicoes:"Antes de escavar, devem estar impressos e assinados na frente: projeto da escavação e do escoramento, Análise Preliminar de Riscos, Plano de Atendimento a Emergências, mapeamento de interferências consolidado e autorizações dos órgãos (NTS 392, 6.1.4). Checklist de liberação e Permissão de Trabalho emitidos no turno, com Líbero de Segurança designado (NTS 392, 7.1).",
+         seguranca:"Escavação nunca por um único trabalhador. Faixa de proteção de 1,0 m na borda. Sem trabalhador na vala ou na Zona de Exclusão com a máquina operando. Bandeira de estado da vala operada pelo Líbero. Paralisar ao atingir interferência, ao surgir divergência de cadastro ou mudança de condição (NTS 392, 7.13). Gás: interromper, isolar, evitar fonte de energia e acionar a concessionária (COMGÁS 08000 110 197).",
+         registros:"FVS no MGI PRO, Permissão de Trabalho e checklist de liberação do turno, registro do rito de segurança (participantes, tema, data e frente) e mapeamento de interferências."}});
+
+  // ── Escoramento (NTS 392 item 8 e NTS 372) ──
+  rev("pv04",{normas:["NTS 392","NR-18","ABNT NBR 9061","ABNT NBR 17015"],
+    set:{0:{tol:"Escoramento ou talude obrigatório acima de 1,25 m, conforme projeto executivo com ART; blindados e escoramentos especiais com memória de cálculo e código de rastreabilidade ligado à ART (NTS 392, item 8)"},
+         3:{tol:"Inspeção pela equipe antes de cada turno e após mudança de condição; inspeção diária registrada se ficar instalado mais de 1 dia; sem deformação ou peça solta (NTS 392, item 8)"}},
+    add:[I("Posição do blindado","Conferir apoio no fundo e altura acima da borda.","Blindado apoiado no fundo da escavação (proibido apoiar em degrau ou rocha) e ultrapassando a borda entre 5 cm e 50 cm (NTS 392, item 8)","Assentar a caixa no fundo regularizado; conferir a sobra acima da borda antes da entrada da equipe."),
+         I("Laudo do escoramento","Conferir o laudo de conformidade.","Laudo do responsável técnico com relatório fotográfico mensal, após avaria apontada pela fiscalização e após manutenção (NTS 392, item 8)","Programar o laudo mensal; manter registros datados e rastreáveis para a fiscalização."),
+         I("Retirada do escoramento","Acompanhar o reaterro.","Retirada progressiva junto com o reaterro; retirada definitiva quando faltar 1,25 m para o fim do reaterro (NTS 372, 4.2.2)","Remover pranchas e estroncas por camadas, sempre com o reaterro acompanhando.")],
+    pet:{seguranca:"É proibida a entrada em vala sem estabilidade garantida por escoramento ou talude (NTS 392, item 8). Inspecionar o escoramento a cada turno."}});
+
+  // ── Fundo de vala (ETRPCM 4.2.2) ──
+  rev("pv05",{normas:["ETRPCM Sabesp 4.2.2","ABNT NBR 12266","NTS 372"],
+    set:{2:{tol:"Fundo regularizado, limpo, sem água (bombear para trabalhar a seco); solo sem suporte rebaixado para lastro de brita, pedra de mão ou laje e berço (ETRPCM 4.2.2 e NTS 372, 4.2.1)"}},
+    add:[I("Fundo em rocha","Conferir o rebaixo quando o fundo for rocha ou material indeformável.","Aprofundamento de no mínimo 0,10 m para colchão de areia ou solo selecionado (ETRPCM 4.2.2)","Rebaixar o fundo e executar o colchão antes do assentamento.")]});
+
+  // ── Lastro e berço (ETRPCM 8.4 e NTS 372) ──
+  rev("pv06",{normas:["ETRPCM Sabesp 8.4","NTS 372","ABNT NBR 12266"],
+    set:{0:{tol:"Areia lavada, pó de pedra ou material granular de granulometria controlada; tubos flexíveis (PVC, PE, PP) apoiados somente em areia (NTS 372, 4.2.1); brita só para cerâmico e concreto (ETRPCM 8.4.2)"},
+         1:{tol:"Lastro de areia adensada com no mínimo 0,10 m sob o tubo (ETRPCM 8.4.1; NTS 372 Tabela 1); macadame seco com 15 cm em lençol alto ou solo mole"}}});
+
+  // ── Recebimento de tubos (ETRPCM cap. 9) ──
+  rev("pv07",{add:[I("Qualificação Sabesp","Conferir a inspeção do lote.","Somente tubos, peças e acessórios qualificados e inspecionados pela Sabesp (ETRPCM cap. 9); PVC sem alteração de cor (9.3)","Conferir o laudo de inspeção do lote antes da descida à vala; segregar o material reprovado.")]});
+
+  // ── PVC (ETRPCM 9 e 9.3) ──
+  rev("pv08",{normas:["ETRPCM Sabesp 9.3","ABNT NBR 7367","ABNT NBR 9814","NTS 024/025"],
+    set:{2:{tol:"Junta elástica: anel no sulco, lubrificante do fabricante (proibido óleo mineral ou graxa), ponta a no máximo 10 mm do fundo da bolsa; junta soldável: lixar, limpar, colar e aguardar cerca de 2 h de cura antes de pressurizar (ETRPCM 9.3)"}},
+    add:[I("Sentido e proteção","Conferir sentido de assentamento e tamponamento.","Esgoto de jusante para montante com bolsa para montante; último tubo tamponado em cada interrupção; proibido fazer bolsa ou curva no campo (ETRPCM 9 e 9.3)","Assentar logo após regularizar o fundo; tamponar ao parar; travar o tubo para não deslocar no próximo encaixe.")]});
+
+  // ── PE (ETRPCM 9.4) ──
+  rev("pv10",{normas:["ETRPCM Sabesp 9.4","NTS 060","NTS 325","ABNT NBR 14462"],
+    add:[I("Compatibilidade","Conferir SDR e material das partes soldadas.","Proibida solda de topo entre tubos de SDR diferentes; tubos no mínimo PE-63; região protegida de intempéries (ETRPCM 9.4)","Conferir marcação dos tubos antes de soldar; usar tenda ou proteção.")]});
+
+  // ── Envoltória (ETRPCM 4.4.5.1 e NTS 372) ──
+  rev("pv13",{normas:["ETRPCM Sabesp 4.4.5","NTS 372","ABNT NBR 12266"],
+    set:{0:{tol:"Areia limpa, com no máximo 5% passando na peneira 100 (ETRPCM 4.4.5.1); tubos flexíveis com envoltória somente de areia (NTS 372, 4.2.2)"},
+         1:{tol:"Envoltória com no mínimo 0,15 m abaixo da geratriz inferior e 0,15 m acima da geratriz superior, na largura da vala (ETRPCM 4.4.5.1; NTS 372 Tabela 2)"},
+         2:{tol:"Areia molhada (sem saturar) e vibrada com ponteiro, preenchida dos dois lados ao mesmo tempo; compacidade relativa acima de 70% em todos os pontos (ETRPCM 4.4.5.1; NTS 372)",exec:"Lançar em camadas horizontais, travar o tubo e adensar dos dois lados simultaneamente, sem danificar o revestimento."}}});
+
+  // ── Reaterro manual (ETRPCM 4.4.1) ──
+  rev("pv14",{normas:["ETRPCM Sabesp 4.4","ABNT NBR 12266"],
+    set:{0:{tol:"Solo selecionado, sem pedras e corpos estranhos; até a geratriz superior + 0,20 m, solo selecionado compactado com soquete manual (ETRPCM 4.4.1)"},
+         1:{tol:"Camadas de no máximo 0,20 m (ETRPCM 4.4.1)"},
+         2:{tol:"Restante do aterro com sapo ou placa vibratória; proibido compactar com pneu de retro ou caminhão; houve recalque, refazer (ETRPCM 4.4 e 4.4.1)"}}});
+
+  // ── Reaterro com controle (ETRPCM 4.4.2 a 4.4.4) ──
+  rev("pv15",{normas:["ETRPCM Sabesp 4.4","ABNT NBR 7182","ABNT NBR 7185","NTS 327"],
+    set:{3:{tol:"Grau de compactação ≥ 95% do Proctor Normal, ou o exigido no projeto ou pela prefeitura quando maior (ETRPCM 4.4.2 e 4.4.3)"},
+         4:{tol:"Umidade ótima ±2%; métodos expeditos (speedy, frigideira, álcool) aceitos se confirmados em laboratório, recusando discrepância acima de 2% (ETRPCM 4.4.4)"}},
+    add:[I("Controle com DCP","Executar o ensaio DCP quando previsto (ver FVS de controle com DCP).","Reforço do subleito com DN ≤ 17 mm/golpe, base em BGS com DN ≤ 6 mm/golpe e areia com DN ≤ 22 mm/golpe (NTS 327, 7.3)","Aplicar a FVS específica de DCP; refazer a camada nos pontos reprovados.")]});
+
+  // ── Poço de visita (ETRPCM 8.7) ──
+  rev("pv16",{normas:["ETRPCM Sabesp 8.7","ABNT NBR 9649","ABNT NBR 9814","NTS 044"],
+    set:{1:{tol:"Laje de fundo em concreto armado com 0,15 m sobre lastro de brita de no mínimo 0,15 m (ETRPCM 8.7)"},
+         3:{tol:"Calhas e canaletas concordando com os coletores; plataforma com 10% de caimento para as canaletas; revestimento em argamassa 1:3 alisada (ETRPCM 8.7)"},
+         5:{t:"Dimensões e acesso",tol:"Balão de 1,00 m (tubos até 450 mm) ou 1,20 m (500 a 800 mm); abertura de 0,60 m excêntrica para montante; chaminé de 0,60 m com no máximo 1,00 m; proibido fixar degraus; tubo de queda quando o desnível passar de 0,50 m (ETRPCM 8.7)",exec:"Conferir o diâmetro do balão pelo DN, a posição da abertura e a altura da chaminé; executar o tubo de queda pelo desenho padrão."}},
+    add:[I("Peças pré-moldadas","Conferir qualificação do fabricante e cobrimento.","Fabricante qualificado pela Sabesp, lote inspecionado (NTS 044) e cobrimento interno das armaduras de no mínimo 40 mm (ETRPCM 8.7.2)","Exigir laudo de inspeção do lote antes da montagem.")]});
+
+  // ── Ensaios (ETRPCM 9.10) ──
+  rev("pv24",{normas:["ETRPCM Sabesp 9.10.3","ABNT NBR 9650","NTS 365"],
+    set:{0:{tol:"Trecho fechado com tampões ancorados, blocos com cura completa e todo o ar expulso; enchimento a no máximo 0,5 m/s e linha cheia 24 h antes do ensaio (ETRPCM 9.10.3)"},
+         1:{tol:"Pressão de ensaio de até 1,5 × a pressão máxima de serviço (ETRPCM 9.10.3)"},
+         2:{tol:"24 h sob pressão; havendo queda, estender por mais 24 h; persistindo, há vazamento (ETRPCM 9.10.3)"}}});
+  rev("pv25",{normas:["ETRPCM Sabesp 9.10","ABNT NBR 9649","NTS 365"],
+    set:{0:{tol:"Estanqueidade com água (preencher a partir do ponto mais alto) ou com fumaça (gerador no ponto mais baixo) (ETRPCM 9.10.1 e 9.10.2)"},
+         3:{tol:"Com água: após 24 h, sem perda de nível desde a marca de estabilização; com fumaça: nenhum escape de fumaça na linha (ETRPCM 9.10)"}}});
+  rev("pv27",{set:{0:{tol:"Lavagem com água limpa aduzida numa ponta e drenada na outra, sem refluxo da água de desinfecção para a rede potável; registros de outros ramais fechados até o resultado (ETRPCM 9.10)"}}});
+
+  // ── Pavimento (NTS 372) ──
+  rev("pv29",{normas:["NTS 372","NTS 327","DER-SP ET-DE-P00/008","PMSP IR-01/2018"],
+    set:{0:{tol:"Material por tipo de via (Anexo B da NTS 372): BGS, bica graduada, RCD britado selecionado ou mistura reciclada asfáltica; via A também misturas cimentadas; solo da escavação não pode ser reaproveitado direto (NTS 372, 4.2)"},
+         1:{tol:"Reforço do subleito: 20 cm (via A) ou 15 cm (vias B e C), em camadas de no máximo 20 cm; base: 15 cm, compactada em camadas de até 10 cm com sapo (NTS 372, Tabelas 3 e 4)"},
+         2:{t:"Controle da base",tol:"Ensaio DCP: base com DN ≤ 6 mm/golpe e reforço com DN ≤ 17 mm/golpe (NTS 327)",m:"Executar o DCP antes de selar ou pavimentar."},
+         3:{t:"Compactação",tol:"Compactação sempre das bordas para o centro, com sapo nas camadas de base de até 10 cm (NTS 372, Tabela 4)"}},
+    add:[I("Selagem da base (pavimento provisório)","Conferir a selagem no dia do fechamento da vala.","Seladora de base em toda a vala até o nível do pavimento no mesmo dia do fechamento, compactada das bordas para o centro e identificada com PAVIMENTO PROVISÓRIO SABESP (NTS 372, 4.2.6)","Aplicar a seladora após aprovação do DCP; pintar a identificação no leito.")]});
+  rev("pv30",{nome:"Recomposição de Pavimento Asfáltico (Flexível)",normas:["NTS 372","PMSP IR-01/2018","DER-SP ET-DE-P00/027"],
+    set:{0:{t:"Pintura de ligação",tol:"Emulsão de ruptura rápida diluída 1:1 em água, na taxa de 0,6 a 1,0 L/m², sobre a base limpa, nas paredes laterais do pavimento antigo e entre as camadas (NTS 372, 4.3.2)",exec:"Limpar a base e aplicar com caneta ou distribuidor manual, inclusive nas laterais do corte."},
+         1:{tol:"Usinagem a quente entre 165 °C e 175 °C, ou mistura morna com compactação em campo até 125 °C (NTS 372, Tabela 6)"},
+         2:{tol:"Capa ≥ 5 cm (vias A e B) ou ≥ 4 cm (via C); camada intermediária ≥ 7,5 cm nas vias A e B; vale a espessura municipal se for maior (NTS 372, Tabelas 5 e 6)"},
+         3:{tol:"Extração de corpos de prova quando exigida pela prefeitura ou pelo contrato"},
+         4:{tol:"Compactação em camadas de cerca de 3 cm com sapo (ou 5 cm com rolo liso vibratório), sempre das bordas para o centro (NTS 372)"},
+         5:{tol:"Capa conformada ao greide e à seção do pavimento existente; emendas lisas, contínuas e sem rebarbas (NTS 372, 4.3.5)"}},
+    add:[I("Enquadramento e corte","Medir o enquadramento em relação à vala.","Corte com serra disco em toda a espessura, com no mínimo 10 cm além da vala em todos os lados (e mais 10 cm da capa sobre a intermediária na via A) (NTS 372, 4.3.1)","Remover o provisório garantindo as espessuras finais; cortar e retirar o pavimento antigo além da vala.")]});
+
+  // ── HDD (NTS 324) ──
+  rev("pv22",{nome:"Perfuração Horizontal Direcional (HDD/MND)",normas:["NTS 324","NTS 189","NTS 365","NTS 292","ABNT NBR 17004"],
+    set:{0:{tol:"Eixo, pontos de entrada e saída e cavas conforme o plano de furo; ângulos de entrada e saída entre 8° e 22° com a superfície (NTS 324, 5.4)"},
+         1:{tol:"Traçado e profundidade do plano de furo, respeitando o recobrimento e o raio de curvatura da NTS 189; divergência submetida à fiscalização da Sabesp (NTS 324, 5.4 e 5.5.2)"},
+         2:{t:"Equipamento e calibração",tol:"Transmissor calibrado antes de cada furo a 1, 3 e 5 m; teste diário do sistema de interceptação de cabos; perfuratriz ancorada e aterrada; fuse link compatível com o tubo (NTS 324, 5.5.1)",m:"Registrar a calibração e os testes antes de iniciar."},
+         3:{tol:"Ao final, inspecionar a ponta do tubo: dano acima de 10% da espessura da parede exige avaliação de todo o trecho com a fiscalização; tubo tamponado com cap ou expansor (NTS 324, 5.5.5)"},
+         4:{t:"Registro e as built",tol:"Pitch e profundidade registrados a cada haste (Anexo A da NTS 324); cadastro conforme NTS 292; estanqueidade conforme NTS 365"}},
+    add:[I("Plano de furo","Conferir plano de furo e projeto de escavação na frente.","Plano de furo e projeto de escavação assinados e impressos na frente, com APR de todas as etapas; hastes disponíveis ≥ 2 × o comprimento do furo (NTS 324, 5.4 e 5.5.1)","Elaborar o plano com cadastro, mapeamento de interferências e projeto; definir máquina, alargadores, cavas e contingência."),
+         I("Distância de interferências","Conferir afastamentos no plano e em campo.","Distância mínima de 500 mm entre a geratriz externa da rede existente e o alargador de maior diâmetro; cava-testemunho de 60 × 60 cm na via para pontos críticos e redes paralelas a até 3 m (NTS 324, 5.4)","Varrer a zona de atenção com georadar; abrir cavas-testemunho à mão ou a vácuo; identificar visualmente gás e óleo."),
+         I("Comunicação prévia","Conferir os comunicados.","Concessionárias com ativos no local avisadas com 48 h de antecedência e as de gás e óleo convidadas a acompanhar; moradores informados (NTS 324, 5.5.1)","Enviar comunicados formais e guardar os protocolos."),
+         I("Lama de perfuração","Conferir a contenção e o destino da lama.","Lama contida nas cavas e removida por sucção a vácuo para destino autorizado; transbordo paralisa a obra (NTS 324, 5.5.4)","Prever drenagem nas cavas e caminhão de sucção.")],
+    pet:{condicoes:"Engenheiro com capacitação em MND (certificado). Licenças vigentes, plano de comunicação, mapeamento de interferências com georadar na zona de atenção, APR e PT na frente, plano de furo e projeto de escavação assinados (checklist Anexo B da NTS 324).",
+         seguranca:"Proibida a permanência de pessoas nas cavas de recepção com a perfuratriz sob pressão. Ordem de giro sempre confirmada pelo operador. Paralisar por mudança não prevista, interferência não mapeada ou divergência de cadastro; retomar só após revisão da APR e do plano de furo.",
+         registros:"FVS, relatório de inspeção do furo (Anexo A da NTS 324), checklist (Anexo B), calibração do transmissor, as built (NTS 292) e ensaio de estanqueidade (NTS 365)."}});
+
+  // ── Reabilitação sem vala: pipe bursting sai para FVS própria ──
+  rev("pv41",{nome:"Reabilitação de Rede sem Vala (Sliplining e CIPP)"});
+
+  // ── CCTV (NTS 215) ──
+  rev("pv42",{nome:"Inspeção de Rede de Esgoto por Vídeo (CCTV)",normas:["NTS 215","NTS 170","NTS 388","NTS 370"],
+    set:{0:{tol:"Conduto limpo (sem detritos, plásticos e gordura), conforme NTS 170, sem pressão excessiva que apague indícios; nível de efluente até 1/4 da seção (NTS 215, 6.2)"},
+         1:{tol:"Câmera com saída VGA ou HDMI e todo equipamento introduzido na rede com IP68; cabeça rotativa a partir de 150 mm (NTS 215, 4.2 e 5.3)"},
+         2:{tol:"Sentido de montante para jusante (inverso só nos casos da norma), com cenas do PV de acesso e todas as anomalias registradas com foto (NTS 215, 6.3)"},
+         3:{tol:"Anomalias classificadas e codificadas pelo Anexo A da NTS 215 (ex.: JDD, JDI, DEF, ILF, IGE, LAC, ADE, BSE, OBO, GOR, FRA, FLO, ASM, RCT, DES) (NTS 215, 7.1)"},
+         4:{tol:"Relatório com os itens mínimos da NTS 215 (contrato, data e hora, condições, distâncias, fotos, avaliação de integridade, operador e engenheiro), croqui de localização e croqui de atualização do cadastro quando divergir (NTS 215, 7 e 7.2)"}},
+    pet:{seguranca:"Prioridade à inspeção sem entrada em espaço confinado. Se houver entrada: autorização conforme NTS 388 e NR 33, ventilação e detector de gás calibrado durante todo o período. Sinalização conforme NTS 370."}});
+
+  // ── Novas FVS ──
+  const N=(id,grupo,nome,normas,itens,pet)=>({id,cat:"saneamento",grupo,nome,normas,itens,pet,revNTS:"v64"});
+  SERVICOS.push(
+   N("pv45","Preliminares","Mapeamento e Sondagem de Interferências",["NTS 392","NTS 375","NTS 324","ABNT NBR 17167"],[
+     I("Cadastros","Conferir cadastros de todas as concessionárias.","Cadastros obtidos por canais oficiais e analisados: endereço, alinhamento, profundidade, material, pressão e amarrações; falta de cadastro não significa ausência de interferência (NTS 392, 6.3)","Solicitar cadastros formalmente; registrar o que foi recebido."),
+     I("Elementos aparentes","Percorrer a área identificando caixas, tampas, válvulas e marcas.","Todos os elementos aparentes identificados, inclusive indícios de gás (VGB, CRC, marcos, tachões, entradas de ramal), mesmo encobertos por veículos ou caçambas (NTS 392, 6.3)","Fotografar e anotar os elementos; remover obstáculos para verificação."),
+     I("Demarcação no piso","Conferir a marcação.","Interferências cadastradas, estimadas e encontradas demarcadas no pavimento com a simbologia da Tabela 2 da NTS 392 (cores da ABNT NBR 17167)","Pintar o caminhamento e as singularidades antes da escavação."),
+     I("Sondagem","Conferir as sondagens de confirmação.","Sondagem manual com haste de ponteira polimérica ou a vácuo dentro da margem de 0,50 m (1,00 m para gás) (NTS 392, 7.6)","Abrir cavas de sondagem à mão; registrar profundidade e posição."),
+     I("Afastamento de redes Sabesp","Medir afastamento da nova obra a redes existentes.","Cruzamento em vala a céu aberto com distância d da geratriz externa: 0,85 m (DN até 200), 0,90 m (até 300) e 1,05 m (até 400); DN acima de 400 é obra especial (NTS 375, Tabela 1)","Não sendo possível, registrar alternativa aprovada pela Sabesp em documento assinado."),
+     I("Mapeamento consolidado","Conferir o documento na frente.","Mapeamento de interferências consolidado, impresso e disponível na frente antes da escavação (NTS 392, 6.1.4)","Consolidar cadastro, sondagens e demarcação em croqui ou planta.")],
+     {condicoes:"Etapa obrigatória para toda escavação, perfuração, corte de pavimento, sondagem, cravação ou compactação (NTS 392, 6.3).",seguranca:"Indício de gás: verificar todos os elementos associados. Em dano ou odor de gás, interromper, isolar, evitar fonte de energia e acionar a concessionária.",registros:"FVS, croqui de interferências, fotos dos elementos aparentes e das sondagens, protocolos de solicitação de cadastro."}),
+   N("pv46","Preliminares","Liberação da Atividade de Escavação (PT e Líbero de Segurança)",["NTS 392","NR-18","NR-06"],[
+     I("Documentos na frente","Conferir a pasta da frente.","Projeto de escavação e escoramento, APR, PAE, mapeamento de interferências e autorizações impressos e assinados (NTS 392, 6.1.4)","Conferir antes de emitir a PT."),
+     I("APR","Conferir a APR da atividade.","APR no formulário corporativo, com hierarquia de controle (eliminação, engenharia, sinalização, EPI), nível de risco C × P e avaliação comportamental da equipe; risco intolerável não inicia (NTS 392, 6.2)","Revisar a APR sempre que mudar o método ou entrar controle de engenharia."),
+     I("Permissão de Trabalho","Conferir a PT.","PT emitida e assinada pelo responsável capacitado, válida por 1 dia e renovada a cada turno, nomeando Líbero e operador (NTS 392, 7.1)","Dar ciência a todos e arquivar ao fim do turno."),
+     I("Rito de segurança","Conferir o registro do rito.","Rito no início do turno: atividade, método, interferências, riscos, Zona de Exclusão, EPI/EPC, equipe e comunicação com o COC; registrado com participantes, tema, data e frente (NTS 392, 7.2)","O Líbero conduz o rito e registra (pode usar o DDS do MGI PRO)."),
+     I("Itens de liberação","Conferir os itens do checklist.","Interferências demarcadas, isolamento e sinalização (NTS 370), Líbero identificado, EPI em uso, máquina e acessórios de içamento aptos, escoramento, acessos e recursos de emergência na frente (NTS 392, 7.1)","Marcar cada item; pendência impede o início."),
+     I("Operador e máquina","Conferir habilitação e inspeção.","Operador capacitado, apto, autorizado e com crachá; CNH categoria C para equipamento ≥ 3,5 t; alarme de ré e inspeção registrada (NTS 392, 6.4 e 7.6.3)","Verificar documentos e checklist diário da máquina."),
+     I("Celular","Observar a equipe.","Equipe sem uso de celular pessoal durante a atividade (exceto rádio e acionamento do COC) (NTS 392, 7.1)","Orientar no rito e fiscalizar.")],
+     {seguranca:"Condições impeditivas que paralisam a escavação: mudança não prevista, interferência não mapeada, dano a interferência, trabalhador na vala ou Zona de Exclusão com máquina operando, ausência do Líbero (NTS 392, 7.13).",registros:"PT e checklist do turno, APR, registro do rito e FVS."}),
+   N("pv47","Controle Tecnológico","Controle de Compactação com DCP (Dynamic Cone Penetrometer)",["NTS 327","NTS 372","ASTM D6951","ABNT NBR 5426"],[
+     I("Equipamento","Inspecionar o DCP com paquímetro.","Punho, bigorna e ponta sem defeitos; ponta cônica com diâmetro ≥ 18 mm (abaixo disso, substituir); conexões apertadas (NTS 327, 6.2)","Verificar antes de cada jornada de ensaios."),
+     I("Quantidade de ensaios","Conferir pontos por vala.","Vala linear: 1 ensaio a cada 20 m, mínimo 2 pontos; vala não linear: 1 ensaio a cada 2 m²; 1 ensaio a cada metro (ou fração) de profundidade de reaterro (NTS 327, 6.3 e 6.4)","Distribuir os pontos de forma uniforme, priorizando os bordos."),
+     I("Execução","Acompanhar o ensaio.","Queda livre de 575 mm; ensaio até 70 cm de profundidade ou ao fim da haste (1000 mm); furo ≥ 25 mm em pavimento ou base com RAP; interromper se penetração < 2 mm em 5 golpes (NTS 327, 6.5 e 6.6)","Duas pessoas: uma opera e outra registra no formulário do Anexo B."),
+     I("Critério de aceitação","Calcular o DN de cada camada.","DN ≤ 6 mm/golpe (BGS), ≤ 17 mm/golpe (solo e reforço do subleito) e ≤ 22 mm/golpe (areia); reprovado, refazer o reaterro do ponto (NTS 327, 7.3 e 8)","DN = (penetração final − inicial) ÷ número de golpes; avaliar base e reforço separadamente."),
+     I("Relatório","Conferir o relatório.","Relatório comprobatório com todos os ensaios da vala (NTS 327, 6.3)","Anexar o formulário de medição e as fotos à FVS.")],
+     {seguranca:"Usar luva anti-impacto; nunca pôr a mão no trajeto do martelo; segurar pelo punho. Verificar interferências antes de cravar.",registros:"Formulário de medição do DCP (Anexo B da NTS 327), relatório da vala e FVS."}),
+   N("pv48","Reabilitação","Substituição de Rede por Arrebentamento (Pipe Bursting)",["NTS 329","NTS 325","NTS 365","NTS 292","ABNT NBR 17015"],[
+     I("Avaliação de campo","Conferir o relatório de avaliação.","Rede existente confirmada (material, extensão, profundidade, DN, acessórios e ramais), cadastros analisados, georadar no trecho e caixas e PVs identificados (NTS 329, 5.2.2)","Anexar o relatório de avaliação ao plano de arrebentamento."),
+     I("Plano de arrebentamento","Conferir o plano na frente.","Plano com método estático, ferramentas, cavas (tração, inserção, testemunho, alívio), bypass e contingência; APR na frente (NTS 329, 5.4 e Anexo B)","Elaborar e aprovar antes do início."),
+     I("Cabeça expansora","Medir o diâmetro da cabeça.","Diâmetro no mínimo 20% maior que o DE do novo tubo (Tabelas 2 e 3 da NTS 329)","Conferir com paquímetro antes de montar."),
+     I("Fuse link","Conferir a carga do fuse link.","Fuse link obrigatório, com carga de ruptura menor que a carga máxima de puxamento do tubo (Tabela 4 da NTS 329; redução acima de 25 °C)","Registrar carga e número de série."),
+     I("Finalização","Inspecionar a ponta do tubo e o pavimento.","Sem dano acima de 10% da espessura da parede (acima disso, avaliar o trecho com a fiscalização); tubo tamponado; ramais reconectados; pavimento sobre o caminhamento verificado (NTS 329, 5.5.3)","Soldar as interligações por eletrofusão (NTS 325) em cavas com folga."),
+     I("Ensaio e cadastro","Conferir estanqueidade e as built.","Estanqueidade conforme NTS 365; cadastro conforme NTS 292; relatório do Anexo A da NTS 329","Anexar o relatório de inspeção e o ensaio.")],
+     {condicoes:"Licenças vigentes, comunicação às concessionárias e à população, abastecimento provisório (bypass), levantamento de interferências e APR na frente (checklist Anexo B da NTS 329).",registros:"FVS, relatório de inspeção (Anexo A da NTS 329), checklist (Anexo B), ensaio de estanqueidade e as built."}),
+   N("pv49","Manutenção","Limpeza e Desobstrução de Rede de Esgoto",["NTS 170","NTS 207","NTS 208","NTS 209","NTS 353","NTS 354","NR-33"],[
+     I("Vistoria prévia","Conferir a vistoria.","Parte do sistema obstruída identificada (ramal, rede ou PV), acesso, DN, profundidade e singularidades (NTS 170, 5.2)","Vistoriar antes de mobilizar o equipamento."),
+     I("Método e equipamento","Conferir o método escolhido.","Método conforme Tabelas 1 a 3 da NTS 170 (Flexi Cleaner, Mini Jet, Sewer Jet, Sewer Rodder, combinado ou vácuo); operador habilitado com certificado reconhecido pela Sabesp","Escolher pelo tipo de material (sólido, areia, gordura) e pelo diâmetro."),
+     I("Resíduos","Conferir remoção e destino.","Todo o resíduo removido, sem empurrar para jusante; transporte estanque e destino com CADRI e CTR ou manifesto (NTS 170, 4.2)","Guardar os comprovantes de destinação."),
+     I("Espaço confinado","Verificar intervenções manuais.","Sem acesso a espaço confinado sem atender a NR 33 (NTS 170, 5.3)","Usar equipamentos que dispensem a entrada sempre que possível."),
+     I("Aceitação","Inspecionar PV de montante e jusante.","Sem detritos nas singularidades, vazão compatível e equipamento passando sem resistência; ramal com escoamento normal; CCTV quando possível (NTS 170, item 6)","Registrar fotos antes e depois.")],
+     {seguranca:"Atender NR 06, 11, 12, 17, 18, 21 e 33. Sinalizar a área conforme NTS 370.",registros:"FVS, fotos antes e depois, comprovantes de destinação (CADRI, CTR) e vídeo quando houver."}),
+   N("pv50","Assentamento","Assentamento de Tubulação de Aço (Junta Soldada)",["ETRPCM Sabesp 9.2","NTS 034","NTS 038","NTS 040"],[
+     I("Qualificação","Conferir procedimento, consumível e soldador.","Procedimento de soldagem, consumível e soldador qualificados pela NTS 034; consumíveis estocados como o fabricante indica (ETRPCM 9.2.1)","Conferir certificados antes de iniciar."),
+     I("Cotas e alinhamento","Medir cotas a cada 20 m.","Cotas do fundo e da geratriz superior verificadas a cada 20 m; desalinhamento, ovalização ou diferença de espessura ≤ 3,0 mm ou t/3, o menor (ETRPCM 9.2.1)","Proibido usar dispositivos soldados (cachorro ou sargento) na montagem."),
+     I("Soldagem","Acompanhar a execução.","Dois soldadores simultâneos; remoção da raiz e passe interno; defasagem mínima de 50 mm entre soldas; no máximo 2 h entre raiz e enchimento; umidade até 85% e temperatura ≥ 3 °C acima do ponto de orvalho (ETRPCM 9.2.1)","Proteger da chuva e do vento; identificar tubos e soldas."),
+     I("Ensaios das soldas","Conferir os laudos.","Toda a extensão ensaiada: visual, ultrassom (NTS 038) ou gamagrafia nas juntas de topo e líquido penetrante (NTS 040) nas de ângulo; trinca ou defeito ≥ 25% da junta exige corte de anel de 500 mm (ETRPCM 9.2.1)","Reparar até 2 vezes; persistindo, cortar o anel."),
+     I("Revestimento","Inspecionar o revestimento das juntas.","Jateamento padrão Sa 2½; juntas testadas quanto a espessura, aderência e falhas; proteção catódica instalada junto com o assentamento (ETRPCM 9.2.1)","Revestir só após a aprovação da solda.")],
+     {seguranca:"Trabalho a quente: permissão específica, extintor e proteção contra radiação da solda. Gamagrafia só com fonte Ir 192 e isolamento da área.",registros:"FVS, registro por junta (soldador e data), laudos de ensaios não destrutivos e de revestimento."}),
+   N("pv51","Travessias","Túnel por Tubos Cravados ou Tunnel Liner",["ETRPCM Sabesp 22.2 e 22.4","ABNT NBR 15319"],[
+     I("Poço de serviço","Conferir o poço de cravação.","Poço com dimensões compatíveis com o equipamento e quadro rígido de reação na parede oposta à cravação (ETRPCM 22.2)","Executar o poço com escoramento de projeto."),
+     I("Tubos cravados","Conferir os tubos.","Tubos de concreto armado conforme ABNT NBR 15319, inspecionados e aprovados, com junta elástica no colar (ETRPCM 22.2)","Exigir laudo do lote."),
+     I("Direcionamento","Conferir o alinhamento.","Tubos cravados: guia a laser e gráfico de desvios do shield; tunnel liner: alinhamento conferido a no máximo cada 3 m de avanço e corrigido de imediato (ETRPCM 22.2 e 22.4)","Registrar as leituras de desvio."),
+     I("Vazios","Conferir preenchimento.","Tubo cravado justo no terreno, sem folga externa; no tunnel liner, vazios da corrugação injetados com solo-cimento a 5 kgf/cm²; preenchimento interno em lances de até 15 m (ETRPCM 22.2 e 22.4)","Inspecionar após cada lance; havendo dúvida, preencher por furo vertical."),
+     I("Frente de escavação","Conferir sondagens à frente.","Sondagens horizontais e ascendentes para detectar água e mudança de solo; frente estabilizada com os dispositivos do método (ETRPCM 22.4)","Interromper o avanço se surgir água ou solo diferente.")],
+     {seguranca:"Trabalho em espaço confinado e em escavação subterrânea: NR 33 e NR 18. Ventilação e monitoramento de gases contínuos.",registros:"FVS, leituras de alinhamento, laudos dos tubos e registros de injeção."})
+  );
+})();
+
+
 
 // ───────────── SST e meio ambiente integrados em cada FVS ─────────────
 (function(){
@@ -5631,19 +5834,21 @@ function petHTML(sv){ const it=sv.itens.map((i,k)=>({...i,...(typeof critEfetivo
    ["Objetivo",`Estabelecer o método de execução, inspeção e aceitação do serviço "${$e(sv.nome)}", garantindo o atendimento às normas de referência e às especificações do contrato.`],
    ["Normas de referência",(sv.normas||[]).map($e).join(", ")+". Prevalecem sempre o projeto executivo e as normas técnicas do contratante vigentes, quando mais exigentes."],
    ["Responsabilidades","Engenheiro da frente: planejar e liberar o serviço. Encarregado: executar conforme este procedimento. Qualidade: inspecionar pela FVS e tratar as não conformidades. Segurança do trabalho: verificar as condições antes do início."],
-   ["Condições para início","Frente liberada (documentação, segurança, meio ambiente e comunicação), materiais aprovados, equipamentos inspecionados e equipe orientada sobre este procedimento."]]}; }
+   ["Condições para início",(sv.pet&&sv.pet.condicoes?$e(sv.pet.condicoes)+" ":"")+"Frente liberada (documentação, segurança, meio ambiente e comunicação), materiais aprovados, equipamentos inspecionados e equipe orientada sobre este procedimento."]].concat(sv.pet&&sv.pet.seguranca?[["Segurança",$e(sv.pet.seguranca)]]:[]),
+   registros:(sv.pet&&sv.pet.registros)?$e(sv.pet.registros):"FVS do serviço no MGI PRO, com fotos, plano de ação das não conformidades e laudos de ensaio quando aplicáveis.",
+   rev:sv.revNTS?"Revisado conforme as NTS Sabesp e a ETRPCM (Livro Azul) em novembro de 2026.":""}; }
 window.mgiPET=function(sid){ const sv=SERVICOS.find(x=>x.id===sid); if(!sv) return; const p=petHTML(sv);
   modal(`<h3>📘 Procedimento de execução</h3><b style="color:var(--text)">${$e(sv.nome)}</b>
     ${p.secs.map(([t,x])=>`<div class="pet-s"><b>${t}</b><p>${x}</p></div>`).join("")}
     <div class="pet-s"><b>Execução e controle, etapa por etapa</b>${p.it.map((i,k)=>`<div class="pet-e"><span>${String(k+1).padStart(2,"0")}</span><div><b>${$e(i.t)}</b><p><i>Como executar:</i> ${$e(i.exec||"Conforme projeto e boas práticas.")}</p><p><i>Critério de aceitação:</i> ${$e(i.tol||"Conforme projeto.")}</p><p><i>Como verificar:</i> ${$e(i.m||"")}</p></div></div>`).join("")}</div>
-    <div class="pet-s"><b>Registros</b><p>FVS do serviço no MGI PRO, com fotos, plano de ação das não conformidades e laudos de ensaio quando aplicáveis.</p></div>
+    <div class="pet-s"><b>Registros</b><p>${p.registros}</p></div>${p.rev?`<p style="margin:0;color:var(--muted);font-size:.74rem">📌 ${p.rev}</p>`:""}
     <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button><button class="ac5-save" onclick="mgiPETPDF('${sid}')">Gerar PDF</button></div>`,"rg-box"); };
 window.mgiPETPDF=function(sid){ const sv=SERVICOS.find(x=>x.id===sid); if(!sv) return; const p=petHTML(sv);
   abrirJanelaPDF(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PET — ${$e(sv.nome)}</title><style>${typeof cssPDF==="function"?cssPDF():""}${CSSREL}</style></head><body>
    <div class="rh"><img src="${logoCab()}"><div><h1>Procedimento de execução e testes</h1><p>${$e(sv.nome)}. Emitido pelo MGI PRO.</p></div></div>
    ${p.secs.map(([t,x],i)=>`<h3>${i+1}. ${t}</h3><p>${x}</p>`).join("")}
-   <h3>5. Execução e controle</h3><table><tr><th>Etapa</th><th>Como executar</th><th>Critério de aceitação</th><th>Como verificar</th></tr>${p.it.map(i=>`<tr><td><b>${$e(i.t)}</b></td><td>${$e(i.exec||"")}</td><td>${$e(i.tol||"")}</td><td>${$e(i.m||"")}</td></tr>`).join("")}</table>
-   <h3>6. Registros</h3><p>FVS do serviço no MGI PRO, com fotos, plano de ação das não conformidades e laudos de ensaio quando aplicáveis.</p>
+   <h3>${p.secs.length+1}. Execução e controle</h3><table><tr><th>Etapa</th><th>Como executar</th><th>Critério de aceitação</th><th>Como verificar</th></tr>${p.it.map(i=>`<tr><td><b>${$e(i.t)}</b></td><td>${$e(i.exec||"")}</td><td>${$e(i.tol||"")}</td><td>${$e(i.m||"")}</td></tr>`).join("")}</table>
+   <h3>${p.secs.length+2}. Registros</h3><p>${p.registros}</p>${p.rev?`<p style="font-size:8pt;color:#64748b">${p.rev}</p>`:""}
    <div class="ass"><div>Elaborado por</div><div>Revisado por</div><div>Aprovado por</div></div><div class="footer">MGI PRO, Massei Gestão Integrada.</div></body></html>`); };
 
 // ───────────────────────── Ditado por voz ─────────────────────────
@@ -6749,6 +6954,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v64: FVS e PET de saneamento revisadas pelas NTS Sabesp (392, 370, 372, 327, 375, 324, 329, 215, 170) e ETRPCM; 7 FVS novas
 // MGI PRO · v63: fotos carimbadas na liberação de frente (por item) e no recebimento de material; carimbo com logo da obra e da empresa, texto sem corte e marca d'água opcional
 // ═════════════════════════════════════════════════════════════════════════════
 (function(){
