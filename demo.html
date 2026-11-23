@@ -7065,6 +7065,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v66: liberação salva sozinha, tela não volta ao topo ao marcar e toque fora não fecha formulário; liberações no relatório mensal
 // MGI PRO · v65: frentes cadastradas em lista de seleção (Liberação, FVS, DDS e Diário)
 // MGI PRO · v64: FVS e PET de saneamento revisadas pelas NTS Sabesp (392, 370, 372, 327, 375, 324, 329, 215, 170) e ETRPCM; 7 FVS novas
 // MGI PRO · v63: fotos carimbadas na liberação de frente (por item) e no recebimento de material; carimbo com logo da obra e da empresa, texto sem corte e marca d'água opcional
@@ -8273,6 +8274,91 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
       try{ (state.materiais||[]).forEach(function(x){ if(x) matFotos(x); });
         (state.liberacoes||[]).forEach(function(x){ if(!x) return; if(!x.fotos||typeof x.fotos!=="object"||Array.isArray(x.fotos)) x.fotos={}; var U=(x.fotosUrl&&!Array.isArray(x.fotosUrl))?x.fotosUrl:{}; Object.keys(U).forEach(function(k){ libFotos(x,k); }); }); }catch(e){}
       return r; }; }
+})();
+</script>
+
+<!-- ===== CAMPO: TELA NÃO PULA, NÃO FECHA SEM QUERER E LIBERAÇÃO SALVA SOZINHA (v66) ===== -->
+<style>
+#lib-auto{font:600 .72rem Barlow,sans-serif;color:var(--muted);margin-top:-4px}
+#mgi-dica{position:fixed;left:50%;transform:translateX(-50%);top:calc(14px + env(safe-area-inset-top,0px));z-index:7000;background:#0f172a;color:#fff;border-radius:12px;padding:9px 14px;font:700 .8rem Barlow,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:90vw;text-align:center}
+.lib-rasc{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;background:rgba(245,158,11,.15);color:#F59E0B;font:800 .68rem Barlow,sans-serif}
+</style>
+<script>
+(function(){
+  function dica(t){ var d=document.getElementById("mgi-dica"); if(d) d.remove(); d=document.createElement("div"); d.id="mgi-dica"; d.textContent=t; document.body.appendChild(d); clearTimeout(dica._t); dica._t=setTimeout(function(){ d.remove(); },2600); }
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function titulo(m){ var h=m&&m.querySelector(".fm-box h3"); return h?h.textContent.replace(/❓\s*Como usar/,"").trim():""; }
+  var FORMS=/Liberação de frente|Lista de presen|Recebimento de material|Editar DDS|Horário do DDS/;
+
+  // ═══ 1. A tela não volta para o topo quando o formulário se redesenha (ex.: ao marcar ✓ ✗ NA) ═══
+  var ult={t:"",top:0,em:0};
+  document.addEventListener("scroll",function(e){ var b=e.target; if(b&&b.classList&&b.classList.contains("fm-box")&&b.parentNode&&b.parentNode.id==="ficha-modal"){ ult={t:titulo(b.parentNode),top:b.scrollTop,em:Date.now()}; } },true);
+  document.addEventListener("pointerdown",function(e){ var b=e.target&&e.target.closest&&e.target.closest("#ficha-modal .fm-box"); if(!b) return;
+    var el=e.target.closest("[onclick],[id]"), ch=null; if(el&&b.contains(el)) ch=el.getAttribute("onclick")?["onclick",el.getAttribute("onclick")]:["id",el.id];
+    ult={t:titulo(b.parentNode),top:b.scrollTop,em:Date.now(),ch:ch,y:el?el.getBoundingClientRect().top:null}; },true);
+  function restaurar(m){ var b=m.querySelector(".fm-box"); if(!b||b.__restaurado) return; b.__restaurado=true; var t=titulo(m);
+    if(!(t&&t===ult.t&&FORMS.test(t)&&ult.top>0&&Date.now()-ult.em<120000)) return; var u=ult;
+    // Mantém o item tocado no mesmo lugar da tela, mesmo que algo seja acrescentado acima dele
+    var acerta=function(){ var el=null; if(u.ch){ try{ el=[].slice.call(b.querySelectorAll(u.ch[0]==="onclick"?"[onclick]":"[id]")).find(function(x){ return x.getAttribute(u.ch[0])===u.ch[1]; }); }catch(e){} }
+      if(el&&u.y!=null){ var d=el.getBoundingClientRect().top-u.y; if(Math.abs(d)>2) b.scrollTop+=d; } else if(Math.abs(b.scrollTop-u.top)>40) b.scrollTop=u.top; };
+    b.scrollTop=u.top; requestAnimationFrame(acerta); [80,200,400,700].forEach(function(ms){ setTimeout(acerta,ms); }); }
+  new MutationObserver(function(ms){ var m=document.getElementById("ficha-modal"); if(!m) return; for(var i=0;i<ms.length;i++){ for(var j=0;j<ms[i].addedNodes.length;j++){ var n=ms[i].addedNodes[j]; if(n.classList&&n.classList.contains("fm-box")){ restaurar(m); return; } } } }).observe(document.body,{childList:true,subtree:true});
+
+  // ═══ 2. Toque fora da janela não fecha um formulário em preenchimento ═══
+  document.addEventListener("click",function(e){ var m=e.target; if(!m||m.id!=="ficha-modal") return;
+    var temCampo=[].slice.call(m.querySelectorAll("input:not([type=file]):not([type=checkbox]),textarea")).some(function(i){ return !i.disabled&&!i.readOnly; });
+    if(temCampo){ e.stopImmediatePropagation(); e.preventDefault(); dica("Para sair, use Voltar ou Salvar. Assim nada se perde."); } },true);
+
+  // ═══ 3. Liberação de frente salva sozinha enquanto é preenchida ═══
+  function temConteudo(L){ if(!L) return false; if((L.frente||"").trim()||(L.parecer||"").trim()) return true;
+    if(Object.keys(L.resp||{}).some(function(k){ return L.resp[k]; })) return true; if(Object.keys(L.obs||{}).some(function(k){ return (L.obs[k]||"").trim(); })) return true;
+    if(L.fotos&&typeof L.fotos==="object"&&Object.keys(L.fotos).some(function(k){ return (L.fotos[k]||[]).length; })) return true;
+    return Object.keys(L.assin||{}).some(function(k){ return L.assin[k]&&L.assin[k].img; }); }
+  var tAuto=null, ultimaAss="";
+  function autosalvar(){
+    if(fiscal()||!window.mgiLibAPI||!document.getElementById("lib-frente")) return;
+    try{ mgiLibAPI.ler(); }catch(e){} var L=mgiLibAPI.get(); if(!temConteudo(L)) return;
+    var c=JSON.parse(JSON.stringify(L)); var sig=JSON.stringify(c); if(sig===ultimaAss) return; ultimaAss=sig;
+    var lst=state.liberacoes=state.liberacoes||[]; var i=lst.findIndex(function(x){ return x.id===c.id; });
+    var antigo=i>=0?lst[i]:null; if(!antigo||antigo.rascunho) c.rascunho=true; else c.rascunho=antigo.rascunho||false;
+    if(!c.rascunho) c.situacao=antigo.situacao;   // registro já finalizado: mantém a situação até salvar de novo
+    c.atualizadoEm=new Date().toISOString(); if(!c.obraNome){ var o=(state.obras||[]).find(function(x){ return x.id===c.obraId; }); c.obraNome=o?o.nome:""; }
+    if(i>=0) lst[i]=c; else lst.push(c);
+    try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){}
+    var a=document.getElementById("lib-auto"); if(a) a.textContent="💾 Salvo automaticamente às "+new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+  function agendar(){ clearTimeout(tAuto); tAuto=setTimeout(autosalvar,700); }
+  function marcarForm(){ var f=document.getElementById("lib-frente"); if(!f) return; var m=document.getElementById("ficha-modal"); if(!m||m.querySelector("#lib-auto")) return;
+    var h=m.querySelector(".fm-box h3"); if(!h) return; var s=document.createElement("div"); s.id="lib-auto"; s.textContent=fiscal()?"":"💾 Salvamento automático ligado"; h.parentNode.insertBefore(s,h.nextSibling); }
+  new MutationObserver(function(){ if(document.getElementById("lib-frente")){ marcarForm(); agendar(); } }).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener("input",function(e){ if(e.target&&e.target.closest&&e.target.closest("#ficha-modal")&&document.getElementById("lib-frente")) agendar(); },true);
+  document.addEventListener("change",function(e){ if(e.target&&e.target.closest&&e.target.closest("#ficha-modal")&&document.getElementById("lib-frente")) agendar(); },true);
+  // Ao sair do app ou trocar de tela, salva na hora
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden"){ clearTimeout(tAuto); autosalvar(); } });
+  window.addEventListener("pagehide",function(){ clearTimeout(tAuto); autosalvar(); });
+  // Antes de sair pelo Voltar ou abrir a câmera, salva
+  document.addEventListener("click",function(e){ var b=e.target&&e.target.closest&&e.target.closest("button,label"); if(!b||!document.getElementById("lib-frente")) return;
+    if(/Voltar|Início|Foto|🖼️/.test(b.textContent||"")){ clearTimeout(tAuto); autosalvar(); } },true);
+  // Salvar finaliza: tira a marca de "em andamento"
+  if(typeof mgiLibSalvar==="function"){ var _sv=mgiLibSalvar; window.mgiLibSalvar=function(){ try{ mgiLibAPI.ler(); var L=mgiLibAPI.get(); if(L) delete L.rascunho; }catch(e){} ultimaAss=""; clearTimeout(tAuto); return _sv.apply(this,arguments); }; }
+  // Lista: mostra as liberações em andamento
+  if(typeof mgiLibLista==="function"){ var _ll=mgiLibLista; window.mgiLibLista=mgiLibLista=function(){ clearTimeout(tAuto); autosalvar(); var r=_ll.apply(this,arguments);
+      document.querySelectorAll('#ficha-modal .rg-tx[onclick^="mgiLibVer"]').forEach(function(tx){ var id=(tx.getAttribute("onclick").match(/'([^']+)'/)||[])[1], x=(state.liberacoes||[]).find(function(l){ return l.id===id; });
+        if(x&&x.rascunho&&!tx.querySelector(".lib-rasc")){ var s=document.createElement("span"); s.className="lib-rasc"; s.textContent="📝 em andamento"; (tx.querySelector(".rg-tp")||tx).appendChild(s); } });
+      return r; }; }
+
+  // ═══ 4. Liberações no relatório mensal da qualidade ═══
+  if(typeof mgiHtmlMensal==="function"){ var _hm=mgiHtmlMensal; window.mgiHtmlMensal=function(mes,esc2){ var html=_hm.apply(this,arguments);
+      try{ var rm=state.removidos||{}, ob=state.obraAtual||null;
+        var L=(state.liberacoes||[]).filter(function(x){ return x&&!rm[x.id]&&(esc2==="todas"||(x.obraId||null)===ob)&&String(x.dataPrev||x.atualizadoEm||"").indexOf(mes)===0; });
+        if(!L.length) return html; var mm=html.match(/<h3>(\d+)\. Análise crítica do mês<\/h3>/); if(!mm) return html; var n=+mm[1];
+        var E=function(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
+        var cont=function(s){ return L.filter(function(x){ return (x.rascunho?"Em andamento":(x.situacao||"Em preenchimento"))===s; }).length; };
+        var pend=function(x){ return Object.keys(x.resp||{}).filter(function(k){ return x.resp[k]==="NC"; }).length; };
+        var sec='<h3>'+n+'. Liberações de frente</h3><div class="kp"><div><b>'+L.length+'</b><span>Liberações</span></div><div><b>'+cont("Liberada")+'</b><span>Liberadas</span></div><div><b>'+cont("Liberada com ressalvas")+'</b><span>Com ressalvas</span></div><div><b>'+(cont("Não liberada")+cont("Em andamento")+cont("Em preenchimento"))+'</b><span>Não liberadas ou em andamento</span></div></div>'+
+          '<table><tr><th>Data prevista</th><th>Frente</th><th>Serviço</th><th>Situação</th><th>Pendências</th></tr>'+L.slice().sort(function(a,b){ return String(a.dataPrev||"").localeCompare(String(b.dataPrev||"")); }).map(function(x){ return '<tr><td>'+String(x.dataPrev||"").split("-").reverse().join("/")+'</td><td>'+E(x.frente)+'</td><td>'+E(x.servico||"")+'</td><td>'+E(x.rascunho?"Em andamento":(x.situacao||"Em preenchimento"))+'</td><td>'+pend(x)+'</td></tr>'; }).join("")+'</table>';
+        html=html.replace(mm[0],sec+'<h3>'+(n+1)+'. Análise crítica do mês</h3>'); }catch(e){}
+      return html; }; }
 })();
 </script>
 
