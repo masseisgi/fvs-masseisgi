@@ -7065,6 +7065,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v65: frentes cadastradas em lista de seleção (Liberação, FVS, DDS e Diário)
 // MGI PRO · v64: FVS e PET de saneamento revisadas pelas NTS Sabesp (392, 370, 372, 327, 375, 324, 329, 215, 170) e ETRPCM; 7 FVS novas
 // MGI PRO · v63: fotos carimbadas na liberação de frente (por item) e no recebimento de material; carimbo com logo da obra e da empresa, texto sem corte e marca d'água opcional
 // ═════════════════════════════════════════════════════════════════════════════
@@ -7401,23 +7402,24 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   setTimeout(garantir,1500); setInterval(garantir,10000);
 })();
 </script>
-<!-- ===== FRENTES CADASTRADAS VISÍVEIS EM FVS, DIÁRIO, LIBERAÇÃO E DDS (v55) ===== -->
+<!-- ===== FRENTES CADASTRADAS: LISTA DE SELEÇÃO EM TODAS AS FERRAMENTAS (v65) ===== -->
 <style>
-.fr-chips{display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px;margin-top:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.fr-chips::-webkit-scrollbar{display:none}
-.fr-chips button{flex:0 0 auto;border:1px solid var(--border2,var(--border));background:var(--surf2,rgba(255,255,255,.05));color:var(--text);border-radius:999px;padding:6px 11px;font:600 .78rem Barlow,sans-serif;cursor:pointer;white-space:nowrap}
-.fr-chips button.on{background:rgba(20,206,141,.16);border-color:#14CE8D;color:#14CE8D}
-.fr-chips .fr-add{border-style:dashed;color:var(--muted)}
-.fr-chips .fr-lbl{flex:0 0 auto;align-self:center;font:700 .72rem Barlow,sans-serif;color:var(--muted)}
+.fr-box{display:flex;gap:6px;align-items:center;margin-top:6px}
+.fr-box select{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid #14CE8D;background:rgba(20,206,141,.08);color:var(--text);font:600 .86rem Barlow,sans-serif;appearance:auto}
+.fr-box select option{background:var(--bg2,#0b1220);color:var(--text)}
+.fr-box .fr-add{flex:0 0 auto;padding:10px 12px;border-radius:10px;border:1px dashed var(--border2,var(--border));background:transparent;color:var(--muted);font:700 .78rem Barlow,sans-serif;cursor:pointer;white-space:nowrap}
 </style>
 <script>
 (function(){
+  // Frentes e locais cadastrados da obra selecionada (e os sem obra)
   function frentes(){
     var r=state.removidos||{}, ob=state.obraAtual||null, nomes=[];
-    (state.trechos||[]).forEach(function(t){ if(t&&t.id&&!r[t.id]&&(t.obraId||null)===ob&&t.nome) nomes.push(t.nome); });
-    (state.locais||[]).forEach(function(l){ if(l&&l.id&&!r[l.id]&&(l.obraId||null)===ob&&l.nome) nomes.push(l.nome); });
-    return nomes.filter(function(n,i){ return nomes.indexOf(n)===i; });
+    var ok=function(o){ return !ob||!o||o===ob; };
+    (state.trechos||[]).forEach(function(t){ if(t&&t.id&&!r[t.id]&&ok(t.obraId||null)&&t.nome) nomes.push(String(t.nome).trim()); });
+    (state.locais||[]).forEach(function(l){ if(l&&l.id&&!r[l.id]&&ok(l.obraId||null)&&l.nome) nomes.push(String(l.nome).trim()); });
+    return nomes.filter(function(n,i){ return n&&nomes.indexOf(n)===i; }).sort(function(a,b){ return a.localeCompare(b,"pt-BR",{numeric:true}); });
   }
+  window.mgiFrentesLista=frentes;
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function alvos(){
     var L=[];
@@ -7427,22 +7429,21 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   }
   function preencher(inp,nome){
     inp.value=nome; inp.dispatchEvent(new Event("input",{bubbles:true})); inp.dispatchEvent(new Event("change",{bubbles:true}));
-    var box=inp.__frBox; if(box) box.querySelectorAll("button[data-n]").forEach(function(b){ b.classList.toggle("on",b.getAttribute("data-n")===nome); });
   }
   function decorar(){
     var F=frentes(), sig=F.join("|")+"#"+(state.obraAtual||"");
     alvos().forEach(function(inp){
       if(inp.disabled||inp.readOnly) return;
       var box=inp.__frBox;
-      if(box&&document.body.contains(box)&&box.__sig===sig) return;
-      if(!box||!document.body.contains(box)){ box=document.createElement("div"); box.className="fr-chips"; inp.__frBox=box;
+      if(box&&document.body.contains(box)&&box.__sig===sig){ var s=box.querySelector("select"); if(s&&s.value!==inp.value) s.value=F.indexOf(inp.value)>=0?inp.value:""; return; }
+      if(!box||!document.body.contains(box)){ box=document.createElement("div"); box.className="fr-box"; inp.__frBox=box;
         var ancora=inp.closest("label")&&inp.closest("label").contains(inp)&&inp.id!=="fvs-trecho"?inp.closest("label"):inp;
         if(ancora.parentNode&&getComputedStyle(ancora.parentNode).display==="grid") ancora=ancora.parentNode;
         ancora.parentNode.insertBefore(box,ancora.nextSibling); }
       box.__sig=sig;
-      box.innerHTML=(F.length?'<span class="fr-lbl">📍</span>'+F.map(function(n){ return '<button type="button" data-n="'+esc(n)+'"'+(inp.value===n?' class="on"':'')+'>'+esc(n)+'</button>'; }).join(""):'')+
-        '<button type="button" class="fr-add">'+(F.length?'+ nova frente':'📍 Cadastrar frentes no Mapa')+'</button>';
-      box.querySelectorAll("button[data-n]").forEach(function(b){ b.onclick=function(ev){ ev.preventDefault(); preencher(inp,b.getAttribute("data-n")); }; });
+      box.innerHTML=(F.length?'<select aria-label="Escolher frente cadastrada"><option value="">📍 Escolher frente cadastrada ('+F.length+')</option>'+F.map(function(n){ return '<option value="'+esc(n)+'"'+(inp.value===n?" selected":"")+'>'+esc(n)+'</option>'; }).join("")+'</select>':'')+
+        '<button type="button" class="fr-add">'+(F.length?'+ nova':'📍 Cadastrar frentes no Mapa')+'</button>';
+      var sel=box.querySelector("select"); if(sel) sel.onchange=function(){ if(sel.value) preencher(inp,sel.value); };
       box.querySelector(".fr-add").onclick=function(ev){ ev.preventDefault(); if(typeof mgiMapaAbrir==="function") mgiMapaAbrir(); };
     });
   }
