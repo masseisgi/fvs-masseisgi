@@ -7006,6 +7006,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v72: avisos de rascunho se atualizam sozinhos quando chega coisa da nuvem; abrir a lista busca na hora
 // MGI PRO · v71: tudo em andamento vai para a nuvem e aparece em todos os aparelhos: FVS, auditoria, DDS, recebimento de material e diário (com fotos e assinaturas)
 // MGI PRO · v70: DDS do serviço em linguagem de campo (sem norma na fala, "como tem que ficar", botão para deixar mais natural com IA com números travados); normas na "Base técnica" da ata
 // MGI PRO · v69: lista de presença do DDS voltou a aparecer (a janela espremia a lista até sumir); nenhum bloco das janelas encolhe mais
@@ -8427,7 +8428,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     if(passo===99){ try{ mgiDDAPI.ler(); }catch(e){} }
     var cp=clone(D); gravar(KD,{em:Date.now(),obraId:ob(),passo:passo,edit:window.__ddEdit||null,D:cp});
     var f=Array.isArray(cp.fotos)?cp.fotos:[]; delete cp.fotos; var nA=(cp.participantes||[]).filter(function(p){ return p.assin; }).length;
-    R.salvar("dds",D.id,{titulo:"DDS · "+(cp.tema||"sem tema"),info:passo===99?nA+" assinatura(s)":(passo?"pergunta "+passo:"conteúdo"),extra:{passo:passo,edit:window.__ddEdit||null},dados:cp,fotos:f,agora:agora}); }
+    R.salvar("dds",D.id,{titulo:"DDS · "+String(cp.tema||"sem tema").replace(/^DDS\s*[-–:·]\s*/i,""),info:passo===99?nA+" assinatura(s)":(passo?"pergunta "+passo:"conteúdo"),extra:{passo:passo,edit:window.__ddEdit||null},dados:cp,fotos:f,agora:agora}); }
   window.mgiDDSRascContinuar=function(id){ var x=id?R.pega(id):null, loc=ler(KD), D, passo, edit;
     if(x){ D=Object.assign({},x.dados,{fotos:fotosDe(x)}); passo=x.extra.passo; edit=x.extra.edit; if(loc&&loc.D&&loc.D.id===x.chave&&loc.em>new Date(x.atualizadoEm).getTime()){ D=loc.D; passo=loc.passo; edit=loc.edit; } }
     else if(loc){ D=loc.D; passo=loc.passo; edit=loc.edit; } else return;
@@ -8459,6 +8460,14 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     lst.forEach(function(x){ box.appendChild(barra(x,cont,desc,x.info)); }); }
   function rascTelas(){ try{ barrasPagina("fvs-page0","fvs","mgiRascFVS","mgiRascFVSDel",window.__fvsRascId); }catch(e){} try{ barrasPagina("iso-page0","aud","mgiRascAud","mgiRascAudDel",window.__audRascId); }catch(e){} try{ barrasPagina("module-diario","dia","mgiRascDia","mgiRascDiaDel",(state.diarioAtual||{}).id); }catch(e){} }
   window.mgiRascTelas=rascTelas; setInterval(rascTelas,2500);
+  // Ao chegar coisa nova da nuvem, atualiza os avisos da tela aberta; ao abrir a lista, busca na hora
+  function refazModal(){ var h=document.querySelector("#ficha-modal .fm-box h3"); if(!h) return; var t=h.textContent;
+    if(/^\s*🎓\s*DDS/.test(t)) barrasModal("dds","mgiDDSRascContinuar","mgiDDSRascDescartar",function(x){ return !(state.dds||[]).some(function(d){ return d.id===x.chave&&!(x.extra&&x.extra.edit); }); });
+    else if(document.querySelector('#ficha-modal [onclick^="mgiMaterialForm"]')&&!document.getElementById("mt-mat")) barrasModal("mat","mgiMatRascContinuar","mgiMatRascDescartar",function(x){ var s=(state.materiais||[]).find(function(m){ return m.id===x.chave; }); return !(s&&String(s.atualizadoEm||"")>=x.atualizadoEm); }); }
+  if(typeof carregarNuvem==="function"){ var _cn=carregarNuvem; window.carregarNuvem=carregarNuvem=async function(){ var r=await _cn.apply(this,arguments); try{ rascTelas(); refazModal(); }catch(e){} return r; }; }
+  var ultPuxa=0; function puxar(){ if(Date.now()-ultPuxa<8000) return; ultPuxa=Date.now(); try{ if(typeof carregarNuvem==="function") carregarNuvem(); }catch(e){} }
+  ["mgiDDS","mgiMateriais"].forEach(function(n){ var f=window[n]; if(typeof f!=="function") return; window[n]=function(){ var r=f.apply(this,arguments); puxar(); return r; }; });
+  document.addEventListener("click",function(e){ var t=e.target&&e.target.closest&&e.target.closest('[onclick*="fvs"],[onclick*="FVS"],[onclick*="iso"],[onclick*="Diario"],[onclick*="diario"]'); if(t) puxar(); },true);
 
   // ═══ Diário: o rascunho também vai para a nuvem ═══
   window.mgiRascDia=function(id){ var x=R.pega(id); if(!x) return; if(!confirm("Abrir o diário em andamento de "+String((x.dados||{}).data||"").split("-").reverse().join("/")+"? O que estiver na tela agora fica guardado como rascunho.")) return;
