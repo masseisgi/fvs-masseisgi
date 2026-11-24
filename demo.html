@@ -6792,6 +6792,7 @@ function lerRascunho(){ try{ const r=JSON.parse(localStorage.getItem(RASC)||"nul
 function gravarRascunho(){ try{ const d=state.diarioAtual; if(!d||ro()) return; const vazio=!(d.mo||[]).length&&!(d.eq||[]).length&&!(d.atividades||[]).length&&!(d.ocorrencias||[]).length&&!d.obs&&!d.tempo; if(vazio){ return; }
   try{ if(window.mgiRasc&&d.id&&!(state.diarios||[]).some(x=>x.id===d.id&&!d._auto)){ const cc=JSON.parse(JSON.stringify(d)); const ff=(cc.fotos||[]).filter(f=>typeof f==="string"&&f); delete cc.fotos; delete cc.fotosUrl; mgiRasc.salvar("dia",d.id,{titulo:"Diário · "+String(d.data||"").split("-").reverse().join("/"),info:(d.atividades||[]).length+" atividade(s)",dados:cc,fotos:ff}); } }catch(e){}
   const c=JSON.parse(JSON.stringify(d)); try{ localStorage.setItem(RASC,JSON.stringify({em:Date.now(),obraId:obraId(),d:c})); }catch(e1){ c.fotos=(c.fotos||[]).filter(f=>!String(f).startsWith("data:")); localStorage.setItem(RASC,JSON.stringify({em:Date.now(),obraId:obraId(),d:c})); } }catch(e){} }
+window.mgiDiarioGravarRascunho=function(){ try{ gravarRascunho(); }catch(e){} };
 function limparRascunho(){ try{ const r=JSON.parse(localStorage.getItem(RASC)||"null"); if(r&&r.d&&window.mgiRasc) mgiRasc.tirar("dia",r.d.id); if(state.diarioAtual&&window.mgiRasc) mgiRasc.tirar("dia",state.diarioAtual.id); localStorage.removeItem(RASC); }catch(e){} }
 
 const _render=window.renderDiarioForm;
@@ -7117,6 +7118,8 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v74: guardar ao sair vale para todas as ferramentas (FVS, auditoria, diário, liberação, material e DDS): trocar de ferramenta, de aba, Voltar, Início, Cancelar ou Fechar guarda na hora
+// MGI PRO · v73: DDS em andamento é guardado também quando se sai sem concluir (Voltar, Início, Cancelar) em qualquer etapa
 // MGI PRO · v72: avisos de rascunho se atualizam sozinhos quando chega coisa da nuvem; abrir a lista busca na hora
 // MGI PRO · v71: tudo em andamento vai para a nuvem e aparece em todos os aparelhos: FVS, auditoria, DDS, recebimento de material e diário (com fotos e assinaturas)
 // MGI PRO · v70: DDS do serviço em linguagem de campo (sem norma na fala, "como tem que ficar", botão para deixar mais natural com IA com números travados); normas na "Base técnica" da ata
@@ -8396,7 +8399,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   window.addEventListener("pagehide",function(){ clearTimeout(tAuto); autosalvar(); });
   // Antes de sair pelo Voltar ou abrir a câmera, salva
   document.addEventListener("click",function(e){ var b=e.target&&e.target.closest&&e.target.closest("button,label"); if(!b||!document.getElementById("lib-frente")) return;
-    if(/Voltar|Início|Foto|🖼️/.test(b.textContent||"")){ clearTimeout(tAuto); autosalvar(); } },true);
+    if(/Voltar|Início|Inicio|Foto|🖼️|Cancelar|Fechar|Sair|←|🏠/.test(b.textContent||"")){ clearTimeout(tAuto); autosalvar(); } },true);
   // Salvar finaliza: tira a marca de "em andamento"
   if(typeof mgiLibSalvar==="function"){ var _sv=mgiLibSalvar; window.mgiLibSalvar=function(){ try{ mgiLibAPI.ler(); var L=mgiLibAPI.get(); if(L) delete L.rascunho; }catch(e){} ultimaAss=""; clearTimeout(tAuto); return _sv.apply(this,arguments); }; }
   // Lista: mostra as liberações em andamento
@@ -8533,10 +8536,12 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   var KD="mgi_rasc_dds";
   if(typeof mgiDDSPasso==="function"){ var _dp=mgiDDSPasso; window.mgiDDSPasso=function(p){ var r=_dp.apply(this,arguments); agendar("dds",ddsGuardar); return r; }; }
   if(typeof mgiDDSResp==="function"){ var _dr=mgiDDSResp; window.mgiDDSResp=function(p){ var r=_dr.apply(this,arguments); agendar("dds",ddsGuardar); return r; }; }
+  var ddsUltPasso=null, ddsUltId=null;
+  function ddsPassoTela(){ var m=document.getElementById("ficha-modal"), h=m&&m.querySelector(".fm-box h3"); if(!h) return null; var t=h.textContent;
+    if(/Lista de presen/.test(t)&&m.querySelector(".dd-lista")) return 99; if(/Pergunta (\d+) de/.test(t)&&m.querySelector(".dd-op")) return +t.match(/Pergunta (\d+)/)[1]; if(m.querySelector('[onclick="mgiDDSPasso(1)"]')&&m.querySelector(".pet-e")) return 0; return null; }
   function ddsGuardar(agora){ if(fiscal()) return; var D=null; try{ D=mgiDDAPI.get(); }catch(e){} if(!D||!D.id) return; if((state.dds||[]).some(function(x){ return x.id===D.id; })&&!window.__ddEdit) return;
-    var m=document.getElementById("ficha-modal"), h=m&&m.querySelector(".fm-box h3"); if(!h) return;
-    var t=h.textContent; var passo=/Lista de presen/.test(t)?99:/Pergunta (\d+)/.test(t)?+t.match(/Pergunta (\d+)/)[1]:(document.querySelector('#ficha-modal [onclick="mgiDDSPasso(1)"]')?0:null); if(passo===null) return;
-    if(passo===99){ try{ mgiDDAPI.ler(); }catch(e){} }
+    var passo=ddsPassoTela(); if(passo!==null){ ddsUltPasso=passo; ddsUltId=D.id; } else if(ddsUltId===D.id&&ddsUltPasso!==null) passo=ddsUltPasso; else return;
+    if(passo===99&&document.querySelector("#ficha-modal .dd-p")){ try{ mgiDDAPI.ler(); }catch(e){} }
     var cp=clone(D); gravar(KD,{em:Date.now(),obraId:ob(),passo:passo,edit:window.__ddEdit||null,D:cp});
     var f=Array.isArray(cp.fotos)?cp.fotos:[]; delete cp.fotos; var nA=(cp.participantes||[]).filter(function(p){ return p.assin; }).length;
     R.salvar("dds",D.id,{titulo:"DDS · "+String(cp.tema||"sem tema").replace(/^DDS\s*[-–:·]\s*/i,""),info:passo===99?nA+" assinatura(s)":(passo?"pergunta "+passo:"conteúdo"),extra:{passo:passo,edit:window.__ddEdit||null},dados:cp,fotos:f,agora:agora}); }
@@ -8587,11 +8592,18 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
 
   // ═══ Gatilhos ═══
   function onde(el){ if(!el||!el.closest) return ""; if(el.closest("#fvs-page0,#fvs-page1")) return "fvs"; if(el.closest("#iso-page0,#iso-page1,#iso-page2")) return "aud";
-    var m=el.closest("#ficha-modal"); if(m){ if(document.getElementById("mt-mat")) return "mat"; var h=m.querySelector(".fm-box h3"); if(h&&/Lista de presen|Pergunta \d/.test(h.textContent)) return "dds"; if(m.querySelector('[onclick="mgiDDSPasso(1)"]')) return "dds"; } return ""; }
+    var m=el.closest("#ficha-modal"); if(m){ if(document.getElementById("mt-mat")) return "mat"; var h=m.querySelector(".fm-box h3"); if(h&&/Lista de presen|Pergunta \d/.test(h.textContent)) return "dds"; if(m.querySelector('[onclick="mgiDDSPasso(1)"]')) return "dds"; } if(ddsPassoTela()!==null&&el.closest(".fm-top,.fm-nav,#ficha-modal")) return "dds"; return ""; }
   var FN={fvs:fvsGuardar,aud:audGuardar,dds:ddsGuardar,mat:matGuardar};
   ["click","input","change"].forEach(function(ev){ document.addEventListener(ev,function(e){ var w=onde(e.target); if(w) setTimeout(function(){ agendar(w,FN[w]); },0); },true); });
-  new MutationObserver(function(){ if(document.getElementById("mt-mat")) agendar("mat",matGuardar); if(document.querySelector("#ficha-modal .dd-p")) agendar("dds",ddsGuardar); }).observe(document.body,{childList:true,subtree:true});
-  function tudo(){ Object.keys(FN).forEach(function(k){ clearTimeout(tempo[k]); try{ FN[k](true); }catch(e){} }); }
+  new MutationObserver(function(){ if(document.getElementById("mt-mat")) agendar("mat",matGuardar); var ps=ddsPassoTela(); if(ps!==null){ try{ var D=mgiDDAPI.get(); if(D){ ddsUltPasso=ps; ddsUltId=D.id; } }catch(e){} agendar("dds",ddsGuardar); } }).observe(document.body,{childList:true,subtree:true});
+  // Sair pelo Voltar, Início, Cancelar ou Fechar: guarda na hora, antes de a tela fechar
+  document.addEventListener("click",function(e){ var b=e.target&&e.target.closest&&e.target.closest("button,a"); if(!b) return; if(!/Voltar|Início|Inicio|Cancelar|Fechar|Sair|←|🏠/.test(b.textContent||"")) return;
+    var w=onde(b)||(document.getElementById("mt-mat")?"mat":(ddsPassoTela()!==null?"dds":"")); if(w&&FN[w]){ clearTimeout(tempo[w]); try{ FN[w](true); }catch(er){} } },true);
+  function tudo(){ Object.keys(FN).forEach(function(k){ clearTimeout(tempo[k]); try{ FN[k](true); }catch(e){} }); try{ if(typeof gravarRascunho==="function") gravarRascunho(); else if(typeof window.mgiDiarioGravarRascunho==="function") mgiDiarioGravarRascunho(); }catch(e){} }
+  window.mgiGuardarTudo=tudo;
+  // Trocar de ferramenta, de aba ou fechar uma janela: guarda tudo o que está em andamento antes
+  ["switchModule","goTab","mgiFechar"].forEach(function(n){ var f=window[n]; if(typeof f!=="function"||f.__guarda) return; var w=function(){ try{ tudo(); }catch(e){} return f.apply(this,arguments); }; w.__guarda=true; window[n]=w; try{ if(n==="switchModule") switchModule=w; if(n==="goTab") goTab=w; }catch(e){} });
+  document.addEventListener("click",function(e){ var b=e.target&&e.target.closest&&e.target.closest("button,a,[onclick]"); if(!b) return; if(/Voltar|Início|Inicio|Cancelar|Fechar|Sair|←|🏠/.test(b.textContent||"")||/switchModule|goTab|mgiFechar|mgiInicio/.test(b.getAttribute("onclick")||"")){ try{ tudo(); }catch(er){} } },true);
   document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") tudo(); });
   window.addEventListener("pagehide",tudo);
   document.addEventListener("click",function(e){ var b=e.target&&e.target.closest&&e.target.closest("label,button"); if(b&&/Foto|📷|🖼️|Assinar|✍️/.test(b.textContent||"")) tudo(); },true);

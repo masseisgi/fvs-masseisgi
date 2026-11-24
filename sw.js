@@ -3,7 +3,7 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v72';
+const CACHE_NAME = 'mgi-pro-v74';
 
 const ASSETS = [
   './manifest.json',
