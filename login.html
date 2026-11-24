@@ -56,6 +56,11 @@
   .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
   @keyframes spin{to{transform:rotate(360deg)}}
   .field-hint{font-size:.68rem;color:var(--muted);margin-top:4px}
+  .pw{position:relative}
+  .pw input{padding-right:48px}
+  .pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:1.05rem;border-radius:8px;display:flex;align-items:center;justify-content:center}
+  .pw-eye:hover{color:var(--text)}
+  .pw-ok{color:#14CE8D!important}.pw-err{color:#EF4444!important}
 </style>
 </head>
 <body>
@@ -87,7 +92,7 @@
     </div>
     <div class="field">
       <label>Senha</label>
-      <input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password">
+      <div class="pw"><input type="password" id="login-senha" placeholder="••••••••" autocomplete="current-password"><button type="button" class="pw-eye" onclick="verSenha(this)" aria-label="Mostrar senha" title="Mostrar senha">👁️</button></div>
     </div>
     <button class="btn-primary" id="btn-login" onclick="loginEmail()">Entrar</button>
     <div class="foot">
@@ -120,8 +125,13 @@
     </div>
     <div class="field">
       <label>Senha</label>
-      <input type="password" id="signup-senha" placeholder="mínimo 6 caracteres" autocomplete="new-password">
+      <div class="pw"><input type="password" id="signup-senha" placeholder="mínimo 6 caracteres" autocomplete="new-password" oninput="conferirSenha()"><button type="button" class="pw-eye" onclick="verSenha(this)" aria-label="Mostrar senha" title="Mostrar senha">👁️</button></div>
       <div class="field-hint">Use ao menos 6 caracteres</div>
+    </div>
+    <div class="field">
+      <label>Confirmar senha</label>
+      <div class="pw"><input type="password" id="signup-senha2" placeholder="repita a senha" autocomplete="new-password" oninput="conferirSenha()"><button type="button" class="pw-eye" onclick="verSenha(this)" aria-label="Mostrar senha" title="Mostrar senha">👁️</button></div>
+      <div class="field-hint" id="signup-senha-hint"></div>
     </div>
     <button class="btn-primary" id="btn-signup" onclick="cadastrar()">Criar conta e começar</button>
     <div class="foot">
@@ -277,6 +287,12 @@ async function criarEmpresaEUsuario(user, nomeEmpresa, nomeUsuario){
 }
 
 // ═══════════════════════════════════════════════════════════
+// Mostrar/ocultar senha e conferir a confirmação
+function verSenha(b){ const i=b.parentNode.querySelector("input"); const ver=i.type==="password"; i.type=ver?"text":"password"; b.textContent=ver?"🙈":"👁️"; b.title=b.ariaLabel=ver?"Ocultar senha":"Mostrar senha"; i.focus(); }
+function conferirSenha(){ const a=document.getElementById("signup-senha").value, b=document.getElementById("signup-senha2").value, h=document.getElementById("signup-senha-hint"); if(!h) return;
+  if(!b){ h.textContent=""; h.className="field-hint"; return; }
+  const ok=a===b; h.textContent=ok?"✓ As senhas conferem":"As senhas ainda não conferem"; h.className="field-hint "+(ok?"pw-ok":"pw-err"); }
+
 // CADASTRO com e-mail/senha
 // ═══════════════════════════════════════════════════════════
 async function cadastrar(){
@@ -289,6 +305,7 @@ async function cadastrar(){
   if(!nome){ showMsg("Informe seu nome.", "error"); return; }
   if(!email){ showMsg("Informe seu e-mail.", "error"); return; }
   if(senha.length < 6){ showMsg("A senha precisa de ao menos 6 caracteres.", "error"); return; }
+  if(senha !== document.getElementById("signup-senha2").value){ showMsg("As senhas não conferem. Digite a mesma senha nos dois campos.", "error"); document.getElementById("signup-senha2").focus(); return; }
 
   setLoading("btn-signup", true);
   try {
