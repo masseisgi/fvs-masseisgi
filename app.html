@@ -1227,7 +1227,7 @@ const SERVICOS = [
   const D2={t:"Resíduos e limpeza da frente",m:"Inspecionar os resíduos gerados pelo serviço.",tol:"Resíduos segregados por classe e frente limpa ao fim do turno (CONAMA 307 / ISO 14001)",exec:"Separar os resíduos em caçambas identificadas e limpar a frente diariamente.",dim:"MA"};
   const SST=[
    [["vala","escava","escor","reaterro","assent","berço","lastro","poço de visita","ligaç","travessia","tubo camisa","caixa","registro","interliga","rebaix","rocha","drenagem","reabilita","recomposi","pavimen","calçada","guia","locação","sinaliza","asfált"],{t:"Sinalização viária e isolamento da frente",m:"Verificar placas, cones, cavaletes, tapumes e passagem de pedestres.",tol:"Conforme plano de sinalização aprovado, com passagem segura de pedestres e moradores (CTB / NR-18)",exec:"Implantar e conferir a sinalização antes de iniciar e ao fim do turno."}],
-   [["vala","escava","escor","reaterro","assent","berço","lastro","poço de visita","ligaç","rebaix","rocha","drenagem","interliga","regulariza"],{t:"Proteção de borda e acesso à vala",m:"Verificar escoramento, afastamento do material e escadas.",tol:"Escoramento acima de 1,25 m, material a 0,60 m da borda e escada a cada 15 m (NR-18)",exec:"Não permitir entrada na vala sem escoramento ou talude e sem escada."}],
+   [["vala","escava","escor","reaterro","assent","berço","lastro","poço de visita","ligaç","rebaix","rocha","drenagem","interliga","regulariza"],{t:"Proteção de borda e acesso à vala",m:"Verificar escoramento, afastamento do material e escadas.",tol:"Acima de 1,25 m, escoramento ou talude conforme projeto com ART (NTS 392, item 8); faixa livre de 1,0 m na borda, com material a no máximo 1,5 m de altura (NTS 392, 7.8); escada ou rampa para saída acima de 1,25 m (NTS 392, 7.9)",exec:"Não permitir entrada na vala sem escoramento ou talude e sem escada; manter 1,0 m livre na borda."}],
    [["fôrma","forma","armação","estrutur","alvenaria","fachada","cobertura","telha","metálica","pré-moldado","esquadria","guarda-corpo","impermeabiliza","forro","laje","pintura","textura","revestimento"],{t:"Proteção contra queda",m:"Verificar guarda-corpo, linha de vida, andaimes e cinto.",tol:"Guarda-corpo ou linha de vida com cinto paraquedista em trabalho acima de 2 m (NR-35 / NR-18)",exec:"Liberar o trabalho em altura com PT e equipe treinada."}],
    [["poço de visita","reabilita","cctv","inspeção de rede","eta","ete","comissionamento","espaço"],{t:"Espaço confinado",m:"Verificar permissão de entrada, vigia e medição de gases.",tol:"Permissão de entrada, vigia e atmosfera monitorada antes e durante o acesso (NR-33)",exec:"Medir os gases e manter o vigia na entrada durante toda a atividade."}],
    [["elétric","spda","cabeamento","eletromec","climatiza","incêndio"],{t:"Segurança em eletricidade",m:"Verificar desenergização, bloqueio e habilitação.",tol:"Circuito desenergizado, bloqueado e sinalizado; profissional com NR-10",exec:"Bloquear e sinalizar antes de qualquer intervenção."}],
@@ -1244,6 +1244,17 @@ const SERVICOS = [
     extra.push(D2); const ma=MA.find(([k])=>has(t,k)); if(ma) extra.push(Object.assign({dim:"MA"},ma[1]));
     sv.itens=sv.itens.concat(extra.map(x=>Object.assign({},x))); sv._sstma=true;
   });
+})();
+
+// ───────────── v75: itens da cava no fim da FVS de PV (pv16). Só acrescenta no fim, não mexe nos itens existentes ─────────────
+(function(){
+  const sv=(typeof SERVICOS!=="undefined"?SERVICOS:[]).find(s=>s.id==="pv16"); if(!sv||sv._cava) return;
+  sv.itens.push(
+   {t:"Dimensão da cava",m:"Medir a cava antes de descer a laje de fundo.",tol:"Cava com espaço para montar e rejuntar os anéis por fora e compactar o reaterro em volta, conforme projeto",exec:"Conferir a largura da cava em relação ao diâmetro externo dos anéis antes de chamar o caminhão com as peças."},
+   {t:"Cota do fundo da cava",m:"Conferir com nível ou topografia.",tol:"Fundo na cota de projeto, descontando lastro e laje de fundo, amarrado às cotas de chegada e saída dos tubos (±2 cm)",exec:"Marcar a cota de fundo e conferir com a geratriz dos tubos que chegam e saem antes do lastro."},
+   {t:"Escoramento e estabilidade da cava",m:"Verificar paredes, borda e acesso da cava.",tol:"Acima de 1,25 m, escoramento ou talude conforme projeto com ART (NTS 392, item 8); faixa livre de 1,0 m na borda (NTS 392, 7.8); escada ou rampa para saída (NTS 392, 7.9)",exec:"Não descer na cava sem contenção quando passar de 1,25 m; tirar material e ferramentas de perto da borda."},
+   {t:"Içamento de anéis e lajes",m:"Acompanhar a descida das peças pré-moldadas.",tol:"Ninguém dentro da cava durante o içamento; acessórios inspecionados antes de cada movimentação; carga guiada por corda (NTS 392, 7.11)",exec:"Tirar todos da cava, guiar a peça com corda e só descer depois que a peça estiver apoiada."}
+  ); sv._cava=true;
 })();
 
 
@@ -2843,7 +2854,7 @@ function mgiMesclarEstado(rem){
   state.fichasCustom=_mesclarLista(state.fichasCustom,rem.fichasCustom,rmv,false);
   state.liberacoes=_ordenar(_mesclarLista(state.liberacoes||[],rem.liberacoes,rmv,true));
   state.docsCtl=_mesclarLista(state.docsCtl||[],rem.docsCtl,rmv,false);
-  ['trechos','materiais','dds','locais','rascunhos'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
+  ['trechos','materiais','dds','locais','rascunhos','equipe'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
   state.historico=_mesclarLista(state.historico||[],rem.historico,{},false).sort((a,b)=>_ts(b.em)-_ts(a.em)).slice(0,600);
   if(rem.empresaCfg && (!state.empresaCfg || _ts(rem.empresaCfg.atualizadoEm)>_ts(state.empresaCfg.atualizadoEm))) state.empresaCfg=rem.empresaCfg;
   else if(state.empresaCfg && (!rem.empresaCfg || _ts(state.empresaCfg.atualizadoEm)>_ts(rem.empresaCfg.atualizadoEm))) _mgiLocalNovo=true;
@@ -2858,7 +2869,7 @@ function mgiSalvarLocal(){
     localStorage.setItem("mgi_acoes_ctl",JSON.stringify(state.acoesCtl||{})); localStorage.setItem("mgi_criterios",JSON.stringify(state.criterios||{}));
     localStorage.setItem("mgi_fichas",JSON.stringify(state.fichasCustom||[])); localStorage.setItem("mgi_removidos",JSON.stringify(state.removidos||{}));
     localStorage.setItem("mgi_empresa_cfg",JSON.stringify(state.empresaCfg||null));
-    ["trechos","materiais","dds","locais","rascunhos"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
+    ["trechos","materiais","dds","locais","rascunhos","equipe"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
     localStorage.setItem("mgi_liberacoes",JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs",JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico",JSON.stringify((state.historico||[]).slice(0,600)));
   }catch(e){}
 }
@@ -2892,7 +2903,7 @@ async function enviarNuvem(){
         empresaCfg: state.empresaCfg || null,
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
-        trechos: state.trechos || [], materiais: (state.materiais || []).map(semFotos), dds: (state.dds || []).map(semFotos), locais: state.locais || [], rascunhos: (state.rascunhos || []).filter(x=>x&&Date.now()-new Date(x.atualizadoEm).getTime()<7*864e5).map(semFotos),
+        trechos: state.trechos || [], materiais: (state.materiais || []).map(semFotos), dds: (state.dds || []).map(semFotos), locais: state.locais || [], equipe: (state.equipe || []), rascunhos: (state.rascunhos || []).filter(x=>x&&Date.now()-new Date(x.atualizadoEm).getTime()<7*864e5).map(semFotos),
         historico: (state.historico||[]).slice(0,600)
       });
       _carga.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
@@ -2943,7 +2954,7 @@ async function carregarNuvem(){
       localStorage.setItem("mgi_fichas", JSON.stringify(state.fichasCustom||[]));
       localStorage.setItem("mgi_removidos", JSON.stringify(state.removidos||{}));
       localStorage.setItem("mgi_empresa_cfg", JSON.stringify(state.empresaCfg||null));
-      ["trechos","materiais","dds","locais","rascunhos"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
+      ["trechos","materiais","dds","locais","rascunhos","equipe"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
       localStorage.setItem("mgi_liberacoes", JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs", JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico", JSON.stringify((state.historico||[]).slice(0,600)));
     } catch(e){}
     renderObras();
@@ -5994,7 +6005,7 @@ function salvar(){ try{ if(typeof mgiSalvarLocal==="function") mgiSalvarLocal();
 function modal(h,cls){ let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m);} m.onclick=e=>{ if(e.target===m) m.remove(); }; m.innerHTML=`<div class="fm-box ${cls||"rg-box"}">${h}</div>`; return m; }
 const fechar=()=>{ const m=document.getElementById("ficha-modal"); if(m) m.remove(); };
 const log=(a,b)=>{ try{ mgiLog(a,b); }catch(e){} };
-["trechos","materiais","dds","rascunhos"].forEach(k=>{ if(!state[k]){ try{ state[k]=JSON.parse(localStorage.getItem("mgi_"+k)||"[]"); }catch(e){ state[k]=[]; } } });
+["trechos","materiais","dds","rascunhos","equipe"].forEach(k=>{ if(!state[k]){ try{ state[k]=JSON.parse(localStorage.getItem("mgi_"+k)||"[]"); }catch(e){ state[k]=[]; } } });
 const vivos=l=>(l||[]).filter(x=>!(state.removidos||{})[x.id]);
 const daObra=l=>vivos(l).filter(x=>(x.obraId||null)===obraId());
 
@@ -7007,6 +7018,8 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v76: equipe da obra cadastrada (vai para a nuvem) e puxada na lista de presença do DDS; botão Faltou com ausentes na ata; excluir direto nas listas de DDS, FVS, auditoria, diário, liberação e material
+// MGI PRO · v75: item geral de proteção de borda corrigido para a NTS 392 (1,0 m livre); FVS de PV (pv16) ganha 4 itens da cava no fim
 // MGI PRO · v74: guardar ao sair vale para todas as ferramentas (FVS, auditoria, diário, liberação, material e DDS): trocar de ferramenta, de aba, Voltar, Início, Cancelar ou Fechar guarda na hora
 // MGI PRO · v73: DDS em andamento é guardado também quando se sai sem concluir (Voltar, Início, Cancelar) em qualquer etapa
 // MGI PRO · v72: avisos de rascunho se atualizam sozinhos quando chega coisa da nuvem; abrir a lista busca na hora
@@ -8503,6 +8516,101 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     try{ var m=ler(KM); if(m&&m.M&&m.M.id&&!R.pega("rasc_mat_"+m.M.id)&&!(state.removidos||{})["rasc_mat_"+m.M.id]&&!(state.materiais||[]).some(function(x){ return x.id===m.M.id; })){ var mc=clone(m.M), mf=(mc.fotos||[]).filter(function(x){ return typeof x==="string"&&x; }); delete mc.fotos; R.salvar("mat",m.M.id,{titulo:"Recebimento · "+(mc.material||"material"),dados:mc,fotos:mf,obraId:m.obraId}); } }catch(e){}
     try{ if(fvsRestaurar()) fvsGuardar(); }catch(e){} try{ if(audRestaurar()) audGuardar(); }catch(e){} rascTelas(); }
   setTimeout(recuperar,3500);
+})();
+</script>
+<!-- ===== EQUIPE CADASTRADA DA OBRA, FALTA NO DDS E EXCLUIR DIRETO NAS LISTAS (v76) ===== -->
+<style>
+.eq-l{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.eq-i{display:flex;gap:8px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:8px 10px}
+.eq-i div{flex:1;min-width:0}.eq-i b{display:block;font-size:.88rem}.eq-i small{color:var(--muted);font-size:.74rem}
+.eq-i button{border:none;background:transparent;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 8px}
+.eq-f{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
+.eq-f input{min-width:0;padding:9px;border-radius:9px;border:1px solid var(--border2,var(--border));background:var(--surf2,transparent);color:var(--text);font:600 .86rem Barlow,sans-serif}
+.eq-f button,.eq-btn{border:none;border-radius:9px;padding:9px 12px;font:800 .8rem Barlow,sans-serif;cursor:pointer;background:#14CE8D;color:#04201a}
+.eq-sec{border:1px dashed var(--border2,var(--border));background:transparent!important;color:var(--text)!important}
+.dd-falta{border:1px solid #F59E0B!important;background:rgba(245,158,11,.1)!important;color:#F59E0B!important;border-radius:8px;padding:6px 8px!important;font:800 .72rem Barlow,sans-serif!important;cursor:pointer;width:auto!important}
+.dd-aus{border:1px dashed #F59E0B;border-radius:12px;padding:8px 10px;margin:6px 0;font-size:.8rem}
+.dd-aus b{color:#F59E0B}.dd-aus span{display:inline-flex;gap:4px;align-items:center;margin:4px 6px 0 0;padding:3px 8px;border-radius:999px;background:rgba(245,158,11,.12)}
+.dd-aus button{border:none;background:transparent;color:var(--text);cursor:pointer;font-size:.74rem;padding:0}
+.lx-del{border:1px solid rgba(220,38,38,.4)!important;color:#DC2626!important;background:transparent!important}
+.dia-del{position:absolute;top:8px;right:8px;border:1px solid rgba(220,38,38,.4);color:#DC2626;background:var(--surface,#111827);border-radius:8px;padding:4px 8px;font-size:.78rem;cursor:pointer;z-index:2}
+</style>
+<script>
+(function(){
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function ob(){ return state.obraAtual||null; }
+  function norm(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
+  function salvar(){ try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){} }
+  function abrir(h){ var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=function(e){ if(e.target===m) m.remove(); }; m.innerHTML='<div class="fm-box rg-box">'+h+'</div>'; return m; }
+
+  // ═══ Equipe cadastrada da obra (vai para a nuvem, vale para todos os aparelhos) ═══
+  function equipe(){ var rm=state.removidos||{}; return (state.equipe||[]).filter(function(x){ return x&&!rm[x.id]&&(x.obraId||null)===ob(); }).sort(function(a,b){ return norm(a.nome).localeCompare(norm(b.nome)); }); }
+  window.mgiEquipeObraLista=equipe;
+  function addPessoa(nome,funcao){ nome=String(nome||"").trim(); if(!nome) return false; if(equipe().some(function(x){ return norm(x.nome)===norm(nome); })) return false;
+    var u=window.MGI_USER||{}; (state.equipe=state.equipe||[]).push({id:"eq_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),obraId:ob(),nome:nome,funcao:String(funcao||"").trim(),criadoEm:new Date().toISOString(),atualizadoEm:new Date().toISOString(),criadoPor:u.email||""}); return true; }
+  var voltarDDS=false;
+  window.mgiEquipeObra=function(doDDS){ voltarDDS=!!doDDS; var L=equipe(), ro=fiscal();
+    var dds=(state.dds||[]).filter(function(d){ return (d.obraId||null)===ob()&&(d.participantes||[]).length; }).sort(function(a,b){ return String(b.data||"").localeCompare(String(a.data||"")); })[0];
+    abrir('<h3>👷 Equipe da obra ('+L.length+')</h3><p class="pi-nada" style="margin:0">Cadastre uma vez. Na lista de presença do DDS a equipe já vem preenchida; quem não veio, toque em <b>Faltou</b>.</p>'+
+      (ro?'':'<div class="eq-f"><input id="eq-n" placeholder="Nome" autocomplete="off"><input id="eq-fn" placeholder="Função" list="dl-funcoes" autocomplete="off"><button onclick="mgiEquipeAdd()">+ Incluir</button></div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">'+(dds?'<button class="eq-btn eq-sec" onclick="mgiEquipeImportar()">📥 Copiar do último DDS ('+dds.participantes.length+')</button>':'')+'<button class="eq-btn eq-sec" onclick="mgiEquipeColar()">📋 Colar lista</button></div>')+
+      '<div class="eq-l">'+(L.length?L.map(function(x){ return '<div class="eq-i"><div><b>'+E(x.nome)+'</b><small>'+E(x.funcao||"sem função")+'</small></div>'+(ro?'':'<button onclick="mgiEquipeRem(\''+x.id+'\')" title="Tirar da equipe" aria-label="Tirar da equipe">✕</button>')+'</div>'; }).join(""):'<p class="pi-nada">Ninguém cadastrado ainda.</p>')+'</div>'+
+      '<div class="ac5-acoes"><button class="ac5-save" onclick="mgiEquipeFechar()">'+(voltarDDS?'Voltar para a lista de presença':'Concluir')+'</button></div>');
+    var n=document.getElementById("eq-n"); if(n) n.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("eq-fn").focus(); } });
+    var f=document.getElementById("eq-fn"); if(f) f.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); mgiEquipeAdd(); } }); };
+  window.mgiEquipeAdd=function(){ var n=document.getElementById("eq-n"), f=document.getElementById("eq-fn"); if(!n||!n.value.trim()) return; if(!addPessoa(n.value,f.value)){ alert("Essa pessoa já está na equipe."); return; } salvar(); mgiEquipeObra(voltarDDS); setTimeout(function(){ var x=document.getElementById("eq-n"); if(x) x.focus(); },50); };
+  window.mgiEquipeRem=function(id){ var x=(state.equipe||[]).find(function(p){ return p.id===id; }); if(!x||!confirm("Tirar "+x.nome+" da equipe cadastrada? Os DDS já feitos não mudam.")) return;
+    state.equipe=(state.equipe||[]).filter(function(p){ return p.id!==id; }); try{ if(typeof mgiLapide==="function") mgiLapide(id); }catch(e){} salvar(); mgiEquipeObra(voltarDDS); };
+  window.mgiEquipeImportar=function(){ var d=(state.dds||[]).filter(function(d){ return (d.obraId||null)===ob()&&(d.participantes||[]).length; }).sort(function(a,b){ return String(b.data||"").localeCompare(String(a.data||"")); })[0]; if(!d) return;
+    var n=0; d.participantes.forEach(function(p){ if(addPessoa(p.nome,p.funcao)) n++; }); salvar(); mgiEquipeObra(voltarDDS); try{ aviso(n?n+" pessoa(s) incluída(s).":"Todos já estavam na equipe.",false); }catch(e){} };
+  window.mgiEquipeColar=function(){ var t=prompt("Cole a lista, uma pessoa por linha.\nExemplo: José da Silva - Pedreiro"); if(!t) return; var n=0;
+    t.split(/\n/).forEach(function(l){ l=l.replace(/^\s*\d+[.)-]?\s*/,"").trim(); if(!l) return; var p=l.split(/\s+[-–;|]\s+|\t|;/); if(addPessoa(p[0],p[1]||"")) n++; }); salvar(); mgiEquipeObra(voltarDDS); try{ aviso(n+" pessoa(s) incluída(s).",false); }catch(e){} };
+  window.mgiEquipeFechar=function(){ if(voltarDDS){ voltarDDS=false; try{ mgiDDSPasso(99); return; }catch(e){} } var m=document.getElementById("ficha-modal"); if(m) m.remove(); };
+
+  // ═══ DDS: lista de presença puxa a equipe; botão Faltou ═══
+  function DD(){ try{ return mgiDDAPI.get(); }catch(e){ return null; } }
+  function redesenha(){ document.querySelectorAll("#ficha-modal .dd-p").forEach(function(r){ r.remove(); }); mgiDDSPasso(99); }
+  function nomes(D){ return (D.participantes||[]).map(function(p){ return norm(p.nome); }).filter(Boolean); }
+  function puxar(D,tudo){ var tem=nomes(D), aus=(D.ausentes||[]).map(function(p){ return norm(p.nome); }), n=0;
+    D.participantes=(D.participantes||[]).filter(function(p){ return (p.nome||"").trim()||p.assin; });
+    equipe().forEach(function(x){ var k=norm(x.nome); if(tem.indexOf(k)<0&&(tudo||aus.indexOf(k)<0)){ D.participantes.push({nome:x.nome,funcao:x.funcao||"",assin:null}); n++; if(tudo) D.ausentes=(D.ausentes||[]).filter(function(a){ return norm(a.nome)!==k; }); } });
+    if(!D.participantes.length) D.participantes.push({nome:"",funcao:"",assin:null}); return n; }
+  window.mgiDDSEquipe=function(){ try{ mgiDDAPI.ler(); }catch(e){} var D=DD(); if(!D) return; if(!equipe().length){ mgiEquipeObra(true); return; } var n=puxar(D,true); D.__eqAuto=true; redesenha(); try{ aviso(n?"👷 "+n+" pessoa(s) da equipe na lista.":"A equipe cadastrada já está na lista.",false); }catch(e){} };
+  window.mgiDDSFalta=function(i){ try{ mgiDDAPI.ler(); }catch(e){} var D=DD(); if(!D) return; var p=D.participantes[i]; if(!p) return;
+    if(p.assin&&!confirm(p.nome+" já assinou. Marcar falta mesmo assim? A assinatura sai da lista.")) return;
+    if((p.nome||"").trim()) (D.ausentes=D.ausentes||[]).push({nome:p.nome,funcao:p.funcao||""}); D.participantes.splice(i,1); if(!D.participantes.length) D.participantes.push({nome:"",funcao:"",assin:null}); redesenha(); };
+  window.mgiDDSVoltou=function(k){ try{ mgiDDAPI.ler(); }catch(e){} var D=DD(); if(!D||!D.ausentes||!D.ausentes[k]) return; var a=D.ausentes.splice(k,1)[0];
+    D.participantes=(D.participantes||[]).filter(function(p){ return (p.nome||"").trim()||p.assin; }); D.participantes.push({nome:a.nome,funcao:a.funcao,assin:null}); redesenha(); };
+  function decorarLista(){ var m=document.getElementById("ficha-modal"), lst=m&&m.querySelector(".dd-lista"); if(!lst) return; var h=m.querySelector(".fm-box h3"); if(!h||!/Lista de presen/.test(h.textContent)) return; var D=DD(); if(!D) return;
+    if(!D.__eqAuto&&equipe().length&&!(D.participantes||[]).some(function(p){ return (p.nome||"").trim()||p.assin; })&&!window.__ddEdit){ D.__eqAuto=true; try{ mgiDDAPI.ler(); }catch(e){} puxar(D,false); redesenha(); return; }
+    if(fiscal()) return;
+    var bar=m.querySelector(".vz-bar"); if(bar&&!bar.querySelector(".eq-dds")){ var b=document.createElement("button"); b.className="vz-sec eq-dds"; b.style.cssText="flex:1;width:auto;padding:9px"; b.textContent="👷 Equipe cadastrada ("+equipe().length+")"; b.setAttribute("onclick","mgiDDSEquipe()"); bar.appendChild(b);
+      var c=document.createElement("button"); c.className="vz-sec eq-cad"; c.style.cssText="flex:1;width:auto;padding:9px"; c.textContent="✏️ Editar equipe"; c.setAttribute("onclick","mgiDDAPI.ler();mgiEquipeObra(true)"); bar.appendChild(c); }
+    lst.querySelectorAll(".dd-p").forEach(function(r,i){ if(r.querySelector(".dd-falta")) return; var pa=r.querySelector(".dd-pa"); if(!pa) return; var b=document.createElement("button"); b.className="dd-falta"; b.textContent="Faltou"; b.title="Não veio hoje: sai da lista e fica registrado como ausente"; b.setAttribute("onclick","mgiDDSFalta("+i+")"); pa.insertBefore(b,pa.querySelector(".dd-x")); });
+    var aus=D.ausentes||[], box=m.querySelector(".dd-aus");
+    if(aus.length){ var html='<b>🚫 Faltaram hoje ('+aus.length+'):</b><br>'+aus.map(function(a,k){ return '<span>'+E(a.nome)+' <button onclick="mgiDDSVoltou('+k+')" title="Veio: volta para a lista">↩️</button></span>'; }).join("");
+      if(!box){ box=document.createElement("div"); box.className="dd-aus"; lst.parentNode.insertBefore(box,lst.nextSibling); } if(box.innerHTML!==html) box.innerHTML=html; } else if(box) box.remove(); }
+  // Ata em PDF: quem faltou
+  if(typeof mgiDDSPDF==="function"){ var _pdf=mgiDDSPDF; window.mgiDDSPDF=mgiDDSPDF=function(id){ var d=(state.dds||[]).find(function(x){ return x.id===id; }); if(!d||!(d.ausentes||[]).length) return _pdf.apply(this,arguments);
+      var _ab=window.abrirJanelaPDF; window.abrirJanelaPDF=abrirJanelaPDF=function(html){ window.abrirJanelaPDF=abrirJanelaPDF=_ab;
+        var linha='<p style="font-size:8.5pt;margin:2mm 0"><b>Ausentes no dia ('+d.ausentes.length+'):</b> '+d.ausentes.map(function(a){ return E(a.nome)+(a.funcao?" ("+E(a.funcao)+")":""); }).join(", ")+'</p>';
+        var i=html.indexOf('<h3>Base técnica'); if(i<0) i=html.lastIndexOf('</body>'); html=html.slice(0,i)+linha+html.slice(i); return _ab.call(this,html); };
+      try{ return _pdf.apply(this,arguments); }finally{ setTimeout(function(){ window.abrirJanelaPDF=abrirJanelaPDF=_ab; },0); } }; }
+  // Lista de DDS: botão para a equipe da obra
+  if(typeof mgiDDS==="function"){ var _l=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_l.apply(this,arguments); var box=document.querySelector("#ficha-modal .fm-box"); if(box&&!box.querySelector(".eq-dds-l")){ var nv=[].slice.call(box.querySelectorAll("button")).find(function(b){ return /Novo DDS/.test(b.textContent); });
+        if(nv){ var b=document.createElement("button"); b.className="ac5-cancel eq-dds-l"; b.style.cssText="width:100%;margin-top:6px"; b.textContent="👷 Equipe da obra ("+equipe().length+") · cadastro prévio para o DDS"; b.setAttribute("onclick","mgiEquipeObra()"); nv.parentNode.insertBefore(b,nv.nextSibling); } } return r; }; }
+
+  // ═══ Excluir direto nas listas (DDS, FVS, auditoria, diário, liberação e material) ═══
+  function botaoDel(t,id){ var b=document.createElement("button"); b.className="lx-del"; b.setAttribute("data-del",t); b.textContent="🗑️"; b.title="Excluir"; b.setAttribute("aria-label","Excluir"); b.setAttribute("onclick","event.stopPropagation();mgiExcluir('"+t+"','"+id+"')"); return b; }
+  function listas(){ if(fiscal()||typeof mgiExcluir!=="function") return;
+    [['mgiDDSVer','dds'],['mgiLibVer','lib'],['mgiMatVer','mat']].forEach(function(c){ document.querySelectorAll('#ficha-modal .rg-it').forEach(function(it){ var tx=it.querySelector('[onclick^="'+c[0]+'("]'); if(!tx||it.querySelector('[data-del]')) return; var id=((tx.getAttribute("onclick")||"").match(/'([^']+)'/)||[])[1]; if(!id) return;
+      var bt=it.querySelector(".rg-bt"); var b=botaoDel(c[1],id); if(bt) bt.appendChild(b); else it.appendChild(b); }); });
+  }
+  // As lixeiras que já existiam em FVS, auditoria e diário apagavam só neste aparelho e o registro voltava da nuvem: agora excluem em todos
+  [['excluirFVS','fvs'],['excluirAuditoria','aud'],['delDiario','dia']].forEach(function(c){ if(typeof window[c[0]]!=='function') return; window[c[0]]=function(id){ if(typeof mgiExcluir==='function') return mgiExcluir(c[1],id); }; try{ if(c[0]==='excluirFVS') excluirFVS=window.excluirFVS; if(c[0]==='excluirAuditoria') excluirAuditoria=window.excluirAuditoria; if(c[0]==='delDiario') delDiario=window.delDiario; }catch(e){} });
+
+  var tm=null; new MutationObserver(function(){ clearTimeout(tm); tm=setTimeout(function(){ try{ decorarLista(); }catch(e){} try{ listas(); }catch(e){} },80); }).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 </body>
