@@ -7025,6 +7025,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v79: no fim da FVS e da auditoria, botão "Assinar e salvar" leva à aba Relatório, com o total de itens respondidos
 // MGI PRO · v78: PDFs só imprimem depois que as fotos carregam (fotos do DDS saíam em branco); rodapé não passa mais por cima do texto
 // MGI PRO · v77: quem faltou não aparece na lista de presença nem na ata; na tela fica só "Desfazer falta"
 // MGI PRO · v76: equipe da obra cadastrada (vai para a nuvem) e puxada na lista de presença do DDS; botão Faltou com ausentes na ata; excluir direto nas listas de DDS, FVS, auditoria, diário, liberação e material
@@ -8614,6 +8615,34 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   [['excluirFVS','fvs'],['excluirAuditoria','aud'],['delDiario','dia']].forEach(function(c){ if(typeof window[c[0]]!=='function') return; window[c[0]]=function(id){ if(typeof mgiExcluir==='function') return mgiExcluir(c[1],id); }; try{ if(c[0]==='excluirFVS') excluirFVS=window.excluirFVS; if(c[0]==='excluirAuditoria') excluirAuditoria=window.excluirAuditoria; if(c[0]==='delDiario') delDiario=window.delDiario; }catch(e){} });
 
   var tm=null; new MutationObserver(function(){ clearTimeout(tm); tm=setTimeout(function(){ try{ decorarLista(); }catch(e){} try{ listas(); }catch(e){} },80); }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+<!-- ===== FIM DA FVS E DA AUDITORIA: BOTÃO PARA ASSINAR E SALVAR (v79) ===== -->
+<style>
+.fim-box{margin:14px 0 24px;border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;text-align:center}
+.fim-box small{color:var(--muted);font-size:.78rem}
+.fim-box button{border:none;border-radius:12px;padding:14px;font:800 1rem Barlow,sans-serif;cursor:pointer;background:linear-gradient(90deg,#14CE8D,#1A8FE3);color:#fff}
+.fim-box .fim-sec{background:transparent;border:1px solid var(--border2,var(--border));color:var(--text);font-size:.85rem;padding:10px}
+</style>
+<script>
+(function(){
+  function fiscal(){ return !!(window.MGI_USER&&window.MGI_USER.role==="fiscal"); }
+  function fvsFim(){ var c=document.getElementById("fvs-items-container"); if(!c) return; var sv=state.currentService; var box=c.querySelector(".fim-box");
+    if(!sv||fiscal()){ if(box) box.remove(); return; }
+    var n=(sv.itens||[]).length, r=0, nc=0; for(var i=0;i<n;i++){ var v=(state.fvsRespostas||{})[sv.id+"_"+i]; if(v) r++; if(v==="NC") nc++; }
+    var html='<small>'+r+' de '+n+' itens respondidos'+(nc?' · '+nc+' não conforme(s), preencha o plano de ação':'')+'</small>'+
+      (nc?'<button class="fim-sec" onclick="goTab(\'fvs\',1);window.scrollTo(0,0)">⚠️ Plano de ação das não conformidades</button>':'')+
+      '<button onclick="goTab(\'fvs\',2);window.scrollTo(0,0)">✍️ Assinar e salvar a FVS →</button><small>As assinaturas e o botão Salvar ficam na aba 📊 Relatório.</small>';
+    if(!box){ box=document.createElement("div"); box.className="fim-box"; c.appendChild(box); } else if(box!==c.lastElementChild) c.appendChild(box);
+    if(box.innerHTML!==html) box.innerHTML=html; }
+  function audFim(){ var pg=document.getElementById("iso-page1"); if(!pg) return; var box=pg.querySelector(":scope > .fim-box"); if(fiscal()){ if(box) box.remove(); return; }
+    var r=Object.keys(state.respostas||{}).filter(function(k){ return state.respostas[k]; }).length, nc=Object.keys(state.respostas||{}).filter(function(k){ return /NC/.test(String(state.respostas[k])); }).length;
+    var html='<small>'+r+' requisito(s) avaliado(s)'+(nc?' · '+nc+' com não conformidade':'')+'</small>'+(nc?'<button class="fim-sec" onclick="goTab(\'iso\',2);window.scrollTo(0,0)">⚠️ Plano de ação</button>':'')+
+      '<button onclick="goTab(\'iso\',3);window.scrollTo(0,0)">✍️ Assinar e salvar a auditoria →</button><small>As assinaturas e o botão Salvar ficam na aba 📊 Relatório.</small>';
+    if(!box){ box=document.createElement("div"); box.className="fim-box"; pg.appendChild(box); } else if(box!==pg.lastElementChild) pg.appendChild(box);
+    if(box.innerHTML!==html) box.innerHTML=html; }
+  var t=null; new MutationObserver(function(){ clearTimeout(t); t=setTimeout(function(){ try{ fvsFim(); }catch(e){} try{ audFim(); }catch(e){} },120); }).observe(document.body,{childList:true,subtree:true});
+  document.addEventListener("click",function(){ setTimeout(function(){ try{ fvsFim(); }catch(e){} try{ audFim(); }catch(e){} },150); },true);
 })();
 </script>
 </body>
