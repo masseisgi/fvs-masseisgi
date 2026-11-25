@@ -3,7 +3,7 @@
 
 // IMPORTANTE: ao publicar nova versão do app, incremente este número.
 // Isso força todos os dispositivos a baixarem a versão nova (limpa cache antigo).
-const CACHE_NAME = 'mgi-pro-v80';
+const CACHE_NAME = 'mgi-pro-v81';
 
 const ASSETS = [
   './manifest.json',
@@ -72,4 +72,33 @@ self.addEventListener('fetch', event => {
       return res;
     }))
   );
+});
+
+// ─── Notificações (v81): aviso que chega com o app fechado ───
+self.addEventListener('push', event => {
+  let d = {};
+  try { const j = event.data ? event.data.json() : {}; d = Object.assign({}, j.notification || {}, j.data || {}); } catch (e) { try { d = { body: event.data.text() }; } catch (x) {} }
+  const titulo = d.title || d.titulo || 'MGI PRO';
+  const opt = {
+    body: d.body || d.corpo || '',
+    icon: './icons/icon-192x192.png',
+    badge: './icons/icon-192x192.png',
+    tag: d.tag || d.chave || undefined,
+    data: { url: d.url || 'app.html', wa: d.wa || '' },
+    actions: d.wa ? [{ action: 'abrir', title: 'Abrir' }, { action: 'wa', title: '📲 WhatsApp' }] : []
+  };
+  event.waitUntil(self.registration.showNotification(titulo, opt));
+});
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const d = event.notification.data || {};
+  let url = new URL(d.url || 'app.html', self.registration.scope).href;
+  if (event.action === 'wa' && d.wa) url = 'https://wa.me/?text=' + encodeURIComponent(d.wa);
+  event.waitUntil((async () => {
+    if (event.action !== 'wa') {
+      const abertos = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const c of abertos) { if (c.url.includes('app.html') && 'focus' in c) { try { await c.focus(); return; } catch (e) {} } }
+    }
+    if (self.clients.openWindow) await self.clients.openWindow(url);
+  })());
 });

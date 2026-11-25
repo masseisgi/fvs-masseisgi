@@ -75,7 +75,7 @@
 <meta name="application-name" content="MGI PRO"/>
 <meta name="theme-color" content="#0d1117"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
+<link rel="apple-touch-icon" href="icons/icon-192x192.png"/>
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon.png"/>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png"/>
@@ -2915,7 +2915,7 @@ function mgiMesclarEstado(rem){
   state.fichasCustom=_mesclarLista(state.fichasCustom,rem.fichasCustom,rmv,false);
   state.liberacoes=_ordenar(_mesclarLista(state.liberacoes||[],rem.liberacoes,rmv,true));
   state.docsCtl=_mesclarLista(state.docsCtl||[],rem.docsCtl,rmv,false);
-  ['trechos','materiais','dds','locais','rascunhos','equipe'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
+  ['trechos','materiais','dds','locais','rascunhos','equipe','notif'].forEach(k=>{ state[k]=_mesclarLista(state[k]||[],rem[k],rmv,false); });
   state.historico=_mesclarLista(state.historico||[],rem.historico,{},false).sort((a,b)=>_ts(b.em)-_ts(a.em)).slice(0,600);
   if(rem.empresaCfg && (!state.empresaCfg || _ts(rem.empresaCfg.atualizadoEm)>_ts(state.empresaCfg.atualizadoEm))) state.empresaCfg=rem.empresaCfg;
   else if(state.empresaCfg && (!rem.empresaCfg || _ts(state.empresaCfg.atualizadoEm)>_ts(rem.empresaCfg.atualizadoEm))) _mgiLocalNovo=true;
@@ -2930,7 +2930,7 @@ function mgiSalvarLocal(){
     localStorage.setItem("mgi_acoes_ctl",JSON.stringify(state.acoesCtl||{})); localStorage.setItem("mgi_criterios",JSON.stringify(state.criterios||{}));
     localStorage.setItem("mgi_fichas",JSON.stringify(state.fichasCustom||[])); localStorage.setItem("mgi_removidos",JSON.stringify(state.removidos||{}));
     localStorage.setItem("mgi_empresa_cfg",JSON.stringify(state.empresaCfg||null));
-    ["trechos","materiais","dds","locais","rascunhos","equipe"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
+    ["trechos","materiais","dds","locais","rascunhos","equipe","notif"].forEach(k=>localStorage.setItem("mgi_"+k,JSON.stringify(state[k]||[])));
     localStorage.setItem("mgi_liberacoes",JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs",JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico",JSON.stringify((state.historico||[]).slice(0,600)));
   }catch(e){}
 }
@@ -2964,7 +2964,7 @@ async function enviarNuvem(){
         empresaCfg: state.empresaCfg || null,
         liberacoes: (state.liberacoes||[]).map(semFotos),
         docsCtl: state.docsCtl || [],
-        trechos: state.trechos || [], materiais: (state.materiais || []).map(semFotos), dds: (state.dds || []).map(semFotos), locais: state.locais || [], equipe: (state.equipe || []), rascunhos: (state.rascunhos || []).filter(x=>x&&Date.now()-new Date(x.atualizadoEm).getTime()<7*864e5).map(semFotos),
+        trechos: state.trechos || [], materiais: (state.materiais || []).map(semFotos), dds: (state.dds || []).map(semFotos), locais: state.locais || [], equipe: (state.equipe || []), notif: (state.notif || []), rascunhos: (state.rascunhos || []).filter(x=>x&&Date.now()-new Date(x.atualizadoEm).getTime()<7*864e5).map(semFotos),
         historico: (state.historico||[]).slice(0,600)
       });
       _carga.atualizadoEm = firebase.firestore.FieldValue.serverTimestamp();
@@ -3015,7 +3015,7 @@ async function carregarNuvem(){
       localStorage.setItem("mgi_fichas", JSON.stringify(state.fichasCustom||[]));
       localStorage.setItem("mgi_removidos", JSON.stringify(state.removidos||{}));
       localStorage.setItem("mgi_empresa_cfg", JSON.stringify(state.empresaCfg||null));
-      ["trechos","materiais","dds","locais","rascunhos","equipe"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
+      ["trechos","materiais","dds","locais","rascunhos","equipe","notif"].forEach(k=>localStorage.setItem("mgi_"+k, JSON.stringify(state[k]||[])));
       localStorage.setItem("mgi_liberacoes", JSON.stringify(state.liberacoes||[])); localStorage.setItem("mgi_docs", JSON.stringify(state.docsCtl||[])); localStorage.setItem("mgi_historico", JSON.stringify((state.historico||[]).slice(0,600)));
     } catch(e){}
     renderObras();
@@ -6125,7 +6125,7 @@ function salvar(){ try{ if(typeof mgiSalvarLocal==="function") mgiSalvarLocal();
 function modal(h,cls){ let m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m);} m.onclick=e=>{ if(e.target===m) m.remove(); }; m.innerHTML=`<div class="fm-box ${cls||"rg-box"}">${h}</div>`; return m; }
 const fechar=()=>{ const m=document.getElementById("ficha-modal"); if(m) m.remove(); };
 const log=(a,b)=>{ try{ mgiLog(a,b); }catch(e){} };
-["trechos","materiais","dds","rascunhos","equipe"].forEach(k=>{ if(!state[k]){ try{ state[k]=JSON.parse(localStorage.getItem("mgi_"+k)||"[]"); }catch(e){ state[k]=[]; } } });
+["trechos","materiais","dds","rascunhos","equipe","notif"].forEach(k=>{ if(!state[k]){ try{ state[k]=JSON.parse(localStorage.getItem("mgi_"+k)||"[]"); }catch(e){ state[k]=[]; } } });
 const vivos=l=>(l||[]).filter(x=>!(state.removidos||{})[x.id]);
 const daObra=l=>vivos(l).filter(x=>(x.obraId||null)===obraId());
 
@@ -7138,6 +7138,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v81: notificações; cada usuário escolhe o que recebe (8 tipos de aviso), no celular e no WhatsApp; sino com as pendências
 // MGI PRO · v80: FVS com "Responsável pela verificação" (nome e função) e uma só assinatura no fim; registros antigos com responsável técnico continuam mostrando as duas
 // MGI PRO · v79: no fim da FVS e da auditoria, botão "Assinar e salvar" leva à aba Relatório, com o total de itens respondidos
 // MGI PRO · v78: PDFs só imprimem depois que as fotos carregam (fotos do DDS saíam em branco); rodapé não passa mais por cima do texto
@@ -8757,6 +8758,169 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     if(box.innerHTML!==html) box.innerHTML=html; }
   var t=null; new MutationObserver(function(){ clearTimeout(t); t=setTimeout(function(){ try{ fvsFim(); }catch(e){} try{ audFim(); }catch(e){} },120); }).observe(document.body,{childList:true,subtree:true});
   document.addEventListener("click",function(){ setTimeout(function(){ try{ fvsFim(); }catch(e){} try{ audFim(); }catch(e){} },150); },true);
+})();
+</script>
+<!-- ===== NOTIFICAÇÕES: CADA USUÁRIO ESCOLHE O QUE RECEBE, NO CELULAR E NO WHATSAPP (v81) ===== -->
+<style>
+#btn-notif{position:relative;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1rem;flex-shrink:0}
+#btn-notif b{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;border-radius:9px;background:#DC2626;color:#fff;font:800 .66rem Barlow,sans-serif;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.nt-s{border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
+.nt-s h4{margin:0 0 6px;font:800 .9rem Barlow,sans-serif}
+.nt-a{display:flex;gap:8px;padding:7px 0;border-top:1px solid var(--border)}.nt-a:first-of-type{border-top:none}
+.nt-a div{flex:1;min-width:0}.nt-a b{display:block;font-size:.84rem}.nt-a small{color:var(--muted);font-size:.76rem}
+.nt-t{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--border)}.nt-t:first-of-type{border-top:none}
+.nt-t input{width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:#14CE8D}.nt-t b{display:block;font-size:.84rem}.nt-t small{color:var(--muted);font-size:.74rem}
+.nt-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.nt-b button{flex:1;min-width:140px;border:none;border-radius:10px;padding:10px;font:800 .8rem Barlow,sans-serif;cursor:pointer;background:#14CE8D;color:#04201a}
+.nt-b .sec{background:transparent;border:1px solid var(--border2,var(--border));color:var(--text)}
+.nt-st{font-size:.78rem;padding:6px 8px;border-radius:8px;background:rgba(20,206,141,.1);color:#14CE8D;margin-top:6px}.nt-st.av{background:rgba(245,158,11,.12);color:#F59E0B}
+.nt-s input[type=tel]{width:100%;padding:9px;border-radius:9px;border:1px solid var(--border2,var(--border));background:var(--surf2,transparent);color:var(--text);font:600 .9rem Barlow,sans-serif;margin-top:6px}
+</style>
+<script>
+/* MGI PRO · motor de alertas (o mesmo código roda no app e no servidor) */
+(function(raiz){
+  var DIA=864e5;
+  var TIPOS=[
+    {id:"nc",    nome:"NC com prazo vencido",              desc:"Ação corretiva de FVS ou auditoria passou do prazo e não foi fechada (aviso às 8h)."},
+    {id:"dds",   nome:"DDS do dia não feito",              desc:"Às 9h, se a obra ainda não tem DDS no dia (segunda a sábado)."},
+    {id:"diario",nome:"Diário de obra pendente",           desc:"Às 17h, se o diário do dia ainda não foi registrado (segunda a sábado)."},
+    {id:"lib",   nome:"Liberação de frente aguardando",    desc:"Liberação em andamento há mais de 1 dia ou não liberada."},
+    {id:"rasc",  nome:"Preenchimento esquecido",           desc:"FVS, auditoria, DDS, material ou diário começado e não concluído há mais de 1 dia."},
+    {id:"mat",   nome:"Material reprovado no recebimento", desc:"Assim que um recebimento é registrado como reprovado."},
+    {id:"novo",  nome:"Registro novo da equipe",           desc:"Alguém da equipe concluiu um DDS, FVS, auditoria ou diário."},
+    {id:"venc",  nome:"Documento perto de vencer",         desc:"Documentos do controle com validade em até 15 dias e no dia do vencimento."}
+  ];
+  function brt(ms){ var d=new Date(ms-3*3600e3); return {iso:d.toISOString().slice(0,10), h:d.getUTCHours(), dow:d.getUTCDay()}; }
+  function diasPrazo(q){ q=String(q||"").toLowerCase(); var m=q.match(/(\d+)\s*dia/); if(m) return +m[1]; m=q.match(/(\d+)\s*semana/); if(m) return 7*m[1]; if(/imediat|hoje/.test(q)) return 1; if(/amanh/.test(q)) return 2; return 7; }
+  function ms(v){ if(!v) return 0; if(typeof v==="number") return v; if(v&&typeof v.toMillis==="function") return v.toMillis(); if(v&&v._seconds) return v._seconds*1000; var t=Date.parse(v); return isNaN(t)?0:t; }
+  function nomeObra(D,id){ var o=(D.obras||[]).find(function(x){ return x.id===id; }); return o?o.nome:"obra"; }
+  function autorDe(x){ return String((x&&x._cri&&(x._cri.email||x._cri.por))||(x&&x.autor)||(x&&x.criadoPor)||"").toLowerCase(); }
+  function vivo(D,x){ return x&&!(D.removidos||{})[x.id]; }
+  function porObra(lista,fn){ var g={}; lista.forEach(function(x){ var k=x.obraId||""; (g[k]=g[k]||[]).push(x); }); Object.keys(g).forEach(function(k){ fn(k||null,g[k]); }); }
+
+  // D = dados da empresa (como estão na nuvem); agora = ms; desde = ms da última verificação; eu = e-mail de quem recebe
+  function calcular(D,agora,desde,eu){
+    D=D||{}; var A=[], b=brt(agora), hoje=b.iso, util=b.dow>=1&&b.dow<=6; eu=String(eu||"").toLowerCase();
+    var obras=(D.obras||[]).filter(function(o){ return o&&!(D.removidos||{})[o.id]&&!o.arquivada&&!o.encerrada; });
+    var ctl=D.acoesCtl||{};
+    // 1. NC vencida
+    if(b.h>=8){ var nc=[];
+      [["fvsSalvas","FVS"],["auditoriasSalvas","Auditoria"]].forEach(function(p){ (D[p[0]]||[]).forEach(function(s){ if(!vivo(D,s)) return;
+        Object.keys(s.respostas||{}).forEach(function(k){ if(s.respostas[k]!=="NC") return; var id=s.id+"|"+k, c=ctl[id]||{}; if(c.status==="fechada") return;
+          var ab=ms(s.savedAt)||agora, ac=(s.acoes||{})[k]; var pz=c.prazo?Date.parse(c.prazo+"T00:00:00-03:00"):ab+diasPrazo(ac&&ac.quando)*DIA;
+          if(pz<Date.parse(hoje+"T00:00:00-03:00")) nc.push({obraId:s.obraId||null,origem:p[1],nome:s.serviceName||(s.info&&s.info.processo)||p[1]}); }); }); });
+      porObra(nc,function(ob,L){ A.push({tipo:"nc",chave:"nc|"+ob+"|"+hoje,obraId:ob,titulo:"⚠️ "+L.length+" NC"+(L.length>1?"s":"")+" com prazo vencido",corpo:nomeObra(D,ob)+": "+L.slice(0,3).map(function(x){ return x.nome; }).join(", ")+(L.length>3?"…":""),url:"app.html#acoes"}); }); }
+    // 2. DDS do dia
+    if(util&&b.h>=9){ obras.forEach(function(o){ var tem=(D.dds||[]).some(function(d){ return vivo(D,d)&&(d.obraId||null)===o.id&&d.data===hoje; });
+      if(!tem) A.push({tipo:"dds",chave:"dds|"+o.id+"|"+hoje,obraId:o.id,titulo:"🎓 Ainda não tem DDS hoje",corpo:o.nome+": faça o DDS antes de começar a frente.",url:"app.html#dds"}); }); }
+    // 3. Diário do dia
+    if(util&&b.h>=17){ obras.forEach(function(o){ var tem=(D.diarios||[]).some(function(d){ return vivo(D,d)&&(d.obraId||null)===o.id&&d.data===hoje; });
+      if(!tem) A.push({tipo:"diario",chave:"diario|"+o.id+"|"+hoje,obraId:o.id,titulo:"📒 Diário de obra de hoje pendente",corpo:o.nome+": registre o diário antes de encerrar o dia.",url:"app.html#diario"}); }); }
+    // 4. Liberação aguardando
+    var lib=(D.liberacoes||[]).filter(function(l){ return vivo(D,l)&&((l.rascunho&&agora-ms(l.atualizadoEm)>DIA)||l.situacao==="Não liberada"); });
+    porObra(lib,function(ob,L){ A.push({tipo:"lib",chave:"lib|"+ob+"|"+hoje,obraId:ob,titulo:"🚧 "+L.length+" liberação(ões) de frente aguardando",corpo:nomeObra(D,ob)+": "+L.slice(0,3).map(function(l){ return l.frente||"frente"; }).join(", "),url:"app.html#lib"}); });
+    // 5. Preenchimento esquecido
+    var ra=(D.rascunhos||[]).filter(function(r){ var t=ms(r.atualizadoEm); return vivo(D,r)&&agora-t>DIA&&agora-t<7*DIA; });
+    porObra(ra,function(ob,L){ A.push({tipo:"rasc",chave:"rasc|"+ob+"|"+hoje,obraId:ob,titulo:"📝 "+L.length+" preenchimento(s) sem concluir",corpo:nomeObra(D,ob)+": "+L.slice(0,3).map(function(r){ return r.titulo||r.tipo; }).join(", "),url:"app.html"}); });
+    // 6. Material reprovado
+    (D.materiais||[]).forEach(function(m){ if(!vivo(D,m)||m.inspecao!=="Reprovado") return; var t=ms(m.atualizadoEm)||ms(m.criadoEm); if(t&&agora-t>2*DIA) return;
+      A.push({tipo:"mat",chave:"mat|"+m.id,obraId:m.obraId||null,titulo:"🚫 Material reprovado no recebimento",corpo:(m.material||"Material")+(m.lote?" · lote "+m.lote:"")+(m.fornecedor?" · "+m.fornecedor:"")+" ("+nomeObra(D,m.obraId)+")",url:"app.html#materiais"}); });
+    // 7. Registro novo da equipe
+    if(desde){ [["dds","DDS","tema","data"],["fvsSalvas","FVS","serviceName","savedAt"],["auditoriasSalvas","Auditoria",null,"savedAt"],["diarios","Diário de obra","data","savedAt"]].forEach(function(p){
+      (D[p[0]]||[]).forEach(function(x){ if(!vivo(D,x)||x.rascunho) return; var t=ms(x.savedAt)||ms(x._cri&&x._cri.em)||ms(x.atualizadoEm); if(!t||t<=desde||t>agora+60e3) return; if(eu&&autorDe(x)===eu) return;
+        A.push({tipo:"novo",chave:"novo|"+x.id,obraId:x.obraId||null,titulo:"✅ "+p[1]+" registrado",corpo:(p[2]&&x[p[2]]?String(x[p[2]]).slice(0,60)+" · ":"")+nomeObra(D,x.obraId)+(autorDe(x)?" · por "+autorDe(x):""),url:"app.html"}); }); }); }
+    // 8. Documentos perto de vencer
+    (D.docsCtl||[]).forEach(function(d){ if(!vivo(D,d)||!d.validade) return; var v=Date.parse(d.validade+"T00:00:00-03:00"), h0=Date.parse(hoje+"T00:00:00-03:00"), dias=Math.round((v-h0)/DIA);
+      if(dias<0||dias>15) return; var faixa=dias===0?"0":(dias<=7?"7":"15");
+      A.push({tipo:"venc",chave:"venc|"+d.id+"|"+d.validade+"|"+faixa,obraId:d.obraId||null,titulo:dias===0?"📄 Documento vence hoje":"📄 Documento vence em "+dias+" dia"+(dias>1?"s":""),corpo:(d.tipo?d.tipo+": ":"")+(d.nome||"documento")+(d.pessoa?" · "+d.pessoa:""),url:"app.html#docs"}); });
+    return A;
+  }
+  function textoWhats(A,empresa){ if(!A.length) return "✅ *MGI PRO* · Sem pendências agora"+(empresa?" ("+empresa+")":"")+".";
+    return "📋 *MGI PRO · Pendências"+(empresa?" · "+empresa:"")+"*\n\n"+A.map(function(a){ return "• *"+a.titulo.replace(/\*/g,"")+"*\n  "+a.corpo.replace(/\*/g,""); }).join("\n")+"\n\n_Abra o app para ver os detalhes: https://mgipro.app_"; }
+  var API={TIPOS:TIPOS,calcular:calcular,textoWhats:textoWhats,brt:brt};
+  if(typeof module!=="undefined"&&module.exports) module.exports=API; else raiz.MGI_ALERTAS=API;
+})(typeof window!=="undefined"?window:globalThis);
+
+(function(){
+  // Chave pública do Firebase Cloud Messaging (Configurações do projeto > Cloud Messaging > Certificados push da Web). Não é segredo.
+  window.MGI_VAPID=window.MGI_VAPID||"";
+  var AL=window.MGI_ALERTAS; if(!AL) return;
+  function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function U(){ return window.MGI_USER||{}; }
+  function salvar(){ try{ mgiSalvarLocal(); }catch(e){} try{ if(typeof syncNuvem==="function") syncNuvem(); }catch(e){} }
+  function ls(k,v){ try{ if(v===undefined) return JSON.parse(localStorage.getItem(k)||"null"); localStorage.setItem(k,JSON.stringify(v)); }catch(e){ return null; } }
+  var PADRAO={nc:true,dds:true,diario:true,lib:true,rasc:true,mat:true,novo:false,venc:true};
+  function meu(){ var u=U(), id=u.uid||u.email||"local"; var r=(state.notif||[]).find(function(x){ return x&&x.id===id; });
+    if(!r){ r={id:id,uid:u.uid||"",email:u.email||"",nome:u.nome||"",tipo:"pessoa",prefs:Object.assign({},PADRAO),whats:{ativo:false,numero:""},atualizadoEm:new Date().toISOString()}; (state.notif=state.notif||[]).push(r); }
+    r.prefs=Object.assign({},PADRAO,r.prefs||{}); r.whats=r.whats||{ativo:false,numero:""}; return r; }
+  function grava(r){ r.atualizadoEm=new Date().toISOString(); r.email=U().email||r.email; r.nome=U().nome||r.nome; salvar(); }
+  // Cada celular tem o seu registro (assim um aparelho não apaga o do outro)
+  function devId(){ var d=ls("mgi_dev_id"); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); ls("mgi_dev_id",d); } return d; }
+  function meuDev(){ var u=U(), id="dev_"+(u.uid||u.email||"local")+"_"+devId(); var r=(state.notif||[]).find(function(x){ return x&&x.id===id; });
+    if(!r){ r={id:id,tipo:"aparelho",uid:u.uid||"",email:u.email||"",token:"",push:false,aparelho:navigator.userAgent.slice(0,120),atualizadoEm:new Date().toISOString()}; (state.notif=state.notif||[]).push(r); } return r; }
+  function alertas(){ var r=meu(), desde=ls("mgi_notif_visto")||0; return AL.calcular(state,Date.now(),desde,U().email).filter(function(a){ return r.prefs[a.tipo]!==false; }); }
+  window.mgiAlertasAgora=alertas;
+  function ios(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+  function instalado(){ return (window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true; }
+
+  // ── Sino no topo com o número de pendências ──
+  function sino(){ var t=document.getElementById("btn-tema"); if(!t||window.MGI_USER&&MGI_USER.role==="fiscal"&&false) return; var b=document.getElementById("btn-notif");
+    if(!b){ b=document.createElement("button"); b.id="btn-notif"; b.title="Notificações e pendências"; b.setAttribute("aria-label","Notificações"); b.onclick=function(){ mgiNotif(); }; t.parentNode.insertBefore(b,t); }
+    var n=0; try{ n=alertas().filter(function(a){ return a.tipo!=="novo"; }).length; }catch(e){} b.innerHTML="🔔"+(n?"<b>"+(n>99?"99+":n)+"</b>":""); }
+  setInterval(sino,30000); setTimeout(sino,4000);
+
+  // ── Tela de notificações ──
+  window.mgiNotif=function(){ var r=meu(), A=alertas(), perm=("Notification" in window)?Notification.permission:"indisponível";
+    var m=document.getElementById("ficha-modal"); if(!m){ m=document.createElement("div"); m.id="ficha-modal"; document.body.appendChild(m); } m.onclick=function(e){ if(e.target===m) m.remove(); };
+    var stPush=!("Notification" in window)||!("serviceWorker" in navigator)?'<div class="nt-st av">Este navegador não aceita notificações.</div>':
+      (ios()&&!instalado())?'<div class="nt-st av">No iPhone, primeiro instale o app: no Safari, toque em Compartilhar e em "Adicionar à Tela de Início". Depois abra o MGI PRO pelo ícone e ative aqui.</div>':
+      perm==="denied"?'<div class="nt-st av">As notificações foram bloqueadas neste celular. Libere nas configurações do navegador (Site > Notificações) e volte aqui.</div>':
+      (meuDev().push&&perm==="granted"&&meuDev().token)?'<div class="nt-st">✅ Ativado neste celular. Os avisos chegam mesmo com o app fechado.</div>':
+      (perm==="granted"&&!window.MGI_VAPID)?'<div class="nt-st">✅ Permissão concedida. Os avisos aparecem ao abrir o app. O envio com o app fechado está em configuração.</div>':'';
+    m.innerHTML='<div class="fm-box rg-box"><h3>🔔 Notificações</h3>'+
+      '<div class="nt-s"><h4>Pendências agora ('+A.filter(function(a){ return a.tipo!=="novo"; }).length+')</h4>'+(A.length?A.map(function(a){ return '<div class="nt-a"><div><b>'+E(a.titulo)+'</b><small>'+E(a.corpo)+'</small></div></div>'; }).join(""):'<p class="pi-nada" style="margin:0">Nenhuma pendência do que você escolheu receber.</p>')+
+        '<div class="nt-b"><button class="sec" onclick="mgiNotifWhats()">📲 Mandar resumo no WhatsApp</button></div></div>'+
+      '<div class="nt-s"><h4>No celular</h4><p class="pi-nada" style="margin:0">Aviso como o do WhatsApp, na tela do celular.</p>'+stPush+
+        '<div class="nt-b"><button onclick="mgiNotifAtivar()">'+(meuDev().push?'🔄 Ativar de novo neste celular':'🔔 Ativar neste celular')+'</button><button class="sec" onclick="mgiNotifTeste()">Testar</button>'+(meuDev().push?'<button class="sec" onclick="mgiNotifDesligar()">Desligar neste celular</button>':'')+'</div></div>'+
+      '<div class="nt-s"><h4>No WhatsApp</h4><label class="nt-t"><input type="checkbox" '+(r.whats.ativo?'checked':'')+' onchange="mgiNotifWhatsCfg(this.checked)"><div><b>Receber o resumo pelo WhatsApp</b><small>Toda notificação traz o botão "Mandar no WhatsApp", e o app oferece o resumo do dia ao abrir. Para mandar a um grupo, deixe o número em branco e escolha o grupo na hora.</small></div></label>'+
+        '<input type="tel" id="nt-num" placeholder="Número com DDD (opcional), ex.: 11 97494-6171" value="'+E(r.whats.numero||"")+'" onchange="mgiNotifNumero(this.value)"></div>'+
+      '<div class="nt-s"><h4>O que eu quero receber</h4>'+AL.TIPOS.map(function(t){ return '<label class="nt-t"><input type="checkbox" '+(r.prefs[t.id]!==false?'checked':'')+' onchange="mgiNotifPref(\''+t.id+'\',this.checked)"><div><b>'+E(t.nome)+'</b><small>'+E(t.desc)+'</small></div></label>'; }).join("")+
+        '<p class="pi-nada" style="margin:6px 0 0">Cada pessoa escolhe as suas. Vale para todas as obras da empresa.</p></div>'+
+      '<div class="ac5-acoes"><button class="ac5-save" onclick="document.getElementById(\'ficha-modal\').remove()">Concluir</button></div></div>'; };
+  window.mgiNotifPref=function(t,v){ var r=meu(); r.prefs[t]=!!v; grava(r); sino(); };
+  window.mgiNotifWhatsCfg=function(v){ var r=meu(); r.whats.ativo=!!v; grava(r); };
+  window.mgiNotifNumero=function(v){ var r=meu(); r.whats.numero=String(v||"").replace(/\D/g,""); grava(r); };
+  function waLink(txt){ var r=meu(), n=(r.whats&&r.whats.numero)||""; if(n&&n.length<=11) n="55"+n; return "https://wa.me/"+(n||"")+"?text="+encodeURIComponent(txt); }
+  window.mgiNotifWhats=function(){ var emp=(state.empresaCfg&&state.empresaCfg.nome)||(window.MGI_EMPRESA&&MGI_EMPRESA.nome)||""; window.open(waLink(AL.textoWhats(alertas().filter(function(a){ return a.tipo!=="novo"; }),emp)),"_blank"); };
+
+  // ── Ativar no celular: permissão + registro na nuvem ──
+  function carregaMessaging(){ return new Promise(function(ok,erro){ if(window.firebase&&firebase.messaging) return ok(); var s=document.createElement("script"); s.src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"; s.onload=function(){ ok(); }; s.onerror=erro; document.head.appendChild(s); }); }
+  window.mgiNotifAtivar=async function(){ var r=meu();
+    if(!("Notification" in window)||!("serviceWorker" in navigator)){ alert("Este navegador não aceita notificações. Use o Chrome no Android ou o app instalado no iPhone."); return; }
+    if(ios()&&!instalado()){ alert('No iPhone: no Safari, toque em Compartilhar e em "Adicionar à Tela de Início". Depois abra o MGI PRO pelo ícone e ative aqui.'); return; }
+    var p=await Notification.requestPermission(); if(p!=="granted"){ alert("Sem permissão não dá para avisar. Se bloqueou sem querer, libere nas configurações do navegador."); mgiNotif(); return; }
+    var dv=meuDev(); dv.push=true;
+    if(window.MGI_VAPID){ try{ await carregaMessaging(); var reg=await navigator.serviceWorker.ready; var tk=await firebase.messaging().getToken({vapidKey:MGI_VAPID,serviceWorkerRegistration:reg});
+        if(tk) dv.token=tk; }catch(e){ console.warn("MGI notificações",e); try{ aviso("Permissão ativada. O envio com o app fechado ainda não respondeu: tente de novo mais tarde.",false); }catch(x){} } }
+    grava(dv); avisoLocal(true); mgiNotif(); };
+  window.mgiNotifDesligar=function(){ var dv=meuDev(); dv.push=false; dv.token=""; grava(dv); mgiNotif(); };
+  window.mgiNotifTeste=async function(){ if(!("Notification" in window)||Notification.permission!=="granted"){ alert("Ative primeiro neste celular."); return; }
+    try{ var reg=await navigator.serviceWorker.ready; await reg.showNotification("🔔 MGI PRO",{body:"Notificações funcionando neste celular.",icon:"icons/icon-192x192.png",badge:"icons/icon-192x192.png",tag:"mgi-teste",data:{url:"app.html"}}); }catch(e){ try{ new Notification("🔔 MGI PRO",{body:"Notificações funcionando neste celular."}); }catch(x){} } };
+
+  // ── Ao abrir o app (e a cada 15 min aberto): avisa o que é novo ──
+  async function avisoLocal(forcar){ var A=[]; try{ A=alertas(); }catch(e){ return; } var vistos=ls("mgi_notif_avisados")||{}, agora=Date.now();
+    Object.keys(vistos).forEach(function(k){ if(agora-vistos[k]>10*864e5) delete vistos[k]; });
+    var novos=A.filter(function(a){ return !vistos[a.chave]; }); if(!novos.length){ ls("mgi_notif_visto",agora); return; }
+    var perm=("Notification" in window)?Notification.permission:"";
+    if(perm==="granted"&&meuDev().push){ try{ var reg=await navigator.serviceWorker.ready;
+        var lista=novos.length>3?[{titulo:"🔔 "+novos.length+" avisos no MGI PRO",corpo:novos.slice(0,3).map(function(a){ return a.titulo; }).join(" · "),chave:"resumo",url:"app.html"}]:novos;
+        for(var i=0;i<lista.length;i++){ var a=lista[i]; await reg.showNotification(a.titulo,{body:a.corpo,icon:"icons/icon-192x192.png",badge:"icons/icon-192x192.png",tag:a.chave,data:{url:a.url||"app.html",wa:AL.textoWhats([a])},actions:[{action:"abrir",title:"Abrir"},{action:"wa",title:"📲 WhatsApp"}]}); } }catch(e){} }
+    else if(forcar||novos.length){ try{ aviso("🔔 "+novos.length+" aviso(s). Toque no sino para ver.",false); }catch(e){} }
+    novos.forEach(function(a){ vistos[a.chave]=agora; }); ls("mgi_notif_avisados",vistos); ls("mgi_notif_visto",agora); sino(); }
+  setTimeout(function(){ avisoLocal(false); },8000); setInterval(function(){ avisoLocal(false); },15*60e3);
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") setTimeout(function(){ avisoLocal(false); },3000); });
+  // Token renovado: mantém o registro do celular em dia
+  setTimeout(async function(){ var dv=meuDev(); if(!dv.push||!window.MGI_VAPID||!("Notification" in window)||Notification.permission!=="granted") return;
+    try{ await carregaMessaging(); var reg=await navigator.serviceWorker.ready; var tk=await firebase.messaging().getToken({vapidKey:MGI_VAPID,serviceWorkerRegistration:reg}); if(tk&&dv.token!==tk){ dv.token=tk; grava(dv); } }catch(e){} },12000);
 })();
 </script>
 </body>
