@@ -622,7 +622,8 @@ textarea.input-f{resize:vertical;min-height:52px}
         <div class="section-hdr orange"><span>📌</span><div><div class="section-hdr-title">Identificação da FVS</div></div></div>
         <div class="form-grid">
           <div><div class="field-lbl">Obra / Local</div><input class="input-f" id="fvs-obra" placeholder="Nome/código da obra" oninput="saveInfoFVS()"/></div>
-          <div><div class="field-lbl">Responsável Técnico</div><input class="input-f" id="fvs-resp" placeholder="Nome e CREA/CAU" oninput="saveInfoFVS()"/></div>
+          <div><div class="field-lbl">Responsável pela verificação</div><input class="input-f" id="fvs-resp" placeholder="Nome" oninput="saveInfoFVS()"/></div>
+          <div><div class="field-lbl">Função</div><input class="input-f" id="fvs-funcao" placeholder="Ex.: Técnico da qualidade, encarregado" list="dl-fvs-funcoes" oninput="saveInfoFVS()"/><datalist id="dl-fvs-funcoes"><option>Técnico da qualidade</option><option>Inspetor da qualidade</option><option>Engenheiro de obra</option><option>Encarregado</option><option>Mestre de obras</option><option>Técnico de segurança</option><option>Fiscal</option></datalist></div>
           <div><div class="field-lbl">Data</div><input type="date" class="input-f" id="fvs-data" oninput="saveInfoFVS()"/></div>
           <div><div class="field-lbl">Trecho / Estaca / Ponto</div><input class="input-f" id="fvs-trecho" placeholder="Ex: Est. 12+20 a 15+00" oninput="saveInfoFVS()"/></div>
         </div>
@@ -1360,7 +1361,7 @@ function saveInfoISO(){
   });
 }
 function saveInfoFVS(){
-  ["obra","resp","data","trecho"].forEach(k=>{
+  ["obra","resp","funcao","data","trecho"].forEach(k=>{
     const el=document.getElementById("fvs-"+k); if(el) state.fvsInfo[k]=el.value;
   });
 }
@@ -2086,8 +2087,8 @@ function renderRelatorioFVS(){
     </div>`:""}
     <div class="section-hdr" style="margin-top:14px"><span>✍️</span><div><div class="section-hdr-title">Assinaturas</div><div class="section-hdr-sub">Desenhe sua assinatura com o dedo ou mouse</div></div></div>
     <div class="sign-grid">
-      ${renderSignaturePad("fvs-inspetor","fvs_inspetor", "Inspetor / Executor"+(resp?" — "+resp:""))}
-      ${renderSignaturePad("fvs-responsavel","fvs_responsavel", "Responsável Técnico")}
+      ${renderSignaturePad("fvs-inspetor","fvs_inspetor", "Responsável pela verificação"+(resp?" — "+resp:"")+(state.fvsInfo&&state.fvsInfo.funcao?" · "+state.fvsInfo.funcao:""))}
+      ${state.signatures.fvs_responsavel?renderSignaturePad("fvs-responsavel","fvs_responsavel", "Responsável Técnico (registro anterior)"):""}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;margin-bottom:12px">
       <button onclick="salvarFVS()" class="btn-start" style="flex:1;min-width:140px">💾 SALVAR FVS</button>
@@ -3458,7 +3459,7 @@ function novaFVS(){
   state.currentService = null;
   const sel = document.getElementById("service-select");
   if(sel) sel.value = "";
-  ["obra","resp","data","trecho"].forEach(k=>{
+  ["obra","resp","funcao","data","trecho"].forEach(k=>{
     const el = document.getElementById("fvs-"+k);
     if(el) el.value = k==="data" ? state.fvsInfo.data : "";
   });
@@ -3486,7 +3487,7 @@ function carregarFVS(id){
   if(sel) sel.value = svc.id;
   document.getElementById("fvs-info-card").style.display = "block";
   document.getElementById("fvs-counters").style.display = "flex";
-  ["obra","resp","data","trecho"].forEach(k=>{
+  ["obra","resp","funcao","data","trecho"].forEach(k=>{
     const el = document.getElementById("fvs-"+k);
     if(el) el.value = state.fvsInfo[k] || "";
   });
@@ -3834,13 +3835,14 @@ ${ncItems.length>0?`<div class="page-break"></div><h2>⚠️ Não Conformidades 
     <td>
       ${sigs.fvs_inspetor ? `<img src="${sigs.fvs_inspetor}" style="max-height:22mm;max-width:65mm;display:block;margin:0 auto 2mm"/>` : `<div style="height:22mm"></div>`}
       <div class="sign-line"></div>
-      <div>Inspetor / Executor${info.resp?" — "+info.resp:""}</div>
+      <div><b>${info.resp||""}</b>${info.funcao?" · "+info.funcao:""}</div>
+      <div>Responsável pela verificação</div>
     </td>
-    <td>
-      ${sigs.fvs_responsavel ? `<img src="${sigs.fvs_responsavel}" style="max-height:22mm;max-width:65mm;display:block;margin:0 auto 2mm"/>` : `<div style="height:22mm"></div>`}
+    ${sigs.fvs_responsavel?`<td>
+      <img src="${sigs.fvs_responsavel}" style="max-height:22mm;max-width:65mm;display:block;margin:0 auto 2mm"/>
       <div class="sign-line"></div>
       <div>Responsável Técnico</div>
-    </td>
+    </td>`:""}
   </tr>
 </table>
 <div class="footer">MGI PRO · Massei Gestão Integrada · Gerado em ${new Date().toLocaleString("pt-BR")}</div>
@@ -6939,7 +6941,7 @@ let ULT_SERV=null;
 function autoFVS(){ const s=state.currentService; if(!s||ro()||ULT_SERV===s.id) return; ULT_SERV=s.id; const I=state.fvsInfo;
   const ult=(state.fvsSalvas||[]).filter(f=>(f.obraId||null)===(state.obraAtual||null)&&!(state.removidos||{})[f.id]).sort((a,b)=>String(b.savedAt).localeCompare(String(a.savedAt)))[0];
   if(!I.obra) I.obra=obraNome()||(ult&&ult.info&&ult.info.obra)||""; if(!I.resp&&ult&&ult.info) I.resp=ult.info.resp||"";
-  ["obra","resp","data","trecho"].forEach(k=>{ const el=document.getElementById("fvs-"+k); if(el&&!el.value&&I[k]) el.value=I[k]; }); }
+  ["obra","resp","funcao","data","trecho"].forEach(k=>{ const el=document.getElementById("fvs-"+k); if(el&&!el.value&&I[k]) el.value=I[k]; }); }
 if(typeof renderFVSService==="function"){ const _r=window.renderFVSService; window.renderFVSService=renderFVSService=function(){ const x=_r.apply(this,arguments); try{ autoFVS(); cartaoFVS(); }catch(e){} return x; }; }
 if(typeof novaFVS==="function"){ const _n=window.novaFVS; window.novaFVS=novaFVS=function(){ ULT_SERV=null; return _n.apply(this,arguments); }; }
 
@@ -7136,6 +7138,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v80: FVS com "Responsável pela verificação" (nome e função) e uma só assinatura no fim; registros antigos com responsável técnico continuam mostrando as duas
 // MGI PRO · v79: no fim da FVS e da auditoria, botão "Assinar e salvar" leva à aba Relatório, com o total de itens respondidos
 // MGI PRO · v78: PDFs só imprimem depois que as fotos carregam (fotos do DDS saíam em branco); rodapé não passa mais por cima do texto
 // MGI PRO · v77: quem faltou não aparece na lista de presença nem na ata; na tela fica só "Desfazer falta"
@@ -7801,7 +7804,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
       '<div class="ddv-kpi"><div><b style="color:var(--green)">'+c+'</b><span>conformes</span></div><div><b style="color:var(--red)">'+nc.length+'</b><span>não conformes</span></div><div><b>'+na+'</b><span>não se aplica</span></div><div><b>'+(it.length-c-nc.length-na)+'</b><span>sem resposta</span></div></div>'+
       (nc.length?'<div class="ddv-s"><h4>⚠️ Não conformidades</h4>'+nc.map(item).join("")+'</div>':'')+
       '<details class="vw-g ddv-s"><summary>Todos os itens verificados ('+it.length+')</summary><div>'+it.map(item).join("")+'</div></details>'+
-      assin(sigImg(S.fvs_inspetor),sigImg(S.fvs_responsavel),"Inspetor / executor","Responsável",info.resp,"")+
+      (sigImg(S.fvs_responsavel)?assin(sigImg(S.fvs_inspetor),sigImg(S.fvs_responsavel),"Responsável pela verificação"+(info.funcao?" · "+E(info.funcao):""),"Responsável técnico",info.resp,""):'<div class="ddv-s"><h4>Assinatura</h4><div class="vw-ass"><div>'+(sigImg(S.fvs_inspetor)?'<img src="'+sigImg(S.fvs_inspetor)+'" alt="Assinatura">':'<i>sem assinatura</i>')+'<b>'+E(info.resp||"—")+'</b>Responsável pela verificação'+(info.funcao?' · '+E(info.funcao):'')+'</div></div></div>')+
       '<div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiVoltar()">Voltar</button>'+(fiscal()?'':'<button class="ac5-cancel" onclick="mgiRegAbrir(\'FVS\',\''+f.id+'\')">✏️ Editar</button>')+(nc.length?botao("fvsc_"+f.id,cob,fotosNC,"📤 Cobrar NCs","vw-cob"):'')+botao("fvs_"+f.id,txt,fotosNC)+'<button class="ac5-save" onclick="exportarPDFFVS(\''+f.id+'\')">📄 PDF</button></div>');
   };
 
@@ -8503,7 +8506,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
   var KF="mgi_rasc_fvs";
   function fvsTem(){ var s=state.currentService; if(!s) return false; var p=s.id+"_"; return Object.keys(state.fvsRespostas||{}).some(function(k){ return k.indexOf(p)===0&&state.fvsRespostas[k]; })||Object.keys(state.fvsObservacoes||{}).some(function(k){ return k.indexOf(p)===0&&state.fvsObservacoes[k]; }); }
   function fvsRec(){ var s=state.currentService, p=s.id+"_", pega=function(o){ var r={}; Object.keys(o||{}).forEach(function(k){ if(k.indexOf(p)===0) r[k]=o[k]; }); return r; };
-    ["obra","resp","data","trecho"].forEach(function(k){ var el=document.getElementById("fvs-"+k); if(el) state.fvsInfo[k]=el.value; });
+    ["obra","resp","funcao","data","trecho"].forEach(function(k){ var el=document.getElementById("fvs-"+k); if(el) state.fvsInfo[k]=el.value; });
     return {serviceId:s.id,serviceName:s.nome,info:clone(state.fvsInfo||{}),respostas:pega(state.fvsRespostas),observacoes:pega(state.fvsObservacoes),acoes:pega(state.fvsAcoes),fotos:pega(state.fvsFotos),signatures:{fvs_inspetor:state.signatures.fvs_inspetor,fvs_responsavel:state.signatures.fvs_responsavel}}; }
   function fvsGuardar(agora){ if(fiscal()||!fvsTem()) return; var rec=fvsRec(); var ch=window.__fvsRascId=window.__fvsRascId||window.__fvsEdit||("f"+Date.now());
     gravar(KF,{em:Date.now(),obraId:ob(),edit:window.__fvsEdit||null,chave:ch,rec:Object.assign({id:"__rasc_fvs"},rec)});
