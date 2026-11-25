@@ -3513,9 +3513,16 @@ function abrirJanelaPDF(html){
   try{ html=_mgiMarca(html); }catch(e){}
   const w = window.open("", "_blank");
   if(!w){ alert("O navegador bloqueou a abertura da janela. Permita pop-ups para este site."); return; }
+  // Rodapé no fim do documento (fixo, ele passava por cima do texto no pé da página)
+  html=html.replace(/<\/head>/i,'<style>.footer,.cli-rod{position:static!important;margin-top:8mm!important}img{break-inside:avoid}</style></head>');
   w.document.write(html);
   w.document.close();
-  setTimeout(()=>{ w.print(); }, 700);
+  // Só imprime depois que as fotos carregarem (fotos da nuvem demoram um pouco)
+  const imprimir=()=>{ try{ w.focus(); w.print(); }catch(e){} };
+  const esperar=()=>{ let imgs=[]; try{ imgs=[].slice.call(w.document.images).filter(i=>!i.complete); }catch(e){} if(!imgs.length) return setTimeout(imprimir,400);
+    let n=imgs.length, feito=false; const fim=()=>{ if(feito) return; feito=true; setTimeout(imprimir,300); };
+    imgs.forEach(i=>{ i.loading="eager"; i.addEventListener("load",()=>{ if(--n<=0) fim(); }); i.addEventListener("error",()=>{ if(--n<=0) fim(); }); }); setTimeout(fim,20000); };
+  setTimeout(esperar,300);
 }
 
 function cssPDF(){
@@ -7018,6 +7025,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v78: PDFs só imprimem depois que as fotos carregam (fotos do DDS saíam em branco); rodapé não passa mais por cima do texto
 // MGI PRO · v77: quem faltou não aparece na lista de presença nem na ata; na tela fica só "Desfazer falta"
 // MGI PRO · v76: equipe da obra cadastrada (vai para a nuvem) e puxada na lista de presença do DDS; botão Faltou com ausentes na ata; excluir direto nas listas de DDS, FVS, auditoria, diário, liberação e material
 // MGI PRO · v75: item geral de proteção de borda corrigido para a NTS 392 (1,0 m livre); FVS de PV (pv16) ganha 4 itens da cava no fim
