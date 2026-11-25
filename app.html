@@ -7018,6 +7018,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v77: quem faltou não aparece na lista de presença nem na ata; na tela fica só "Desfazer falta"
 // MGI PRO · v76: equipe da obra cadastrada (vai para a nuvem) e puxada na lista de presença do DDS; botão Faltou com ausentes na ata; excluir direto nas listas de DDS, FVS, auditoria, diário, liberação e material
 // MGI PRO · v75: item geral de proteção de borda corrigido para a NTS 392 (1,0 m livre); FVS de PV (pv16) ganha 4 itens da cava no fim
 // MGI PRO · v74: guardar ao sair vale para todas as ferramentas (FVS, auditoria, diário, liberação, material e DDS): trocar de ferramenta, de aba, Voltar, Início, Cancelar ou Fechar guarda na hora
@@ -8529,7 +8530,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
 .eq-f button,.eq-btn{border:none;border-radius:9px;padding:9px 12px;font:800 .8rem Barlow,sans-serif;cursor:pointer;background:#14CE8D;color:#04201a}
 .eq-sec{border:1px dashed var(--border2,var(--border));background:transparent!important;color:var(--text)!important}
 .dd-falta{border:1px solid #F59E0B!important;background:rgba(245,158,11,.1)!important;color:#F59E0B!important;border-radius:8px;padding:6px 8px!important;font:800 .72rem Barlow,sans-serif!important;cursor:pointer;width:auto!important}
-.dd-aus{border:1px dashed #F59E0B;border-radius:12px;padding:8px 10px;margin:6px 0;font-size:.8rem}
+.dd-aus{padding:2px 0;margin:4px 0;font-size:.8rem}
 .dd-aus b{color:#F59E0B}.dd-aus span{display:inline-flex;gap:4px;align-items:center;margin:4px 6px 0 0;padding:3px 8px;border-radius:999px;background:rgba(245,158,11,.12)}
 .dd-aus button{border:none;background:transparent;color:var(--text);cursor:pointer;font-size:.74rem;padding:0}
 .lx-del{border:1px solid rgba(220,38,38,.4)!important;color:#DC2626!important;background:transparent!important}
@@ -8589,14 +8590,8 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
       var c=document.createElement("button"); c.className="vz-sec eq-cad"; c.style.cssText="flex:1;width:auto;padding:9px"; c.textContent="✏️ Editar equipe"; c.setAttribute("onclick","mgiDDAPI.ler();mgiEquipeObra(true)"); bar.appendChild(c); }
     lst.querySelectorAll(".dd-p").forEach(function(r,i){ if(r.querySelector(".dd-falta")) return; var pa=r.querySelector(".dd-pa"); if(!pa) return; var b=document.createElement("button"); b.className="dd-falta"; b.textContent="Faltou"; b.title="Não veio hoje: sai da lista e fica registrado como ausente"; b.setAttribute("onclick","mgiDDSFalta("+i+")"); pa.insertBefore(b,pa.querySelector(".dd-x")); });
     var aus=D.ausentes||[], box=m.querySelector(".dd-aus");
-    if(aus.length){ var html='<b>🚫 Faltaram hoje ('+aus.length+'):</b><br>'+aus.map(function(a,k){ return '<span>'+E(a.nome)+' <button onclick="mgiDDSVoltou('+k+')" title="Veio: volta para a lista">↩️</button></span>'; }).join("");
+    if(aus.length){ var aberto=!!window.__ausAberto; var html='<button onclick="window.__ausAberto=!window.__ausAberto;this.parentNode.innerHTML=\'\'" style="font-size:.78rem;color:var(--muted)">↩️ Desfazer falta ('+aus.length+')</button>'+(aberto?'<br>'+aus.map(function(a,k){ return '<span>'+E(a.nome)+' <button onclick="mgiDDSVoltou('+k+')" title="Volta para a lista">↩️</button></span>'; }).join(""):"");
       if(!box){ box=document.createElement("div"); box.className="dd-aus"; lst.parentNode.insertBefore(box,lst.nextSibling); } if(box.innerHTML!==html) box.innerHTML=html; } else if(box) box.remove(); }
-  // Ata em PDF: quem faltou
-  if(typeof mgiDDSPDF==="function"){ var _pdf=mgiDDSPDF; window.mgiDDSPDF=mgiDDSPDF=function(id){ var d=(state.dds||[]).find(function(x){ return x.id===id; }); if(!d||!(d.ausentes||[]).length) return _pdf.apply(this,arguments);
-      var _ab=window.abrirJanelaPDF; window.abrirJanelaPDF=abrirJanelaPDF=function(html){ window.abrirJanelaPDF=abrirJanelaPDF=_ab;
-        var linha='<p style="font-size:8.5pt;margin:2mm 0"><b>Ausentes no dia ('+d.ausentes.length+'):</b> '+d.ausentes.map(function(a){ return E(a.nome)+(a.funcao?" ("+E(a.funcao)+")":""); }).join(", ")+'</p>';
-        var i=html.indexOf('<h3>Base técnica'); if(i<0) i=html.lastIndexOf('</body>'); html=html.slice(0,i)+linha+html.slice(i); return _ab.call(this,html); };
-      try{ return _pdf.apply(this,arguments); }finally{ setTimeout(function(){ window.abrirJanelaPDF=abrirJanelaPDF=_ab; },0); } }; }
   // Lista de DDS: botão para a equipe da obra
   if(typeof mgiDDS==="function"){ var _l=mgiDDS; window.mgiDDS=mgiDDS=function(){ var r=_l.apply(this,arguments); var box=document.querySelector("#ficha-modal .fm-box"); if(box&&!box.querySelector(".eq-dds-l")){ var nv=[].slice.call(box.querySelectorAll("button")).find(function(b){ return /Novo DDS/.test(b.textContent); });
         if(nv){ var b=document.createElement("button"); b.className="ac5-cancel eq-dds-l"; b.style.cssText="width:100%;margin-top:6px"; b.textContent="👷 Equipe da obra ("+equipe().length+") · cadastro prévio para o DDS"; b.setAttribute("onclick","mgiEquipeObra()"); nv.parentNode.insertBefore(b,nv.nextSibling); } } return r; }; }
