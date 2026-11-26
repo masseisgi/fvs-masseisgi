@@ -7027,6 +7027,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v82: chave pública de notificação do Firebase configurada (envio com o app fechado)
 // MGI PRO · v81: notificações; cada usuário escolhe o que recebe (8 tipos de aviso), no celular e no WhatsApp; sino com as pendências
 // MGI PRO · v80: FVS com "Responsável pela verificação" (nome e função) e uma só assinatura no fim; registros antigos com responsável técnico continuam mostrando as duas
 // MGI PRO · v79: no fim da FVS e da auditoria, botão "Assinar e salvar" leva à aba Relatório, com o total de itens respondidos
@@ -8731,7 +8732,7 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
 
 (function(){
   // Chave pública do Firebase Cloud Messaging (Configurações do projeto > Cloud Messaging > Certificados push da Web). Não é segredo.
-  window.MGI_VAPID=window.MGI_VAPID||"";
+  window.MGI_VAPID=window.MGI_VAPID||"BA4Kml3dUiiwISYbYGaMajhd427iY2dezkNrj9sjiTh4GnP7SM5mPj5mWBBNrnclW1YwsIYTEIDUrWFhCfsEhVw";
   var AL=window.MGI_ALERTAS; if(!AL) return;
   function E(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
   function U(){ return window.MGI_USER||{}; }
