@@ -6271,26 +6271,43 @@ window.mgiDDS=function(){ const LT=daObra(state.dds).sort((a,b)=>(b.data||"").lo
    ${ro()?"":`<button class="ac5-save" onclick="mgiDDSNovo()">+ Novo DDS</button>`}${filtro}
    <div class="rg-lista">${L0.map(d=>`<div class="rg-it" style="border-left-color:var(--cyan)"><div class="rg-tx" style="cursor:pointer" onclick="mgiDDSVer('${d.id}')"><span class="rg-tp">${tipoDD(d)[1]} ${tipoDD(d)[0]} · ${(d.data||"").split("-").reverse().join("/")} · ${d.acertos}/${d.perguntas.length} acertos</span><b>${$e(d.tema||d.servico)}</b><span>${(d.participantes||[]).length} participante(s) · ministrado por ${$e(d.ministrante||"")}</span></div><div class="rg-bt"><button onclick="mgiDDSVer('${d.id}')">👁️ Ver</button><button onclick="mgiDDSPDF('${d.id}')">PDF</button></div></div>`).join("")||`<p class="pi-nada">${LT.length?"Nenhum DDS com esses filtros.":"Nenhum DDS registrado."}</p>`}</div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiFechar()">Fechar</button></div>`); };
-window.mgiDDSNovo=function(modo,tipo){ modo=modo||"tema"; tipo=tipo||(window.__ddTipo)||"qualidade"; window.__ddTipo=tipo;
+// Escolha de um ou mais serviços da FVS no DDS
+window.__ddSvs=window.__ddSvs||[];
+function ddSvEscolha(opc){ const sel=window.__ddSvs.filter(id=>SERVICOS.some(s=>s.id===id)); window.__ddSvs=sel;
+  const L=[...sel.map(id=>SERVICOS.find(s=>s.id===id)),...SERVICOS.filter(s=>!sel.includes(s.id))];
+  return `<label>${opc?"Serviços relacionados (opcional, pode marcar mais de um)":"Serviços (pode marcar mais de um)"}</label><div class="dd-svbox"><div class="dd-svtop"><input type="search" id="dd-svbusca" placeholder="Buscar serviço" oninput="mgiDDSvBusca(this.value)"><span id="dd-svn">${sel.length?sel.length+" marcado(s)":"nenhum marcado"}</span></div><div class="dd-svl">${L.map(s=>`<label class="dd-svi${sel.includes(s.id)?" on":""}" data-n="${$e(norm(s.nome))}"><input type="checkbox" class="dd-svc" value="${s.id}"${sel.includes(s.id)?" checked":""} onchange="mgiDDSvTroca(this)"> <span>${$e(s.nome)}</span></label>`).join("")}</div></div>`; }
+window.mgiDDSvTroca=function(el){ const id=el.value, L=window.__ddSvs; const i=L.indexOf(id); if(el.checked&&i<0) L.push(id); if(!el.checked&&i>=0) L.splice(i,1); el.closest(".dd-svi").classList.toggle("on",el.checked); const n=document.getElementById("dd-svn"); if(n) n.textContent=L.length?L.length+" marcado(s)":"nenhum marcado"; };
+window.mgiDDSvBusca=function(q){ q=norm(q||""); document.querySelectorAll(".dd-svi").forEach(l=>{ l.style.display=!q||l.dataset.n.includes(q)?"":"none"; }); };
+window.mgiDDSvMarcar=function(id){ if(!window.__ddSvs.includes(id)) window.__ddSvs.push(id); const el=document.querySelector('.dd-svc[value="'+id+'"]'); if(el){ el.checked=true; mgiDDSvTroca(el); } };
+window.mgiDDSNovo=function(modo,tipo){ if(!modo) window.__ddSvs=[]; modo=modo||"tema"; tipo=tipo||(window.__ddTipo)||"qualidade"; window.__ddTipo=tipo;
   modal(`<h3>Novo DDS</h3>
    <label>Tipo de DDS</label><div class="dd-modo dd-tipo">${Object.entries(DDT).map(([k,v])=>`<button class="${tipo===k?"on":""}" onclick="mgiDDSNovo('${modo}','${k}')">${v[1]} ${v[0]}</button>`).join("")}</div>
    <label>Como montar</label><div class="dd-modo"><button class="${modo==="tema"?"on":""}" onclick="mgiDDSNovo('tema','${tipo}')">✨ Tema livre (IA monta)</button><button class="${modo==="servico"?"on":""}" onclick="mgiDDSNovo('servico','${tipo}')">🔧 Por serviço da FVS</button></div>
    ${modo==="tema"?`<button class="vz-sec" style="width:100%;padding:10px;margin:6px 0" onclick="mgiDDNovoVoz('${tipo}')">🎤 Falar o tema, a frente e o serviço</button><label>Tema do DDS<textarea id="dd-tema" rows="2" placeholder="${tipo==='sst'?'Ex.: trabalho em vala acima de 1,25 m':tipo==='ambiental'?'Ex.: destinação de resíduos da obra':'Ex.: cuidados no lançamento de tubo PEAD na vala'}"></textarea></label>
-     <label>Serviço relacionado (opcional)<select id="dd-sv"><option value="">Nenhum</option>${SERVICOS.map(s=>`<option value="${s.id}">${$e(s.nome)}</option>`).join("")}</select></label>`
-   :`<label>Serviço<select id="dd-sv">${SERVICOS.map(s=>`<option value="${s.id}">${$e(s.nome)}</option>`).join("")}</select></label>`}
+     ${ddSvEscolha(true)}`
+   :ddSvEscolha(false)}
    <div class="fm-g2"><label>Data<input type="date" id="dd-dt" value="${(d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10))(new Date())}"></label><label>Perguntas<select id="dd-n"><option>3</option><option>5</option></select></label></div>
    <div class="fm-g2"><label>Frente ou trecho<input id="dd-fr" placeholder="PV-08 a PV-12"></label><label>Ministrado por<input id="dd-min" value="${$e((window.MGI_USER||{}).nome||"")}"></label></div>
    <div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDS()">Voltar</button><button class="ac5-save" onclick="mgiDDSIniciar('${modo}','${tipo}')">${modo==="tema"?"Gerar com IA":"Iniciar"}</button></div>`); };
-window.mgiDDSIniciar=async function(modo,tipo){ tipo=tipo||"qualidade"; const T=DDT[tipo]; const g=i=>(document.getElementById(i)||{}).value||""; const sv=SERVICOS.find(s=>s.id===g("dd-sv")); const n=parseInt(g("dd-n"),10)||3;
+window.mgiDDSIniciar=async function(modo,tipo){ tipo=tipo||"qualidade"; const T=DDT[tipo]; const g=i=>(document.getElementById(i)||{}).value||""; const svs=window.__ddSvs.map(id=>SERVICOS.find(s=>s.id===id)).filter(Boolean); const sv=svs[0]; const n=parseInt(g("dd-n"),10)||3; const nomes=svs.map(s=>s.nome).join(" + ");
   const base={id:"dds_"+Date.now(),tipo,obraId:obraId(),data:g("dd-dt"),frente:g("dd-fr"),ministrante:g("dd-min"),respostas:[],participantes:[],assin:null,autor:(window.MGI_USER||{}).email||""};
-  if(modo==="servico"){ if(!sv) return; const its=itensTipo(sv,tipo); if(!its.length){ alert("Este serviço não tem itens de "+T[0].toLowerCase()+" na ficha. Use o tema livre."); return; } DD={...base,serviceId:sv.id,servico:sv.nome,tema:(tipo==="qualidade"?"":T[0]+": ")+sv.nome,pontos:its.filter(i=>i.exec).slice(0,8).map(i=>({t:i.t,texto:fala(i.exec),conferir:fala(i.tol)})),base:its.filter(i=>i.exec).slice(0,8).map(i=>({t:i.t,ref:i.tol})),linguagem:"campo",perguntas:perguntasServico(sv,Math.min(n,its.length),tipo)}; return ddPasso(0); }
+  if(modo==="servico"){ if(!svs.length){ alert("Marque pelo menos um serviço."); return; }
+    const com=svs.filter(s=>itensTipo(s,tipo).length), sem=svs.filter(s=>!itensTipo(s,tipo).length);
+    if(!com.length){ alert((svs.length>1?"Estes serviços não têm":"Este serviço não tem")+" itens de "+T[0].toLowerCase()+" na ficha. Use o tema livre."); return; }
+    if(sem.length&&!confirm("Sem itens de "+T[0].toLowerCase()+" na ficha: "+sem.map(s=>s.nome).join(", ")+".\nSeguir só com: "+com.map(s=>s.nome).join(", ")+"?")) return;
+    const k=com.length, por=k===1?8:Math.max(2,Math.floor(10/k)), pts=[], bs=[];
+    com.forEach(s=>itensTipo(s,tipo).filter(i=>i.exec).slice(0,por).forEach(i=>{ const t=k>1?s.nome+" · "+i.t:i.t; pts.push({t,item:i.t,sv:s.id,texto:fala(i.exec),conferir:fala(i.tol)}); bs.push({t,ref:i.tol}); }));
+    const tot=Math.min(n,com.reduce((a,s)=>a+itensTipo(s,tipo).length,0)), cota=com.map(()=>0); for(let i=0,j=0;i<tot&&j<200;j++){ const x=j%k; if(cota[x]<itensTipo(com[x],tipo).length){ cota[x]++; i++; } }
+    const pq=com.flatMap((s,x)=>cota[x]?perguntasServico(s,cota[x],tipo).map(q=>k>1?{...q,q:s.nome+" · "+q.q}:q):[]).sort(()=>Math.random()-.5);
+    const nm=com.map(s=>s.nome).join(" + ");
+    DD={...base,serviceId:com[0].id,serviceIds:com.map(s=>s.id),servico:nm,tema:(tipo==="qualidade"?"":T[0]+": ")+nm,pontos:pts,base:bs,linguagem:"campo",perguntas:pq}; return ddPasso(0); }
   const tema=g("dd-tema").trim(); if(!tema){ alert("Escreva o tema do DDS."); return; }
   modal(`<h3>✨ Montando o DDS</h3><p class="pi-nada">A IA está preparando o conteúdo e as perguntas sobre "${$e(tema)}"...</p>`);
-  const ref=sv?`\nServiço relacionado: ${sv.nome}. Critérios da ficha: ${sv.itens.filter(i=>i.tol).map(i=>i.t+": "+i.tol).join("; ")}.`:"";
+  const ref=svs.map(s=>`\nServiço relacionado: ${s.nome}. Critérios da ficha: ${s.itens.filter(i=>i.tol).map(i=>i.t+": "+i.tol).join("; ")}.`).join("");
   const prompt=`Monte um DDS (diálogo diário) de ${T[0].toLowerCase()} para uma equipe de obra de saneamento ou construção civil no Brasil, falado pelo encarregado em 5 a 10 minutos, com linguagem simples de canteiro, ${T[3]}.\nTema: ${tema}.${ref}\nResponda SOMENTE com JSON válido, sem texto antes ou depois, no formato:\n{"titulo":"...","pontos":[{"t":"título curto","texto":"1 a 3 frases práticas, do jeito que o encarregado fala","porque":"1 frase: o que dá errado se não fizer"}],"base":["normas de referência, só se tiver certeza"],"perguntas":[{"q":"pergunta","ops":["opção A","opção B","opção C"],"certa":0,"explicacao":"1 frase"}]}\nRegras: 4 a 6 pontos; exatamente ${n} perguntas de múltipla escolha com 3 opções e só uma correta, com a posição da correta variando; linguagem de canteiro, frases curtas, sem citar norma, sigla técnica ou número de item nos pontos e nas perguntas (as normas vão só em "base"); nada de markdown.`;
   try{ const r=await callAnthropicAPI([{role:"user",content:prompt}],1500); const txt=(r.content||[]).map(c=>c.text||"").join("").replace(/```json|```/g,"").trim(); const j=JSON.parse(txt.slice(txt.indexOf("{"),txt.lastIndexOf("}")+1));
     if(!j.perguntas||!j.perguntas.length||!j.pontos) throw new Error("conteúdo incompleto");
-    DD={...base,serviceId:sv?sv.id:"",servico:sv?sv.nome:"",tema:j.titulo||tema,temaPedido:tema,pontos:j.pontos.slice(0,8),base:(Array.isArray(j.base)?j.base:[]).filter(x=>typeof x==="string"&&x.trim()).slice(0,8).map(x=>({t:"",ref:x})),linguagem:"campo",perguntas:j.perguntas.slice(0,n).map(q=>({q:q.q,ops:(q.ops||[]).slice(0,4),certa:Math.max(0,Math.min((q.ops||[]).length-1,+q.certa||0)),exec:q.explicacao||""})),geradoPorIA:true};
+    DD={...base,serviceId:sv?sv.id:"",serviceIds:svs.map(s=>s.id),servico:nomes,tema:j.titulo||tema,temaPedido:tema,pontos:j.pontos.slice(0,8),base:(Array.isArray(j.base)?j.base:[]).filter(x=>typeof x==="string"&&x.trim()).slice(0,8).map(x=>({t:"",ref:x})),linguagem:"campo",perguntas:j.perguntas.slice(0,n).map(q=>({q:q.q,ops:(q.ops||[]).slice(0,4),certa:Math.max(0,Math.min((q.ops||[]).length-1,+q.certa||0)),exec:q.explicacao||""})),geradoPorIA:true};
     ddPasso(0);
   }catch(e){ modal(`<h3>Não foi possível montar com IA</h3><p style="color:var(--muted)">${$e(e.message||e)}. Verifique a internet e tente de novo, ou monte o DDS a partir de um serviço da FVS.</p><div class="ac5-acoes"><button class="ac5-cancel" onclick="mgiDDSNovo('servico')">Usar serviço da FVS</button><button class="ac5-save" onclick="mgiDDSNovo('tema')">Tentar de novo</button></div>`); } };
 window.mgiDDAPI={get:()=>DD,set:x=>{ DD=x; },passo:p=>ddPasso(p),ler:()=>lerPart()};
@@ -6312,8 +6329,8 @@ function ddPasso(p){
   const ul=[...document.querySelectorAll(".dd-pn")].pop(); if(ul&&!ul.value) ul.focus(); }
 window.mgiDDSPasso=p=>{ if(document.querySelector(".dd-p")) lerPart(); ddPasso(p); };
 window.mgiDDSResp=(p,k)=>{ DD.respostas[p-1]=k; ddPasso(p); };
-window.mgiDDSNatural=async function(){ if(!DD||!DD.serviceId) return; const sv=SERVICOS.find(s=>s.id===DD.serviceId); if(!sv) return;
-  const fonte=DD.pontos.map((p,k)=>{ const it=sv.itens.find(i=>i.t===p.t)||{}; return {k,t:p.t,fazer:fala(it.exec||p.texto),ficar:fala(it.tol||p.conferir||"")}; });
+window.mgiDDSNatural=async function(){ if(!DD||!DD.serviceId) return; const svs=(DD.serviceIds&&DD.serviceIds.length?DD.serviceIds:[DD.serviceId]).map(id=>SERVICOS.find(s=>s.id===id)).filter(Boolean); if(!svs.length) return;
+  const fonte=DD.pontos.map((p,k)=>{ const s0=svs.find(s=>s.id===p.sv)||svs[0]; const it=s0.itens.find(i=>i.t===(p.item||p.t))||{}; return {k,t:p.t,fazer:fala(it.exec||p.texto),ficar:fala(it.tol||p.conferir||"")}; });
   modal(`<h3>✨ Deixando a fala mais natural</h3><p class="pi-nada">A IA está reescrevendo no jeito de canteiro. Os números da ficha não mudam.</p>`);
   const prompt=`Você é encarregado experiente de obra de saneamento no Brasil. Reescreva cada ponto abaixo para falar com a equipe de campo (pedreiros, serventes, operadores) num DDS: frases curtas, voz ativa, exemplo prático, sem citar norma, sigla ou número de item. NÃO invente, altere ou acrescente números, medidas ou valores: use apenas os números que já estão no ponto. Também reescreva cada pergunta de forma simples, sem mudar o sentido.\nPontos: ${JSON.stringify(fonte)}\nPerguntas: ${JSON.stringify(DD.perguntas.map((q,i)=>({i,q:q.q})))}\nResponda SOMENTE com JSON: {"pontos":[{"k":0,"texto":"1 a 3 frases","porque":"1 frase: o que dá errado se não fizer","conferir":"1 frase: como tem que ficar"}],"perguntas":[{"i":0,"q":"..."}]}`;
   const nums=t=>(String(t||"").match(/\d+(?:[.,]\d+)?/g)||[]).map(x=>x.replace(",","."));
@@ -7076,7 +7093,7 @@ window.mgiDDNovoVoz=function(tipo){ if(ro()) return; const g=i=>(document.getEle
      const j=lerJSON(r); const t=["qualidade","sst","ambiental","integrado"].includes(j.tipo)?j.tipo:tipo; fecharModal(); mgiDDSNovo("tema",t);
      const set=(i,v)=>{ const el=document.getElementById(i); if(el&&v!=null&&v!=="") el.value=v; };
      set("dd-tema",j.tema); set("dd-fr",j.frente); set("dd-dt",atual.dt); set("dd-n",atual.n); set("dd-min",atual.min);
-     if(j.servico){ const w=norm(j.servico).split(" ").filter(x=>x.length>2); let melhor=null,pt=0,rz=0; SERVICOS.forEach(s=>{ const nn=norm(s.nome); const p=w.filter(x=>nn.includes(x)).length; const z=p/Math.max(1,nn.split(" ").filter(x=>x.length>2).length); if(p>pt||(p===pt&&p>0&&z>rz)){ pt=p; rz=z; melhor=s; } }); if(melhor&&pt>=Math.min(2,w.length)) set("dd-sv",melhor.id); }
+     if(j.servico){ const w=norm(j.servico).split(" ").filter(x=>x.length>2); let melhor=null,pt=0,rz=0; SERVICOS.forEach(s=>{ const nn=norm(s.nome); const p=w.filter(x=>nn.includes(x)).length; const z=p/Math.max(1,nn.split(" ").filter(x=>x.length>2).length); if(p>pt||(p===pt&&p>0&&z>rz)){ pt=p; rz=z; melhor=s; } }); if(melhor&&pt>=Math.min(2,w.length)) mgiDDSvMarcar(melhor.id); }
      aviso("✅ DDS preenchido. Confira e toque em Gerar com IA.",false); }});
 };
 
@@ -7138,6 +7155,7 @@ window.mgiMatVoz=function(){ if(ro()) return; mgiMTAPI.ler();
 // MGI PRO · v60: duração real do DDS, lembrete de ações vencidas com cobrança por responsável, painel de FVS e DDS no relatório mensal
 // MGI PRO · v61: editar e excluir em todas as ferramentas; quem registrou e quem alterou cada registro, com histórico
 // MGI PRO · v62: DDS com horário de aplicação e duração sempre registrados (tela, ata, lista e WhatsApp); fotos inteiras para o carimbo aparecer
+// MGI PRO · v83: DDS por serviço aceita mais de um serviço da FVS (lista com busca e marcação); pontos e perguntas divididos entre os serviços
 // MGI PRO · v82: chave pública de notificação do Firebase configurada (envio com o app fechado)
 // MGI PRO · v81: notificações; cada usuário escolhe o que recebe (8 tipos de aviso), no celular e no WhatsApp; sino com as pendências
 // MGI PRO · v80: FVS com "Responsável pela verificação" (nome e função) e uma só assinatura no fim; registros antigos com responsável técnico continuam mostrando as duas
@@ -8924,5 +8942,6 @@ body:not(.mod-inicio) #nv-hdr{display:flex}
     try{ await carregaMessaging(); var reg=await navigator.serviceWorker.ready; var tk=await firebase.messaging().getToken({vapidKey:MGI_VAPID,serviceWorkerRegistration:reg}); if(tk&&dv.token!==tk){ dv.token=tk; grava(dv); } }catch(e){} },12000);
 })();
 </script>
+<style>.dd-svbox{border:1px solid var(--border);border-radius:10px;margin:4px 0 8px;overflow:hidden}.dd-svtop{display:flex;gap:8px;align-items:center;padding:6px;border-bottom:1px solid var(--border)}.dd-svtop input{flex:1;margin:0!important}.dd-svtop span{font-size:.72rem;color:var(--muted);white-space:nowrap}.dd-svl{max-height:230px;overflow-y:auto;-webkit-overflow-scrolling:touch}.dd-svi{display:flex!important;flex-direction:row!important;gap:10px;align-items:center;font-weight:500!important;padding:8px 10px;margin:0!important;font-size:.84rem;color:var(--text);border-bottom:1px solid var(--border);cursor:pointer}.dd-svi input{display:inline-block!important;width:20px!important;min-width:20px;height:20px!important;padding:0!important;margin:0!important;flex:none}.dd-svi span{flex:1;line-height:1.25}.dd-svi.on{background:rgba(6,182,212,.12)}</style>
 </body>
 </html>
